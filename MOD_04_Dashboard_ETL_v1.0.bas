@@ -1,4 +1,3 @@
-Attribute VB_Name = "MOD_04_Dashboard_ETL"
 Option Explicit
 
 ' =========================================================================
@@ -32,8 +31,8 @@ Private Function Obtenir_Parametre(NomParam As String, ValeurDefaut As String) A
         End If
     Next i
     
-    Dim nR As ListRow: Set nR = tblConf.ListRows.Add
-    nR.Range(1, 1).Value = NomParam: nR.Range(1, 2).Value = ValeurDefaut: nR.Range(1, 3).Value = "Filtre Actif"
+    Dim nr As ListRow: Set nr = tblConf.ListRows.Add
+    nr.Range(1, 1).Value = NomParam: nr.Range(1, 2).Value = ValeurDefaut: nr.Range(1, 3).Value = "Filtre Actif"
     Obtenir_Parametre = ValeurDefaut
 End Function
 
@@ -71,9 +70,9 @@ Private Sub Upsert_Dico(tbl As ListObject, k As String, fr As String, en As Stri
     Dim i As Long: For i = 1 To tbl.ListRows.Count
         If tbl.DataBodyRange(i, 1).Value = k Then Exit Sub
     Next i
-    Dim nR As ListRow: Set nR = tbl.ListRows.Add
-    nR.Range(1, 1).Value = k: nR.Range(1, 2).Value = fr: nR.Range(1, 3).Value = en: nR.Range(1, 4).Value = es
-    nR.Range(1, 5).Value = pt: nR.Range(1, 6).Value = de: nR.Range(1, 7).Value = it: nR.Range(1, 8).Value = nl: nR.Range(1, 9).Value = sv
+    Dim nr As ListRow: Set nr = tbl.ListRows.Add
+    nr.Range(1, 1).Value = k: nr.Range(1, 2).Value = fr: nr.Range(1, 3).Value = en: nr.Range(1, 4).Value = es
+    nr.Range(1, 5).Value = pt: nr.Range(1, 6).Value = de: nr.Range(1, 7).Value = it: nr.Range(1, 8).Value = nl: nr.Range(1, 9).Value = sv
 End Sub
 
 Private Function TR(Clé As String) As String

@@ -1,4 +1,3 @@
-Attribute VB_Name = "MOD_05_Advanced_Modules"
 Option Explicit
 
 ' =========================================================================
@@ -37,8 +36,8 @@ Private Function Obtenir_Parametre(NomParam As String, ValeurDefaut As String) A
         End If
     Next i
     
-    Dim nR As ListRow: Set nR = tblConf.ListRows.Add
-    nR.Range(1, 1).Value = NomParam: nR.Range(1, 2).Value = ValeurDefaut: nR.Range(1, 3).Value = "Filtre Actif"
+    Dim nr As ListRow: Set nr = tblConf.ListRows.Add
+    nr.Range(1, 1).Value = NomParam: nr.Range(1, 2).Value = ValeurDefaut: nr.Range(1, 3).Value = "Filtre Actif"
     Obtenir_Parametre = ValeurDefaut
 End Function
 
@@ -84,13 +83,13 @@ Private Sub Upsert_Dico(tbl As ListObject, k As String, fr As String, en As Stri
             Exit Sub
         End If
     Next i
-    Dim nR As ListRow: Set nR = tbl.ListRows.Add
-    nR.Range(1, 1).Value = k: nR.Range(1, 2).Value = fr: nR.Range(1, 3).Value = en: nR.Range(1, 4).Value = es
-    nR.Range(1, 5).Value = pt: nR.Range(1, 6).Value = de: nR.Range(1, 7).Value = it: nR.Range(1, 8).Value = nl: nR.Range(1, 9).Value = sv
+    Dim nr As ListRow: Set nr = tbl.ListRows.Add
+    nr.Range(1, 1).Value = k: nr.Range(1, 2).Value = fr: nr.Range(1, 3).Value = en: nr.Range(1, 4).Value = es
+    nr.Range(1, 5).Value = pt: nr.Range(1, 6).Value = de: nr.Range(1, 7).Value = it: nr.Range(1, 8).Value = nl: nr.Range(1, 9).Value = sv
 End Sub
 
-Private Function TR(Clé As String) As String
-    TR = MOD_02_AppHome_Global.TR(Clé)
+Private Function TR(Cle As String) As String
+    TR = MOD_02_AppHome_Global.TR(Cle)
 End Function
 
 ' -------------------------------------------------------------------------
@@ -161,7 +160,7 @@ Public Sub GENERER_NET_WORTH_DASHBOARD()
     Dim dictTaux As Object: Set dictTaux = CreateObject("Scripting.Dictionary")
     dictTaux("MUR") = 1: dictTaux("EUR") = 49.5: dictTaux("USD") = 46.2: dictTaux("GBP") = 58.1: dictTaux("ZAR") = 2.4: dictTaux("XOF") = 0.083
     
-    ' --- 7. PHASE D'EXTRACTION (ETL SNAPSHOT TEMP & CONVERSION) ---
+    ' --- 7. PHASE D'EXTRACTION (ETL CUMULATIF ACCOUNT-CENTRIC CORRIGÉ) ---
     Dim tblCompte As ListObject, tblFact As ListObject
     On Error Resume Next
     Set tblCompte = ThisWorkbook.Sheets("DIM_Compte").ListObjects("T_DIM_Compte")
@@ -176,64 +175,100 @@ Public Sub GENERER_NET_WORTH_DASHBOARD()
     If Not tblCompte Is Nothing Then
         If tblCompte.ListRows.Count > 0 Then
             Dim arrCpt As Variant: arrCpt = tblCompte.DataBodyRange.Value
-            Dim arrTx As Variant, aDesTransactions As Boolean: aDesTransactions = False
+            Dim arrTx As Variant
+            Dim aDesTransactions As Boolean: aDesTransactions = False
             
             If Not tblFact Is Nothing Then
                 If tblFact.ListRows.Count > 0 Then
-                    arrTx = tblFact.DataBodyRange.Value: aDesTransactions = True
+                    If tblFact.ListColumns.Count >= 7 Then
+                        arrTx = tblFact.DataBodyRange.Value
+                        aDesTransactions = True
+                    End If
                 End If
             End If
             
             ReDim arrConsolide(1 To UBound(arrCpt, 1), 1 To 4)
-            Dim i As Long, j As Long, ID_Cpt As String, SoldeConverti As Double, TypeCpt As String
+            Dim i As Long, j As Long
+            Dim ID_Cpt As String, TypeCpt As String, StatutActif As String
+            Dim SoldeNatif As Double, SoldeConvertiKPI As Double
             Dim FluxType As String, CatTypeDict As Object
-            Dim DevOrigine As String, TauxO As Double, TauxC As Double, MontantTx As Double, MontantReel As Double
+            Dim CptDevise As String, TauxC_Native As Double, TauxFiltre As Double
             Dim dTx As Date
             
             Set CatTypeDict = Charger_Dico_Interne("T_DIM_Categorie", 1, 3)
-            TauxC = IIf(dictTaux.exists(DeviseFiltre), dictTaux(DeviseFiltre), 1)
+            ' Taux d'affichage global du Dashboard
+            TauxFiltre = IIf(dictTaux.exists(DeviseFiltre), dictTaux(DeviseFiltre), 1)
             
             For i = 1 To UBound(arrCpt, 1)
-                ID_Cpt = Trim(CStr(arrCpt(i, 1))): TypeCpt = UCase(Trim(CStr(arrCpt(i, 3)))): SoldeConverti = 0
+                ' =========================================================================
+                ' CORRECTION 1 : RÉSOLUTION DU "STATUT FANTÔME" (COMPTES OMIS)
+                ' Si la colonne Est_Actif (5) est vide (à cause de l'auto-apprentissage),
+                ' on force la valeur à "OUI" pour qu'il soit reconnu par le Bilan.
+                ' =========================================================================
+                StatutActif = ""
+                If UBound(arrCpt, 2) >= 5 Then StatutActif = UCase(Trim(CStr(arrCpt(i, 5))))
+                If StatutActif = "" Then StatutActif = "OUI"
                 
-                If aDesTransactions Then
-                    For j = 1 To UBound(arrTx, 1)
-                        If Trim(CStr(arrTx(j, 3))) = ID_Cpt And Trim(CStr(arrTx(j, 1))) <> "" And IsDate(arrTx(j, 2)) Then
-                            dTx = CDate(arrTx(j, 2))
-                            
-                            ' LA MAGIE DU SNAPSHOT : On cumule toutes les transactions <= MoisFiltre
-                            If Format(dTx, "yyyy-mm") <= MoisFiltre Then
-                            
-                                DevOrigine = UCase(Trim(CStr(arrTx(j, 7))))
-                                TauxO = IIf(dictTaux.exists(DevOrigine), dictTaux(DevOrigine), 1)
-                                MontantTx = CDbl(arrTx(j, 6))
-                                MontantReel = (MontantTx * TauxO) / TauxC
-                                
-                                FluxType = IIf(CatTypeDict.exists(Trim(CStr(arrTx(j, 4)))), CatTypeDict(Trim(CStr(arrTx(j, 4)))), "AUTRE")
-                                
-                                ' Mathématique : Revenu = +, Dépense = -
-                                If UCase(FluxType) = "REVENU" Or UCase(FluxType) = "TRANSFERT" Then
-                                    SoldeConverti = SoldeConverti + MontantReel
-                                ElseIf UCase(FluxType) = "DEPENSE" Then
-                                    SoldeConverti = SoldeConverti - MontantReel
+                If StatutActif = "OUI" Then
+                    ID_Cpt = Trim(CStr(arrCpt(i, 1)))
+                    TypeCpt = UCase(Trim(CStr(arrCpt(i, 3))))
+                    
+                    ' =========================================================================
+                    ' CORRECTION 2 : PRIORITÉ À LA DEVISE NATIVE DU COMPTE (DIMENSION)
+                    ' La devise par défaut du compte est la seule qui fait foi.
+                    ' =========================================================================
+                    CptDevise = UCase(Trim(CStr(arrCpt(i, 4))))
+                    If CptDevise = "" Then CptDevise = "MUR"
+                    TauxC_Native = IIf(dictTaux.exists(CptDevise), dictTaux(CptDevise), 1)
+                    
+                    SoldeNatif = 0
+                    
+                    If aDesTransactions Then
+                        For j = 1 To UBound(arrTx, 1)
+                            If Trim(CStr(arrTx(j, 3))) = ID_Cpt And Trim(CStr(arrTx(j, 1))) <> "" Then
+                                If IsDate(arrTx(j, 2)) Then
+                                    dTx = CDate(arrTx(j, 2))
+                                    If Format(dTx, "yyyy-mm") <= MoisFiltre Then
+                                        
+                                        ' =========================================================================
+                                        ' CORRECTION 3 : SUPPRESSION DU CONFLIT DE DEVISE (LA TRANSACTION EST IGNORÉE)
+                                        ' On assume que le Montant saisi EST dans la Devise Native du Compte.
+                                        ' On additionne directement le montant sans conversion hasardeuse.
+                                        ' =========================================================================
+                                        FluxType = IIf(CatTypeDict.exists(Trim(CStr(arrTx(j, 4)))), CatTypeDict(Trim(CStr(arrTx(j, 4)))), "AUTRE")
+                                        
+                                        If UCase(FluxType) = "REVENU" Or UCase(FluxType) = "TRANSFERT" Then
+                                            SoldeNatif = SoldeNatif + CDbl(arrTx(j, 6))
+                                        ElseIf UCase(FluxType) = "DEPENSE" Then
+                                            SoldeNatif = SoldeNatif - CDbl(arrTx(j, 6))
+                                        End If
+                                        
+                                    End If
                                 End If
-                                
                             End If
-                        End If
-                    Next j
-                End If
-                
-                ' On n'affiche le compte que s'il a eu des mouvements (Solde <> 0)
-                If SoldeConverti <> 0 Then
-                    If TypeCpt = "DETTE" Then
-                        TotLiab = TotLiab + Abs(SoldeConverti): SoldeConverti = -Abs(SoldeConverti)
-                    Else
-                        TotAssets = TotAssets + SoldeConverti
+                        Next j
                     End If
                     
-                    Ligne = Ligne + 1
-                    arrConsolide(Ligne, 1) = arrCpt(i, 2): arrConsolide(Ligne, 2) = TypeCpt
-                    arrConsolide(Ligne, 3) = DeviseFiltre: arrConsolide(Ligne, 4) = SoldeConverti
+                    If SoldeNatif <> 0 Then
+                        ' =========================================================================
+                        ' CONVERSION GLOBALE DES KPIs (À la toute fin)
+                        ' Le Solde Natif est converti dans la devise du Dashboard pour les Totaux.
+                        ' =========================================================================
+                        SoldeConvertiKPI = (SoldeNatif * TauxC_Native) / TauxFiltre
+                        
+                        If TypeCpt = "DETTE" Then
+                            TotLiab = TotLiab + Abs(SoldeConvertiKPI)
+                            SoldeNatif = -Abs(SoldeNatif) ' Le tableau affiche le solde négatif
+                        Else
+                            TotAssets = TotAssets + SoldeConvertiKPI
+                        End If
+                        
+                        Ligne = Ligne + 1
+                        arrConsolide(Ligne, 1) = arrCpt(i, 2)
+                        arrConsolide(Ligne, 2) = TypeCpt
+                        arrConsolide(Ligne, 3) = CptDevise ' La table affiche la devise NATIVE (ex: XOF)
+                        arrConsolide(Ligne, 4) = SoldeNatif ' La table affiche le montant NATIF (ex: 20000)
+                    End If
                 End If
             Next i
         End If
@@ -403,10 +438,10 @@ Private Function Charger_Dico_Interne(NomTable As String, ColKey As Integer, Col
     Dim dict As Object: Set dict = CreateObject("Scripting.Dictionary")
     Dim tbl As ListObject: On Error Resume Next: Set tbl = ThisWorkbook.Sheets(Split(NomTable, "_", 2)(1)).ListObjects(NomTable): On Error GoTo 0
     If Not tbl Is Nothing Then
-        Dim i As Long, Clé As String, Val As String
+        Dim i As Long, Cle As String, Val As String
         For i = 1 To tbl.ListRows.Count
-            Clé = Trim(CStr(tbl.DataBodyRange(i, ColKey).Value)): Val = Trim(CStr(tbl.DataBodyRange(i, ColVal).Value))
-            If Clé <> "" Then dict(Clé) = Val
+            Cle = Trim(CStr(tbl.DataBodyRange(i, ColKey).Value)): Val = Trim(CStr(tbl.DataBodyRange(i, ColVal).Value))
+            If Cle <> "" Then dict(Cle) = Val
         Next i
     End If
     Set Charger_Dico_Interne = dict
@@ -423,4 +458,6 @@ Private Sub Dessiner_Shape_Card(ws As Worksheet, NomShape As String, Titre As St
     With shp.TextFrame2.TextRange.Lines(1).Font: .Name = "ADLaM Display": .Size = 11: .Bold = True: .Fill.ForeColor.RGB = CoulTexte: End With
     With shp.TextFrame2.TextRange.Lines(2).Font: .Name = "ADLaM Display": .Size = 28: .Bold = True: .Fill.ForeColor.RGB = CoulTexte: End With
 End Sub
+
+
 

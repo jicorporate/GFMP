@@ -1,4 +1,3 @@
-Attribute VB_Name = "MOD_03_Gatekeeper"
 Option Explicit
 
 ' =========================================================================
@@ -147,16 +146,16 @@ Private Sub Upsert_Dico(tbl As ListObject, k As String, fr As String, en As Stri
     Dim i As Long: For i = 1 To tbl.ListRows.Count
         If tbl.DataBodyRange(i, 1).Value = k Then Exit Sub
     Next i
-    Dim nR As ListRow: Set nR = tbl.ListRows.Add
-    nR.Range(1, 1).Value = k: nR.Range(1, 2).Value = fr: nR.Range(1, 3).Value = en: nR.Range(1, 4).Value = es
-    nR.Range(1, 5).Value = pt: nR.Range(1, 6).Value = de: nR.Range(1, 7).Value = it: nR.Range(1, 8).Value = nl: nR.Range(1, 9).Value = sv
+    Dim nr As ListRow: Set nr = tbl.ListRows.Add
+    nr.Range(1, 1).Value = k: nr.Range(1, 2).Value = fr: nr.Range(1, 3).Value = en: nr.Range(1, 4).Value = es
+    nr.Range(1, 5).Value = pt: nr.Range(1, 6).Value = de: nr.Range(1, 7).Value = it: nr.Range(1, 8).Value = nl: nr.Range(1, 9).Value = sv
 End Sub
 
 ' -------------------------------------------------------------------------
-' LE CERVEAU INJECTÉ (CODE BEHIND)
+' LE CERVEAU INJECTÉ (LE STRING BUILDER EST TOTALEMENT FIXÉ)
 ' -------------------------------------------------------------------------
 Private Function Code_VBA_Formulaire() As String
-    Dim L() As String: ReDim L(1 To 200): Dim i As Integer: i = 1
+    Dim L() As String: ReDim L(1 To 250): Dim i As Integer: i = 1
     
     L(i) = "Option Explicit": i = i + 1
     L(i) = "Private Function TR(Clé As String) As String": i = i + 1
@@ -178,6 +177,7 @@ Private Function Code_VBA_Formulaire() As String
     L(i) = "    Me.lbl_txt_New_Tiers.Caption = TR(""FRM_NEW"")": i = i + 1
     L(i) = "    Me.btn_Save.Caption = TR(""FRM_SAVE"")": i = i + 1
     L(i) = "    Me.btn_Cancel.Caption = TR(""FRM_CANCEL"")": i = i + 1
+    
     L(i) = "    Me.txt_Date.ControlTipText = TR(""TT_F_DATE"")": i = i + 1
     L(i) = "    Me.cmb_Compte.ControlTipText = TR(""TT_F_COMPTE"")": i = i + 1
     L(i) = "    Me.cmb_Categorie.ControlTipText = TR(""TT_F_CAT"")": i = i + 1
@@ -187,12 +187,12 @@ Private Function Code_VBA_Formulaire() As String
     L(i) = "    Me.txt_Description.ControlTipText = TR(""TT_F_DESC"")": i = i + 1
     L(i) = "    Me.btn_Save.ControlTipText = TR(""TT_F_SAVE"")": i = i + 1
     L(i) = "    Me.btn_Cancel.ControlTipText = TR(""TT_F_CANCEL"")": i = i + 1
-    
     L(i) = "    Me.cmb_New_Cpt_Type.ControlTipText = TR(""TT_F_TYPE_CPT"")": i = i + 1
     L(i) = "    Me.cmb_New_Cat_Type.ControlTipText = TR(""TT_F_TYPE_CAT"")": i = i + 1
     
     L(i) = "    Me.txt_Date.Value = Format(Date, ""dd/mm/yyyy"")": i = i + 1
-    L(i) = "    Me.cmb_Devise.List = Array(""MUR"", ""EUR"", ""USD"", ""GBP"", ""ZAR"", ""OXF"")": i = i + 1
+    ' AJOUT DE XOF DANS LE GATEKEEPER
+    L(i) = "    Me.cmb_Devise.List = Array(""MUR"", ""EUR"", ""USD"", ""GBP"", ""ZAR"", ""XOF"")": i = i + 1
     L(i) = "    Me.cmb_Devise.ListIndex = 0": i = i + 1
     
     L(i) = "    Me.cmb_New_Cpt_Type.List = Array(""LIQUIDITE"", ""INVESTISSEMENT"", ""DETTE"")": i = i + 1
@@ -220,7 +220,6 @@ Private Function Code_VBA_Formulaire() As String
     L(i) = "    End If": i = i + 1
     L(i) = "End Sub": i = i + 1
     
-    ' LES ÉVÉNEMENTS QUI AFFICHENT LE DOUBLE CONTRÔLE (Nom + Typage)
     L(i) = "Private Sub cmb_Compte_Change(): Gerer_Visibilite_Double Me.cmb_Compte, Me.txt_New_Compte, Me.cmb_New_Cpt_Type, Me.lbl_txt_New_Compte: End Sub": i = i + 1
     L(i) = "Private Sub cmb_Categorie_Change(): Gerer_Visibilite_Double Me.cmb_Categorie, Me.txt_New_Categorie, Me.cmb_New_Cat_Type, Me.lbl_txt_New_Categorie: End Sub": i = i + 1
     L(i) = "Private Sub cmb_Tiers_Change(): Gerer_Visibilite_Simple Me.cmb_Tiers, Me.txt_New_Tiers, Me.lbl_txt_New_Tiers: End Sub": i = i + 1
@@ -237,6 +236,9 @@ Private Function Code_VBA_Formulaire() As String
     L(i) = "    If Not estAutre Then txt.Value = """"": i = i + 1
     L(i) = "End Sub": i = i + 1
     
+    ' =====================================================================
+    ' CORRECTION EXACTE : LE STRING BUILDER POUR LA FONCTION OBTENIR_ID
+    ' =====================================================================
     L(i) = "Private Function Obtenir_ID(cmb As MSForms.ComboBox, txt As MSForms.TextBox, NomTable As String, TypeSelect As String) As Long": i = i + 1
     L(i) = "    If txt.Visible = False Then Obtenir_ID = CLng(cmb.List(cmb.ListIndex, 0)): Exit Function": i = i + 1
     L(i) = "    Dim valClean As String: valClean = MOD_01_CoreEngine.CLEAN_TEXT(txt.Value)": i = i + 1
@@ -248,12 +250,23 @@ Private Function Code_VBA_Formulaire() As String
     L(i) = "    ws.Unprotect ""SFP_ADMIN_2026""": i = i + 1
     L(i) = "    Dim newRow As ListRow: Set newRow = tbl.ListRows.Add": i = i + 1
     L(i) = "    Dim newID As Long: newID = MOD_01_CoreEngine.GENERER_NOUVEL_ID(NomTable)": i = i + 1
-    L(i) = "    newRow.Range(1, 1).Value = newID: newRow.Range(1, 2).Value = valClean: newRow.Range(1, 3).Value = TypeSelect": i = i + 1
-    L(i) = "    If NomTable = ""T_DIM_Compte"" Then newRow.Range(1, 4).Value = Me.cmb_Devise.Value": i = i + 1
+    
+    L(i) = "    newRow.Range(1, 1).Value = newID": i = i + 1
+    L(i) = "    newRow.Range(1, 2).Value = valClean": i = i + 1
+    L(i) = "    newRow.Range(1, 3).Value = TypeSelect": i = i + 1
+    
+    L(i) = "    If NomTable = ""T_DIM_Compte"" Then": i = i + 1
+    L(i) = "        newRow.Range(1, 4).Value = Me.cmb_Devise.Value": i = i + 1
+    L(i) = "        newRow.Range(1, 5).Value = ""OUI""": i = i + 1
+    L(i) = "    End If": i = i + 1
+    
     L(i) = "    ws.Protect ""SFP_ADMIN_2026"", UserInterfaceOnly:=True": i = i + 1
     L(i) = "    Obtenir_ID = newID": i = i + 1
     L(i) = "End Function": i = i + 1
     
+    ' =====================================================================
+    ' SAUVEGARDE
+    ' =====================================================================
     L(i) = "Private Sub btn_Save_Click()": i = i + 1
     L(i) = "    If Me.cmb_Compte.ListIndex = -1 Or Me.cmb_Categorie.ListIndex = -1 Or Me.cmb_Tiers.ListIndex = -1 Then MsgBox TR(""MSG_ERR_MISSING""), vbCritical: Exit Sub": i = i + 1
     L(i) = "    Dim strMontant As String, dblMontant As Double": i = i + 1
@@ -262,7 +275,6 @@ Private Function Code_VBA_Formulaire() As String
     L(i) = "    If dblMontant <= 0 Then MsgBox TR(""MSG_ERR_AMT""), vbCritical: Exit Sub": i = i + 1
     L(i) = "    If Not IsDate(Me.txt_Date.Value) Then MsgBox TR(""MSG_ERR_MISSING""), vbCritical: Exit Sub": i = i + 1
     
-    ' LE CŒUR DE LA CORRECTION : LE TYPAGE EXPLICITE SAISIT PAR L'UTILISATEUR
     L(i) = "    Dim idC As Long, idCat As Long, idT As Long": i = i + 1
     L(i) = "    idC = Obtenir_ID(Me.cmb_Compte, Me.txt_New_Compte, ""T_DIM_Compte"", Me.cmb_New_Cpt_Type.Value)": i = i + 1
     L(i) = "    idCat = Obtenir_ID(Me.cmb_Categorie, Me.txt_New_Categorie, ""T_DIM_Categorie"", Me.cmb_New_Cat_Type.Value)": i = i + 1
@@ -288,4 +300,3 @@ Private Function Code_VBA_Formulaire() As String
     ReDim Preserve L(1 To i - 1)
     Code_VBA_Formulaire = Join(L, vbCrLf)
 End Function
-

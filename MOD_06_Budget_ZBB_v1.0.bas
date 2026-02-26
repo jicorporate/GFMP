@@ -1,4 +1,3 @@
-Attribute VB_Name = "MOD_06_Budget_ZBB"
 Option Explicit
 
 ' =========================================================================
@@ -43,10 +42,10 @@ Public Function Obtenir_Parametre(NomParam As String, ValeurDefaut As String) As
         End If
     Next i
     
-    Dim nR As ListRow: Set nR = tblConf.ListRows.Add
-    nR.Range(1, 1).Value = NomParam
-    nR.Range(1, 2).Value = ValeurDefaut
-    nR.Range(1, 3).Value = "Filtre Actif"
+    Dim nr As ListRow: Set nr = tblConf.ListRows.Add
+    nr.Range(1, 1).Value = NomParam
+    nr.Range(1, 2).Value = ValeurDefaut
+    nr.Range(1, 3).Value = "Filtre Actif"
     Obtenir_Parametre = ValeurDefaut
 End Function
 
@@ -102,16 +101,16 @@ Private Sub Upsert_Dico(tbl As ListObject, k As String, fr As String, en As Stri
             Exit Sub
         End If
     Next i
-    Dim nR As ListRow: Set nR = tbl.ListRows.Add
-    nR.Range(1, 1).Value = k
-    nR.Range(1, 2).Value = fr
-    nR.Range(1, 3).Value = en
-    nR.Range(1, 4).Value = es
-    nR.Range(1, 5).Value = pt
-    nR.Range(1, 6).Value = de
-    nR.Range(1, 7).Value = it
-    nR.Range(1, 8).Value = nl
-    nR.Range(1, 9).Value = sv
+    Dim nr As ListRow: Set nr = tbl.ListRows.Add
+    nr.Range(1, 1).Value = k
+    nr.Range(1, 2).Value = fr
+    nr.Range(1, 3).Value = en
+    nr.Range(1, 4).Value = es
+    nr.Range(1, 5).Value = pt
+    nr.Range(1, 6).Value = de
+    nr.Range(1, 7).Value = it
+    nr.Range(1, 8).Value = nl
+    nr.Range(1, 9).Value = sv
 End Sub
 
 Private Function TR(Clé As String) As String
@@ -322,26 +321,37 @@ Public Sub GENERER_BUDGET_DASHBOARD()
     Set tblCat = ThisWorkbook.Sheets("DIM_Categorie").ListObjects("T_DIM_Categorie")
     On Error GoTo 0
     
+    ' --- PATCH: DÉCLARATION DES DEUX DICTIONNAIRES (NOM ET TYPE) ---
     Dim dictCatName As Object: Set dictCatName = CreateObject("Scripting.Dictionary")
+    Dim dictCatType As Object: Set dictCatType = CreateObject("Scripting.Dictionary") ' <-- LA VARIABLE MANQUANTE
+    
     If Not tblCat Is Nothing Then
         If tblCat.ListRows.Count > 0 Then
             Dim x As Long: For x = 1 To tblCat.ListRows.Count
                 dictCatName(CStr(tblCat.DataBodyRange(x, 1).Value)) = CStr(tblCat.DataBodyRange(x, 2).Value)
+                ' <-- LE REMPLISSAGE DU DICTIONNAIRE MANQUANT
+                dictCatType(CStr(tblCat.DataBodyRange(x, 1).Value)) = UCase(Trim(CStr(tblCat.DataBodyRange(x, 3).Value)))
             Next x
         End If
     End If
     
+    ' =========================================================================
+    ' L'OMNISCIENCE ETL : FUSION DES ALLOCATIONS ET DES DÉPENSES SANS EXCEPTION
+    ' =========================================================================
+    Dim dictMaster As Object: Set dictMaster = CreateObject("Scripting.Dictionary") ' Le cerveau de fusion
     Dim dictAlloc As Object: Set dictAlloc = CreateObject("Scripting.Dictionary")
     Dim TotAlloc As Double: TotAlloc = 0
+    
     If Not tblBud Is Nothing Then
         If tblBud.ListRows.Count > 0 Then
             Dim arrB As Variant: arrB = tblBud.DataBodyRange.Value
             For x = 1 To UBound(arrB, 1)
                 If Trim(CStr(arrB(x, 2))) = MoisFiltre Then
-                    ' On convertit l'allocation qui est en base MUR vers la devise cible
+                    Dim idC_B As String: idC_B = CStr(arrB(x, 3))
                     Dim ValAlloc As Double: ValAlloc = CDbl(arrB(x, 4)) / TauxC
-                    dictAlloc(CStr(arrB(x, 3))) = ValAlloc
+                    dictAlloc(idC_B) = dictAlloc(idC_B) + ValAlloc
                     TotAlloc = TotAlloc + ValAlloc
+                    dictMaster(idC_B) = True ' Ajout au Master
                 End If
             Next x
         End If
@@ -349,17 +359,23 @@ Public Sub GENERER_BUDGET_DASHBOARD()
     
     Dim dictSpent As Object: Set dictSpent = CreateObject("Scripting.Dictionary")
     Dim TotSpent As Double: TotSpent = 0
+    
     If Not tblTx Is Nothing Then
         If tblTx.ListRows.Count > 0 Then
             Dim arrT As Variant: arrT = tblTx.DataBodyRange.Value
             Dim dtTx As String, idC As String, amt As Double
             Dim DevOrigine As String, TauxO As Double
+            Dim FluxType As String
+            
             For x = 1 To UBound(arrT, 1)
                 If Trim(CStr(arrT(x, 1))) <> "" Then
                     dtTx = Format(CDate(arrT(x, 2)), "yyyy-mm")
                     If dtTx = MoisFiltre Then
                         idC = CStr(arrT(x, 4))
-                        If dictAlloc.exists(idC) Then
+                        FluxType = IIf(dictCatType.exists(idC), dictCatType(idC), "AUTRE")
+                        
+                        ' CORRECTION: On intègre TOUTES les dépenses (budgétisées ou auto-apprises)
+                        If FluxType = "DEPENSE" Then
                             DevOrigine = UCase(Trim(CStr(arrT(x, 7))))
                             TauxO = IIf(dictTaux.exists(DevOrigine), dictTaux(DevOrigine), 1)
                             amt = CDbl(arrT(x, 6))
@@ -367,6 +383,7 @@ Public Sub GENERER_BUDGET_DASHBOARD()
                             
                             dictSpent(idC) = dictSpent(idC) + RealAmt
                             TotSpent = TotSpent + RealAmt
+                            dictMaster(idC) = True ' Ajout au Master (Même sans allocation !)
                         End If
                     End If
                 End If
@@ -376,15 +393,26 @@ Public Sub GENERER_BUDGET_DASHBOARD()
     
     Dim Ligne As Long: Ligne = 0
     Dim arrConsolide() As Variant
-    If dictAlloc.Count > 0 Then
-        ReDim arrConsolide(1 To dictAlloc.Count, 1 To 5)
+    If dictMaster.Count > 0 Then
+        ReDim arrConsolide(1 To dictMaster.Count, 1 To 5)
         Dim key As Variant, alloué As Double, depensé As Double, pct As Double
-        For Each key In dictAlloc.keys
+        For Each key In dictMaster.keys
             Ligne = Ligne + 1
-            alloué = dictAlloc(key): depensé = IIf(dictSpent.exists(key), dictSpent(key), 0): pct = 0
-            If alloué > 0 Then pct = depensé / alloué
+            alloué = IIf(dictAlloc.exists(key), dictAlloc(key), 0)
+            depensé = IIf(dictSpent.exists(key), dictSpent(key), 0)
+            
+            pct = 0
+            If alloué > 0 Then
+                pct = depensé / alloué
+            ElseIf depensé > 0 Then
+                pct = 1 ' Dépense sans budget = Barre pleine alerte
+            End If
+            
             arrConsolide(Ligne, 1) = IIf(dictCatName.exists(key), dictCatName(key), "Catégorie " & key)
-            arrConsolide(Ligne, 2) = alloué: arrConsolide(Ligne, 3) = depensé: arrConsolide(Ligne, 4) = alloué - depensé: arrConsolide(Ligne, 5) = pct
+            arrConsolide(Ligne, 2) = alloué
+            arrConsolide(Ligne, 3) = depensé
+            arrConsolide(Ligne, 4) = alloué - depensé ' Écart
+            arrConsolide(Ligne, 5) = pct
         Next key
     Else
         ReDim arrConsolide(1 To 1, 1 To 5)
@@ -554,4 +582,8 @@ Private Sub Dessiner_Shape_Card(ws As Worksheet, NomShape As String, Titre As St
     With shp.TextFrame2.TextRange.Lines(1).Font: .Name = "ADLaM Display": .Size = 11: .Bold = True: .Fill.ForeColor.RGB = CoulTexte: End With
     With shp.TextFrame2.TextRange.Lines(2).Font: .Name = "ADLaM Display": .Size = 28: .Bold = True: .Fill.ForeColor.RGB = CoulTexte: End With
 End Sub
+
+
+
+
 
