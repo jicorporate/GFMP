@@ -1,0 +1,55 @@
+relationship 3f3f7feb-fdd6-4668-b33b-38cae1e87025
+	joinOnDateBehavior: datePartOnly
+	fromColumn: T_FACT_Budget.Mois_Annee
+	toColumn: LocalDateTable_659b3c57-e23c-4c3a-aaa6-479f29ede4d1.Date
+
+relationship 0ba05729-da16-4bc2-9956-90278e619e49
+	joinOnDateBehavior: datePartOnly
+	fromColumn: T_FACT_Budget.SYS_Date
+	toColumn: LocalDateTable_3efb3915-3c7a-4cb0-a653-04774ad7886e.Date
+
+relationship 69f4e96a-250a-4ce3-a801-8cd4ee5b615d
+	joinOnDateBehavior: datePartOnly
+	fromColumn: T_FACT_Transaction.Date_Trans
+	toColumn: LocalDateTable_8809113e-4581-4455-82f3-9bb188093be8.Date
+
+relationship 50f03355-a9cc-4bb1-89af-9909e173f80c
+	joinOnDateBehavior: datePartOnly
+	fromColumn: T_FACT_Transaction.SYS_Date
+	toColumn: LocalDateTable_9c005866-ed79-467a-9a1d-2696ff70cda0.Date
+
+relationship AutoDetected_e55acd1d-b8f8-481c-a2a2-dda27bc33fbb
+	crossFilteringBehavior: bothDirections
+	fromCardinality: one
+	fromColumn: T_FACT_Budget.ID_Categorie
+	toColumn: T_DIM_Categorie.ID_Categorie
+
+relationship AutoDetected_fc994b7a-8ed7-4802-bfae-cd7521528ef3
+	crossFilteringBehavior: bothDirections
+	fromCardinality: one
+	fromColumn: T_FACT_Transaction.ID_Categorie
+	toColumn: T_DIM_Categorie.ID_Categorie
+
+relationship AutoDetected_4964f5ce-4b87-4a84-8931-466e48ae2767
+	crossFilteringBehavior: bothDirections
+	fromCardinality: one
+	fromColumn: T_FACT_Budget.ID_Categorie
+	toColumn: DIM_Categorie.ID_Categorie
+
+relationship AutoDetected_0e4185b3-fa96-4c4d-b8cc-332d4c951213
+	isActive: false
+	crossFilteringBehavior: bothDirections
+	fromCardinality: one
+	fromColumn: T_FACT_Transaction.ID_Categorie
+	toColumn: DIM_Categorie.ID_Categorie
+
+relationship AutoDetected_3ff81b36-8742-4082-825e-d48f41823ad4
+	fromColumn: T_FACT_Transaction.ID_Compte
+	toColumn: T_DIM_Compte.ID_Compte
+
+relationship AutoDetected_5a924789-a09f-45e0-b2f3-2aa7a56ff1c3
+	crossFilteringBehavior: bothDirections
+	fromCardinality: one
+	fromColumn: T_FACT_Transaction.ID_Tiers
+	toColumn: T_DIM_Tiers.ID_Tiers
+

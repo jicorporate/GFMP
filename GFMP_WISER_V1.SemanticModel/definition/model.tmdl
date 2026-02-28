@@ -1,0 +1,28 @@
+model Model
+	culture: fr-FR
+	defaultPowerBIDataSourceVersion: powerBI_V3
+	sourceQueryCulture: en-US
+	dataAccessOptions
+		legacyRedirects
+		returnErrorValuesAsNull
+
+annotation __PBI_TimeIntelligenceEnabled = 1
+
+annotation PBI_QueryOrder = ["T_DIM_Categorie","T_DIM_Compte","T_DIM_Tiers","T_FACT_Budget","T_FACT_Transaction","DIM_Categorie"]
+
+annotation PBI_ProTooling = ["DevMode"]
+
+ref table T_DIM_Categorie
+ref table T_DIM_Compte
+ref table T_DIM_Tiers
+ref table T_FACT_Budget
+ref table DateTableTemplate_da94dcaa-3951-4174-9340-ca92f3866b97
+ref table LocalDateTable_659b3c57-e23c-4c3a-aaa6-479f29ede4d1
+ref table LocalDateTable_3efb3915-3c7a-4cb0-a653-04774ad7886e
+ref table T_FACT_Transaction
+ref table LocalDateTable_8809113e-4581-4455-82f3-9bb188093be8
+ref table LocalDateTable_9c005866-ed79-467a-9a1d-2696ff70cda0
+ref table DIM_Categorie
+
+ref cultureInfo fr-FR
+

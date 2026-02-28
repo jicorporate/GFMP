@@ -1,0 +1,100 @@
+{
+  "version": "1.1.0",
+  "diagrams": [
+    {
+      "ordinal": 0,
+      "scrollPosition": {
+        "x": 0,
+        "y": 158
+      },
+      "nodes": [
+        {
+          "location": {
+            "x": 618.400591401308,
+            "y": 482.17779846429789
+          },
+          "nodeIndex": "DIM_Categorie",
+          "nodeLineageTag": "875486ee-1b6f-4062-b099-6f573a4c84fa",
+          "size": {
+            "height": 152,
+            "width": 234
+          },
+          "zIndex": 1
+        },
+        {
+          "location": {
+            "x": 630.89792164520031,
+            "y": 105.53801085093664
+          },
+          "nodeIndex": "T_DIM_Categorie",
+          "nodeLineageTag": "3ffd4144-90b7-49ae-96b3-873211dc813f",
+          "size": {
+            "height": 152,
+            "width": 234
+          },
+          "zIndex": 2
+        },
+        {
+          "location": {
+            "x": 83.590836199653722,
+            "y": -50
+          },
+          "nodeIndex": "T_DIM_Compte",
+          "nodeLineageTag": "afdb067c-58c6-4cec-b061-c4c620e72a79",
+          "size": {
+            "height": 200,
+            "width": 234
+          },
+          "zIndex": 3
+        },
+        {
+          "location": {
+            "x": 50,
+            "y": 440.63721215814689
+          },
+          "nodeIndex": "T_DIM_Tiers",
+          "nodeLineageTag": "a01387ca-f070-4d14-b88e-7ad8bace45ae",
+          "size": {
+            "height": 152,
+            "width": 234
+          },
+          "zIndex": 4
+        },
+        {
+          "location": {
+            "x": 902.59213283021927,
+            "y": 307.67143298995813
+          },
+          "nodeIndex": "T_FACT_Budget",
+          "nodeLineageTag": "87baee70-56e9-4029-8b6b-31afd8a016d5",
+          "size": {
+            "height": 224,
+            "width": 234
+          },
+          "zIndex": 5
+        },
+        {
+          "location": {
+            "x": 334.21200060958256,
+            "y": 200.18251800623347
+          },
+          "nodeIndex": "T_FACT_Transaction",
+          "nodeLineageTag": "33c9873a-aaca-40fc-9dfe-00e0e13e047c",
+          "size": {
+            "height": 300,
+            "width": 234
+          },
+          "zIndex": 6
+        }
+      ],
+      "name": "All tables",
+      "zoomValue": 100,
+      "pinKeyFieldsToTop": false,
+      "showExtraHeaderInfo": false,
+      "hideKeyFieldsWhenCollapsed": false,
+      "tablesLocked": false
+    }
+  ],
+  "selectedDiagram": "All tables",
+  "defaultDiagram": "All tables"
+}

@@ -1,0 +1,58 @@
+table T_DIM_Compte
+	lineageTag: afdb067c-58c6-4cec-b061-c4c620e72a79
+
+	column ID_Compte
+		dataType: int64
+		formatString: 0
+		lineageTag: b2be0d00-8892-4370-ba5f-9847ad30f692
+		summarizeBy: none
+		sourceColumn: ID_Compte
+
+		annotation SummarizationSetBy = Automatic
+
+	column Nom_Compte
+		dataType: string
+		lineageTag: fcfe61ae-1a4f-40a0-993d-85c34f5d8520
+		summarizeBy: none
+		sourceColumn: Nom_Compte
+
+		annotation SummarizationSetBy = Automatic
+
+	column Classe_Actif
+		dataType: string
+		lineageTag: 7925fcfd-adb4-4283-b3e7-85442fbf700a
+		summarizeBy: none
+		sourceColumn: Classe_Actif
+
+		annotation SummarizationSetBy = Automatic
+
+	column Devise_Defaut
+		dataType: string
+		lineageTag: 5388b269-a655-4a9c-9f58-d012aa022562
+		summarizeBy: none
+		sourceColumn: Devise_Defaut
+
+		annotation SummarizationSetBy = Automatic
+
+	column Est_Actif
+		dataType: string
+		lineageTag: 2987cd4f-4b96-46a9-8add-b0d5f4bb5492
+		summarizeBy: none
+		sourceColumn: Est_Actif
+
+		annotation SummarizationSetBy = Automatic
+
+	partition T_DIM_Compte = m
+		mode: import
+		source =
+				let
+				    Source = Excel.Workbook(File.Contents("C:\Users\KIMYAÉDITION\source\repos\GFMP\GFMP_V1.0.xlsm"), null, true),
+				    T_DIM_Compte_Table = Source{[Item="T_DIM_Compte",Kind="Table"]}[Data],
+				    #"Changed Type" = Table.TransformColumnTypes(T_DIM_Compte_Table,{{"ID_Compte", Int64.Type}, {"Nom_Compte", type text}, {"Classe_Actif", type text}, {"Devise_Defaut", type text}, {"Est_Actif", type text}})
+				in
+				    #"Changed Type"
+
+	annotation PBI_ResultType = Table
+
+	annotation PBI_NavigationStepName = Navigation
+

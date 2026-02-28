@@ -1,0 +1,11 @@
+{
+  "$schema": "https://developer.microsoft.com/json-schemas/fabric/gitIntegration/platformProperties/2.0.0/schema.json",
+  "metadata": {
+    "type": "Report",
+    "displayName": "GFMP_WISER_V1"
+  },
+  "config": {
+    "version": "2.0",
+    "logicalId": "aba0d1ea-a0d8-4a02-b0af-65c6e0e2891f"
+  }
+}
