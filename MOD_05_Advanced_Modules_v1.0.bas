@@ -226,25 +226,34 @@ Public Sub GENERER_NET_WORTH_DASHBOARD()
                     If aDesTransactions Then
                         For j = 1 To UBound(arrTx, 1)
                             If Trim(CStr(arrTx(j, 3))) = ID_Cpt And Trim(CStr(arrTx(j, 1))) <> "" Then
+                                ' --- DEBUT DU PATCH MOD_05 (Moteur Multi-Devises Transactionnel) ---
                                 If IsDate(arrTx(j, 2)) Then
                                     dTx = CDate(arrTx(j, 2))
                                     If Format(dTx, "yyyy-mm") <= MoisFiltre Then
                                         
-                                        ' =========================================================================
-                                        ' CORRECTION 3 : SUPPRESSION DU CONFLIT DE DEVISE (LA TRANSACTION EST IGNORÉE)
-                                        ' On assume que le Montant saisi EST dans la Devise Native du Compte.
-                                        ' On additionne directement le montant sans conversion hasardeuse.
-                                        ' =========================================================================
                                         FluxType = IIf(CatTypeDict.exists(Trim(CStr(arrTx(j, 4)))), CatTypeDict(Trim(CStr(arrTx(j, 4)))), "AUTRE")
                                         
+                                        ' 1. Identification des devises
+                                        Dim DevTx As String: DevTx = UCase(Trim(CStr(arrTx(j, 7)))) ' Devise de la transaction (ex: XOF)
+                                        Dim TauxTx As Double: TauxTx = IIf(dictTaux.exists(DevTx), dictTaux(DevTx), 1)
+                                        
+                                        ' 2. Conversion : Montant Transaction -> MUR -> Devise Compte (Native)
+                                        ' Formule : (Montant * TauxTx_vs_MUR) / TauxCompte_vs_MUR
+                                        Dim MontantBrut As Double: MontantBrut = CDbl(arrTx(j, 6))
+                                        Dim MontantNormalise As Double
+                                        
+                                        MontantNormalise = (MontantBrut * TauxTx) / TauxC_Native
+                                        
+                                        ' 3. Application au solde
                                         If UCase(FluxType) = "REVENU" Or UCase(FluxType) = "TRANSFERT" Then
-                                            SoldeNatif = SoldeNatif + CDbl(arrTx(j, 6))
+                                            SoldeNatif = SoldeNatif + MontantNormalise
                                         ElseIf UCase(FluxType) = "DEPENSE" Then
-                                            SoldeNatif = SoldeNatif - CDbl(arrTx(j, 6))
+                                            SoldeNatif = SoldeNatif - MontantNormalise
                                         End If
                                         
                                     End If
                                 End If
+                                ' --- FIN DU PATCH MOD_05 ---
                             End If
                         Next j
                     End If

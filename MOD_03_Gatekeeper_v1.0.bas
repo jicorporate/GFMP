@@ -76,22 +76,22 @@ End Sub
 ' MOTEUR DE DESSIN UI (Avec l'Innovation "Double Contrôle")
 ' -------------------------------------------------------------------------
 Private Sub Creer_Controle(myForm As Object, Nom As String, TypeCtrl As String, ByRef t As Integer, Optional EstCache As Boolean = False)
-    Dim lbl As Object, c As Object
-    Set lbl = myForm.Controls.Add("Forms.Label.1", "lbl_" & Nom)
-    lbl.Top = t: lbl.Left = 20: lbl.Width = 220: lbl.Height = 12
+    Dim Lbl As Object, c As Object
+    Set Lbl = myForm.Controls.Add("Forms.Label.1", "lbl_" & Nom)
+    Lbl.Top = t: Lbl.Left = 20: Lbl.Width = 220: Lbl.Height = 12
     Set c = myForm.Controls.Add("Forms." & TypeCtrl & ".1", Nom)
     c.Top = t + 12: c.Left = 20: c.Width = 220: c.Height = 18
     If EstCache Then
-        lbl.Visible = False: c.Visible = False: t = t + 35
+        Lbl.Visible = False: c.Visible = False: t = t + 35
     Else
         t = t + 35
     End If
 End Sub
 
 Private Sub Creer_Controle_Double(myForm As Object, NomTxt As String, NomCmb As String, ByRef t As Integer)
-    Dim lbl As Object, cTxt As Object, cCmb As Object
-    Set lbl = myForm.Controls.Add("Forms.Label.1", "lbl_" & NomTxt)
-    lbl.Top = t: lbl.Left = 20: lbl.Width = 220: lbl.Height = 12: lbl.Visible = False
+    Dim Lbl As Object, cTxt As Object, cCmb As Object
+    Set Lbl = myForm.Controls.Add("Forms.Label.1", "lbl_" & NomTxt)
+    Lbl.Top = t: Lbl.Left = 20: Lbl.Width = 220: Lbl.Height = 12: Lbl.Visible = False
     
     ' Le champ texte est raccourci pour faire place au menu déroulant de Typage
     Set cTxt = myForm.Controls.Add("Forms.TextBox.1", NomTxt)
