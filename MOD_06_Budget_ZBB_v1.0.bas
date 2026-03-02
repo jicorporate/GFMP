@@ -42,10 +42,10 @@ Public Function Obtenir_Parametre(NomParam As String, ValeurDefaut As String) As
         End If
     Next i
     
-    Dim nr As ListRow: Set nr = tblConf.ListRows.Add
-    nr.Range(1, 1).Value = NomParam
-    nr.Range(1, 2).Value = ValeurDefaut
-    nr.Range(1, 3).Value = "Filtre Actif"
+    Dim nR As ListRow: Set nR = tblConf.ListRows.Add
+    nR.Range(1, 1).Value = NomParam
+    nR.Range(1, 2).Value = ValeurDefaut
+    nR.Range(1, 3).Value = "Filtre Actif"
     Obtenir_Parametre = ValeurDefaut
 End Function
 
@@ -84,6 +84,14 @@ Private Sub Garantir_Lexique_Budget()
     Upsert_Dico tblDic, "COL_B_DIFF", "ÉCART", "VARIANCE", "DIFERENCIA", "DIFERENÇA", "ABWEICHUNG", "VARIAZIONE", "VERSCHIL", "AVVIKELSE"
     Upsert_Dico tblDic, "COL_B_PROG", "CONSOMMATION", "CONSUMPTION", "CONSUMO", "CONSUMO", "VERBRAUCH", "CONSUMO", "VERBRUIK", "FÖRBRUKNING"
     Upsert_Dico tblDic, "NO_BUDG", "Aucun budget alloué", "No budget allocated", "Sin presupuesto", "Sem orçamento", "Kein Budget", "Nessun budget", "Geen budget", "Ingen budget"
+
+    ' --- DEBUT PATCH 4 (Lexique USF_Budget) ---
+    Upsert_Dico tblDic, "FRM_B_MOIS", "Mois cible (AAAA-MM) :", "Target Month (YYYY-MM) :", "Mes objetivo (AAAA-MM) :", "Mês alvo (AAAA-MM) :", "Zielmonat (JJJJ-MM) :", "Mese target (AAAA-MM) :", "Doelmaand (JJJJ-MM) :", "Målmånad (ÅÅÅÅ-MM) :"
+    Upsert_Dico tblDic, "FRM_B_CAT", "Enveloppe (Catégorie) :", "Envelope (Category) :", "Sobre (Categoría) :", "Envelope (Categoria) :", "Umschlag (Kategorie) :", "Busta (Categoria) :", "Envelop (Categorie) :", "Kuvert (Kategori) :"
+    Upsert_Dico tblDic, "FRM_B_AMT", "Montant Alloué :", "Allocated Amount :", "Monto Asignado :", "Valor Alocado :", "Zugewiesener Betrag :", "Importo Assegnato :", "Toegewezen Bedrag :", "Tilldelat Belopp :"
+    Upsert_Dico tblDic, "FRM_B_SAVE", "ALLOUER", "ALLOCATE", "ASIGNAR", "ALOCAR", "ZUWEISEN", "ASSEGNA", "TOEWIJZEN", "TILLDELA"
+    Upsert_Dico tblDic, "FRM_B_CANCEL", "ANNULER", "CANCEL", "CANCELAR", "CANCELAR", "ABBRECHEN", "ANNULLA", "ANNULEREN", "AVBRYT"
+    ' --- FIN PATCH 4 ---
 End Sub
 
 Private Sub Upsert_Dico(tbl As ListObject, k As String, fr As String, en As String, es As String, pt As String, de As String, it As String, nl As String, sv As String)
@@ -101,16 +109,16 @@ Private Sub Upsert_Dico(tbl As ListObject, k As String, fr As String, en As Stri
             Exit Sub
         End If
     Next i
-    Dim nr As ListRow: Set nr = tbl.ListRows.Add
-    nr.Range(1, 1).Value = k
-    nr.Range(1, 2).Value = fr
-    nr.Range(1, 3).Value = en
-    nr.Range(1, 4).Value = es
-    nr.Range(1, 5).Value = pt
-    nr.Range(1, 6).Value = de
-    nr.Range(1, 7).Value = it
-    nr.Range(1, 8).Value = nl
-    nr.Range(1, 9).Value = sv
+    Dim nR As ListRow: Set nR = tbl.ListRows.Add
+    nR.Range(1, 1).Value = k
+    nR.Range(1, 2).Value = fr
+    nR.Range(1, 3).Value = en
+    nR.Range(1, 4).Value = es
+    nR.Range(1, 5).Value = pt
+    nR.Range(1, 6).Value = de
+    nR.Range(1, 7).Value = it
+    nR.Range(1, 8).Value = nl
+    nR.Range(1, 9).Value = sv
 End Sub
 
 Private Function TR(Clé As String) As String
@@ -171,6 +179,15 @@ Private Function Code_VBA_USF_Budget() As String
     c = "Option Explicit" & vbCrLf
     c = c & "Private Sub UserForm_Initialize()" & vbCrLf
     c = c & "    Me.txt_Mois.Value = MOD_06_Budget_ZBB.Obtenir_Parametre(""BUDG_FILTRE_MOIS"", Format(Date, ""yyyy-mm""))" & vbCrLf
+    
+    ' --- DEBUT PATCH 5 (Application Dynamique du Lexique) ---
+    c = c & "    Me.lbl_Mois.Caption = MOD_02_AppHome_Global.TR(""FRM_B_MOIS"")" & vbCrLf
+    c = c & "    Me.lbl_Cat.Caption = MOD_02_AppHome_Global.TR(""FRM_B_CAT"")" & vbCrLf
+    c = c & "    Me.lbl_Montant.Caption = MOD_02_AppHome_Global.TR(""FRM_B_AMT"")" & vbCrLf
+    c = c & "    Me.btn_Save.Caption = MOD_02_AppHome_Global.TR(""FRM_B_SAVE"")" & vbCrLf
+    c = c & "    Me.btn_Cancel.Caption = MOD_02_AppHome_Global.TR(""FRM_B_CANCEL"")" & vbCrLf
+    ' --- FIN PATCH 5 ---
+    
     c = c & "    Me.Caption = MOD_02_AppHome_Global.TR(""BTN_ALLOC"")" & vbCrLf
     c = c & "    Dim tbl As ListObject, i As Long" & vbCrLf
     c = c & "    On Error Resume Next: Set tbl = ThisWorkbook.Sheets(""DIM_Categorie"").ListObjects(""T_DIM_Categorie""): On Error GoTo 0" & vbCrLf

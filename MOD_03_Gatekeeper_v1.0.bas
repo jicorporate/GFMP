@@ -143,16 +143,42 @@ Public Sub Garantir_Lexique_Formulaire()
     ' Les Tooltips pour l'Explicit Auto-Learning
     Upsert_Dico tblDic, "TT_F_TYPE_CPT", "Type d'actif.", "Asset type.", "Tipo de activo.", "Tipo de ativo.", "Anlageklasse.", "Classe di attività.", "Activaklasse.", "Tillgångsklass."
     Upsert_Dico tblDic, "TT_F_TYPE_CAT", "Type de flux.", "Flow type.", "Tipo de flujo.", "Tipo de fluxo.", "Flusstyp.", "Tipo di flusso.", "Stroomtype.", "Flödestyp."
+    
+    ' --- DEBUT PATCH 1 (Lexique UI Backend) ---
+    Upsert_Dico tblDic, "OPT_LIQ", "LIQUIDITÉ", "LIQUIDITY", "LIQUIDEZ", "LIQUIDEZ", "LIQUIDITÄT", "LIQUIDITÀ", "LIQUIDITEIT", "LIKVIDITET"
+    Upsert_Dico tblDic, "OPT_INV", "INVESTISSEMENT", "INVESTMENT", "INVERSIÓN", "INVESTIMENTO", "INVESTITION", "INVESTIMENTO", "INVESTERING", "INVESTERING"
+    Upsert_Dico tblDic, "OPT_DET", "DETTE", "DEBT", "DEUDA", "DÍVIDA", "SCHULD", "DEBITO", "SCHULD", "SKULD"
+    Upsert_Dico tblDic, "OPT_DEP", "DÉPENSE", "EXPENSE", "GASTO", "DESPESA", "AUSGABE", "USCITA", "UITGAVE", "UTGIFT"
+    Upsert_Dico tblDic, "OPT_REV", "REVENU", "INCOME", "INGRESO", "RENDA", "EINKOMMEN", "ENTRATA", "INKOMSTEN", "INKOMST"
+    Upsert_Dico tblDic, "OPT_TRA", "TRANSFERT", "TRANSFER", "TRANSFERENCIA", "TRANSFERÊNCIA", "TRANSFER", "TRASFERIMENTO", "OVERDRACHT", "ÖVERFÖRING"
+    ' --- FIN PATCH 1 ---
 End Sub
 
+'Private Sub Upsert_Dico(tbl As ListObject, k As String, fr As String, en As String, es As String, pt As String, de As String, it As String, nl As String, sv As String)
+    'Dim i As Long: For i = 1 To tbl.ListRows.Count
+        'If tbl.DataBodyRange(i, 1).Value = k Then Exit Sub
+    'Next i
+    'Dim nr As ListRow: Set nr = tbl.ListRows.Add
+    'nr.Range(1, 1).Value = k: nr.Range(1, 2).Value = fr: nr.Range(1, 3).Value = en: nr.Range(1, 4).Value = es
+    'nr.Range(1, 5).Value = pt: nr.Range(1, 6).Value = de: nr.Range(1, 7).Value = it: nr.Range(1, 8).Value = nl: nr.Range(1, 9).Value = sv
+'End Sub
+
+' --- DEBUT PATCH (Mise à jour Forcée du Lexique Formulaire) ---
 Private Sub Upsert_Dico(tbl As ListObject, k As String, fr As String, en As String, es As String, pt As String, de As String, it As String, nl As String, sv As String)
     Dim i As Long: For i = 1 To tbl.ListRows.Count
-        If tbl.DataBodyRange(i, 1).Value = k Then Exit Sub
+        If tbl.DataBodyRange(i, 1).Value = k Then
+            ' CORRECTION : On écrase de force les traductions au lieu d'abandonner
+            tbl.DataBodyRange(i, 2).Value = fr: tbl.DataBodyRange(i, 3).Value = en: tbl.DataBodyRange(i, 4).Value = es
+            tbl.DataBodyRange(i, 5).Value = pt: tbl.DataBodyRange(i, 6).Value = de: tbl.DataBodyRange(i, 7).Value = it
+            tbl.DataBodyRange(i, 8).Value = nl: tbl.DataBodyRange(i, 9).Value = sv
+            Exit Sub
+        End If
     Next i
     Dim nR As ListRow: Set nR = tbl.ListRows.Add
     nR.Range(1, 1).Value = k: nR.Range(1, 2).Value = fr: nR.Range(1, 3).Value = en: nR.Range(1, 4).Value = es
     nR.Range(1, 5).Value = pt: nR.Range(1, 6).Value = de: nR.Range(1, 7).Value = it: nR.Range(1, 8).Value = nl: nR.Range(1, 9).Value = sv
 End Sub
+' --- FIN PATCH ---
 
 ' -------------------------------------------------------------------------
 ' LE CERVEAU INJECTÉ (LE STRING BUILDER EST TOTALEMENT FIXÉ)
@@ -201,10 +227,16 @@ Private Function Code_VBA_Formulaire() As String
     L(i) = "    Me.cmb_Devise.List = Array(""MUR"", ""EUR"", ""USD"", ""GBP"", ""ZAR"", ""XOF"")": i = i + 1
     L(i) = "    Me.cmb_Devise.ListIndex = 0": i = i + 1
     
-    L(i) = "    Me.cmb_New_Cpt_Type.List = Array(""LIQUIDITE"", ""INVESTISSEMENT"", ""DETTE"")": i = i + 1
+    'L(i) = "    Me.cmb_New_Cpt_Type.List = Array(""LIQUIDITE"", ""INVESTISSEMENT"", ""DETTE"")": i = i + 1
+    'L(i) = "    Me.cmb_New_Cpt_Type.ListIndex = 0": i = i + 1
+    'L(i) = "    Me.cmb_New_Cat_Type.List = Array(""DEPENSE"", ""REVENU"", ""TRANSFERT"")": i = i + 1
+    'L(i) = "    Me.cmb_New_Cat_Type.ListIndex = 0": i = i + 1
+    ' --- DEBUT PATCH 2 (UI Multilingue) ---
+    L(i) = "    Me.cmb_New_Cpt_Type.List = Array(TR(""OPT_LIQ""), TR(""OPT_INV""), TR(""OPT_DET""))": i = i + 1
     L(i) = "    Me.cmb_New_Cpt_Type.ListIndex = 0": i = i + 1
-    L(i) = "    Me.cmb_New_Cat_Type.List = Array(""DEPENSE"", ""REVENU"", ""TRANSFERT"")": i = i + 1
+    L(i) = "    Me.cmb_New_Cat_Type.List = Array(TR(""OPT_DEP""), TR(""OPT_REV""), TR(""OPT_TRA""))": i = i + 1
     L(i) = "    Me.cmb_New_Cat_Type.ListIndex = 0": i = i + 1
+    ' --- FIN PATCH 2 ---
     
     L(i) = "    Charger_Combo Me.cmb_Compte, ""T_DIM_Compte""": i = i + 1
     L(i) = "    Charger_Combo Me.cmb_Categorie, ""T_DIM_Categorie""": i = i + 1
@@ -273,41 +305,39 @@ Private Function Code_VBA_Formulaire() As String
     ' =====================================================================
     ' SAUVEGARDE
     ' =====================================================================
+    ' =====================================================================
+    ' SAUVEGARDE AVEC PROPRIÉTÉS A.C.I.D (T-SQL LIKE TRANSACTION)
+    ' =====================================================================
     L(i) = "Private Sub btn_Save_Click()": i = i + 1
     L(i) = "    If Me.cmb_Compte.ListIndex = -1 Or Me.cmb_Categorie.ListIndex = -1 Or Me.cmb_Tiers.ListIndex = -1 Then MsgBox TR(""MSG_ERR_MISSING""), vbCritical: Exit Sub": i = i + 1
     L(i) = "    Dim strMontant As String, dblMontant As Double": i = i + 1
     L(i) = "    strMontant = Replace(Me.txt_Montant.Value, "","", ""."")": i = i + 1
     L(i) = "    dblMontant = Val(strMontant)": i = i + 1
     L(i) = "    If dblMontant <= 0 Then MsgBox TR(""MSG_ERR_AMT""), vbCritical: Exit Sub": i = i + 1
-    'L(i) = "    If Not IsDate(Me.txt_Date.Value) Then MsgBox TR(""MSG_ERR_MISSING""), vbCritical: Exit Sub": i = i + 1
-    ' --- DEBUT PATCH 3 (Validation Strict MM/DD/YYYY) ---
+    
     L(i) = "    Dim dParts() As String: dParts = Split(Replace(Me.txt_Date.Value, ""-"", ""/""), ""/"")": i = i + 1
     L(i) = "    If UBound(dParts) <> 2 Then MsgBox TR(""MSG_ERR_MISSING""), vbCritical: Exit Sub": i = i + 1
     L(i) = "    If Not IsNumeric(dParts(0)) Or Not IsNumeric(dParts(1)) Or Not IsNumeric(dParts(2)) Then MsgBox TR(""MSG_ERR_MISSING""), vbCritical: Exit Sub": i = i + 1
-    ' --- FIN PATCH 3 ---
     
     L(i) = "    Dim idC As Long, idCat As Long, idT As Long": i = i + 1
-    L(i) = "    idC = Obtenir_ID(Me.cmb_Compte, Me.txt_New_Compte, ""T_DIM_Compte"", Me.cmb_New_Cpt_Type.Value)": i = i + 1
-    L(i) = "    idCat = Obtenir_ID(Me.cmb_Categorie, Me.txt_New_Categorie, ""T_DIM_Categorie"", Me.cmb_New_Cat_Type.Value)": i = i + 1
+    'L(i) = "    idC = Obtenir_ID(Me.cmb_Compte, Me.txt_New_Compte, ""T_DIM_Compte"", Me.cmb_New_Cpt_Type.Value)": i = i + 1
+    'L(i) = "    idCat = Obtenir_ID(Me.cmb_Categorie, Me.txt_New_Categorie, ""T_DIM_Categorie"", Me.cmb_New_Cat_Type.Value)": i = i + 1
+    
+    ' --- DEBUT PATCH 3 (Isolation ACID BDD) ---
+    L(i) = "    Dim rawCpt As String: Select Case Me.cmb_New_Cpt_Type.ListIndex: Case 0: rawCpt = ""LIQUIDITE"": Case 1: rawCpt = ""INVESTISSEMENT"": Case 2: rawCpt = ""DETTE"": End Select": i = i + 1
+    L(i) = "    Dim rawCat As String: Select Case Me.cmb_New_Cat_Type.ListIndex: Case 0: rawCat = ""DEPENSE"": Case 1: rawCat = ""REVENU"": Case 2: rawCat = ""TRANSFERT"": End Select": i = i + 1
+    L(i) = "    idC = Obtenir_ID(Me.cmb_Compte, Me.txt_New_Compte, ""T_DIM_Compte"", rawCpt)": i = i + 1
+    L(i) = "    idCat = Obtenir_ID(Me.cmb_Categorie, Me.txt_New_Categorie, ""T_DIM_Categorie"", rawCat)": i = i + 1
+    ' --- FIN PATCH 3 ---
+    
     L(i) = "    idT = Obtenir_ID(Me.cmb_Tiers, Me.txt_New_Tiers, ""T_DIM_Tiers"", ""AUTRE"")": i = i + 1
     
-    'L(i) = "    Dim wsFact As Worksheet: Set wsFact = ThisWorkbook.Sheets(""FACT_Transaction"")": i = i + 1
-    'L(i) = "    wsFact.Unprotect ""SFP_ADMIN_2026""": i = i + 1
-    'L(i) = "    Dim nR As ListRow: Set nR = wsFact.ListObjects(""T_FACT_Transaction"").ListRows.Add": i = i + 1
-    'L(i) = "    nR.Range(1, 1).Value = MOD_01_CoreEngine.GENERER_NOUVEL_ID(""T_FACT_Transaction"")": i = i + 1
-    'L(i) = "    nR.Range(1, 2).Value = DateValue(Me.txt_Date.Value)": i = i + 1
-    ' --- DEBUT PATCH 4 (Injection Base de Données Sécurisée) ---
-    ' DateSerial(Année, Mois, Jour) = DateSerial(dParts(2), dParts(0), dParts(1))
-    'L(i) = "    nR.Range(1, 2).Value = DateSerial(CInt(dParts(2)), CInt(dParts(0)), CInt(dParts(1)))": i = i + 1
-    ' --- FIN PATCH 4 ---
-    'L(i) = "    nR.Range(1, 3).Value = idC: nR.Range(1, 4).Value = idCat: nR.Range(1, 5).Value = idT": i = i + 1
-    'L(i) = "    nR.Range(1, 6).Value = dblMontant": i = i + 1
-    'L(i) = "    nR.Range(1, 7).Value = Me.cmb_Devise.Value": i = i + 1
-    'L(i) = "    nR.Range(1, 8).Value = MOD_01_CoreEngine.CLEAN_TEXT(Me.txt_Description.Value)": i = i + 1
-    'L(i) = "    nR.Range(1, 9).Value = Application.UserName: nR.Range(1, 10).Value = Now": i = i + 1
-    'L(i) = "    wsFact.Protect ""SFP_ADMIN_2026"", UserInterfaceOnly:=True": i = i + 1
+    ' --- BEGIN TRAN (Mémorisation de l'état initial) ---
+    L(i) = "    Dim wsFact As Worksheet: Set wsFact = ThisWorkbook.Sheets(""FACT_Transaction"")": i = i + 1
+    L(i) = "    Dim tblFact As ListObject: Set tblFact = wsFact.ListObjects(""T_FACT_Transaction"")": i = i + 1
+    L(i) = "    Dim initRows As Long: initRows = tblFact.ListRows.Count": i = i + 1
+    L(i) = "    On Error GoTo ROLLBACK_TRAN": i = i + 1
     
-    ' --- DEBUT PATCH 1 (Moteur BDD Atomique Strict) ---
     L(i) = "    Dim typeF As String, rC As Long": i = i + 1
     L(i) = "    Dim wsC As Worksheet: Set wsC = ThisWorkbook.Sheets(""DIM_Categorie"")": i = i + 1
     L(i) = "    typeF = ""AUTRE""": i = i + 1
@@ -315,9 +345,8 @@ Private Function Code_VBA_Formulaire() As String
     L(i) = "        If CStr(wsC.ListObjects(""T_DIM_Categorie"").DataBodyRange(rC, 1).Value) = CStr(idCat) Then typeF = UCase(Trim(wsC.ListObjects(""T_DIM_Categorie"").DataBodyRange(rC, 3).Value)): Exit For": i = i + 1
     L(i) = "    Next rC": i = i + 1
     
-    L(i) = "    Dim wsFact As Worksheet: Set wsFact = ThisWorkbook.Sheets(""FACT_Transaction"")": i = i + 1
     L(i) = "    wsFact.Unprotect ""SFP_ADMIN_2026""": i = i + 1
-    L(i) = "    Dim nR As ListRow: Set nR = wsFact.ListObjects(""T_FACT_Transaction"").ListRows.Add": i = i + 1
+    L(i) = "    Dim nR As ListRow: Set nR = tblFact.ListRows.Add": i = i + 1
     L(i) = "    nR.Range(1, 1).Value = MOD_01_CoreEngine.GENERER_NOUVEL_ID(""T_FACT_Transaction"")": i = i + 1
     L(i) = "    nR.Range(1, 2).Value = DateSerial(CInt(dParts(2)), CInt(dParts(0)), CInt(dParts(1)))": i = i + 1
     L(i) = "    nR.Range(1, 3).Value = idC: nR.Range(1, 4).Value = idCat: nR.Range(1, 5).Value = idT": i = i + 1
@@ -326,7 +355,7 @@ Private Function Code_VBA_Formulaire() As String
     L(i) = "    nR.Range(1, 8).Value = MOD_01_CoreEngine.CLEAN_TEXT(Me.txt_Description.Value)": i = i + 1
     L(i) = "    nR.Range(1, 9).Value = Application.UserName: nR.Range(1, 10).Value = Now": i = i + 1
     
-    ' Génération à la volée du Compte de Compensation pour équilibrer le Bilan
+    ' Double Entrée Atomique
     L(i) = "    If typeF = ""TRANSFERT"" Then": i = i + 1
     L(i) = "        Dim wCp As Worksheet: Set wCp = ThisWorkbook.Sheets(""DIM_Compte"")": i = i + 1
     L(i) = "        Dim idComp As Long: idComp = 0": i = i + 1
@@ -340,19 +369,33 @@ Private Function Code_VBA_Formulaire() As String
     L(i) = "            nCp.Range(1, 1).Value = idComp: nCp.Range(1, 2).Value = ""Compensation (System)"": nCp.Range(1, 3).Value = ""LIQUIDITE"": nCp.Range(1, 4).Value = Me.cmb_Devise.Value: nCp.Range(1, 5).Value = ""OUI""": i = i + 1
     L(i) = "            wCp.Protect ""SFP_ADMIN_2026"", UserInterfaceOnly:=True": i = i + 1
     L(i) = "        End If": i = i + 1
-    L(i) = "        Dim nR2 As ListRow: Set nR2 = wsFact.ListObjects(""T_FACT_Transaction"").ListRows.Add": i = i + 1
+    L(i) = "        Dim nR2 As ListRow: Set nR2 = tblFact.ListRows.Add": i = i + 1
     L(i) = "        nR2.Range(1, 1).Value = MOD_01_CoreEngine.GENERER_NOUVEL_ID(""T_FACT_Transaction"")": i = i + 1
     L(i) = "        nR2.Range(1, 2).Value = DateSerial(CInt(dParts(2)), CInt(dParts(0)), CInt(dParts(1)))": i = i + 1
     L(i) = "        nR2.Range(1, 3).Value = idComp: nR2.Range(1, 4).Value = idCat: nR2.Range(1, 5).Value = idT": i = i + 1
-    L(i) = "        nR2.Range(1, 6).Value = -dblMontant ' LA CONTREPARTIE (CREDIT)": i = i + 1
+    L(i) = "        nR2.Range(1, 6).Value = -dblMontant": i = i + 1
     L(i) = "        nR2.Range(1, 7).Value = Me.cmb_Devise.Value: nR2.Range(1, 8).Value = ""[AUTO-CREDIT] "" & MOD_01_CoreEngine.CLEAN_TEXT(Me.txt_Description.Value)": i = i + 1
     L(i) = "        nR2.Range(1, 9).Value = ""SYSTEM"": nR2.Range(1, 10).Value = Now": i = i + 1
     L(i) = "    End If": i = i + 1
     
+    ' --- COMMIT TRAN ---
     L(i) = "    wsFact.Protect ""SFP_ADMIN_2026"", UserInterfaceOnly:=True": i = i + 1
-    ' --- FIN PATCH 1 ---
-    
     L(i) = "    MsgBox TR(""MSG_OK""), vbInformation: Unload Me": i = i + 1
+    L(i) = "    Exit Sub": i = i + 1
+
+    ' --- ROLLBACK TRAN ---
+    L(i) = "ROLLBACK_TRAN:": i = i + 1
+    L(i) = "    Dim errMsg As String: errMsg = Err.Description": i = i + 1
+    L(i) = "    On Error Resume Next": i = i + 1
+    L(i) = "    Dim currRows As Long: currRows = tblFact.ListRows.Count": i = i + 1
+    L(i) = "    Dim rIdx As Long": i = i + 1
+    L(i) = "    For rIdx = currRows To initRows + 1 Step -1": i = i + 1
+    L(i) = "        tblFact.ListRows(rIdx).Delete": i = i + 1
+    L(i) = "    Next rIdx": i = i + 1
+    L(i) = "    wsFact.Protect ""SFP_ADMIN_2026"", UserInterfaceOnly:=True": i = i + 1
+    L(i) = "    MsgBox ""ERREUR CRITIQUE : TRANSACTION ANNULÉE (ROLLBACK)."" & vbCrLf & vbCrLf & ""Détail : "" & errMsg, vbCritical, ""ACID Rollback""": i = i + 1
+    L(i) = "    Unload Me": i = i + 1
+    
     L(i) = "End Sub": i = i + 1
     
     L(i) = "Private Sub btn_Cancel_Click(): Unload Me: End Sub": i = i + 1
