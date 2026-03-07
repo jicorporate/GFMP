@@ -313,7 +313,10 @@ Private Function Code_VBA_Formulaire() As String
     L(i) = "    Dim strMontant As String, dblMontant As Double": i = i + 1
     L(i) = "    strMontant = Replace(Me.txt_Montant.Value, "","", ""."")": i = i + 1
     L(i) = "    dblMontant = Val(strMontant)": i = i + 1
-    L(i) = "    If dblMontant <= 0 Then MsgBox TR(""MSG_ERR_AMT""), vbCritical: Exit Sub": i = i + 1
+    'L(i) = "    If dblMontant <= 0 Then MsgBox TR(""MSG_ERR_AMT""), vbCritical: Exit Sub": i = i + 1
+    ' --- DEBUT PATCH (Autorisation des Débits / Retraits) ---
+    L(i) = "    If dblMontant = 0 Then MsgBox TR(""MSG_ERR_AMT""), vbCritical: Exit Sub": i = i + 1
+    ' --- FIN PATCH ---
     
     L(i) = "    Dim dParts() As String: dParts = Split(Replace(Me.txt_Date.Value, ""-"", ""/""), ""/"")": i = i + 1
     L(i) = "    If UBound(dParts) <> 2 Then MsgBox TR(""MSG_ERR_MISSING""), vbCritical: Exit Sub": i = i + 1

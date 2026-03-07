@@ -31,8 +31,8 @@ Private Function Obtenir_Parametre(NomParam As String, ValeurDefaut As String) A
         End If
     Next i
     
-    Dim nR As ListRow: Set nR = tblConf.ListRows.Add
-    nR.Range(1, 1).Value = NomParam: nR.Range(1, 2).Value = ValeurDefaut: nR.Range(1, 3).Value = "Filtre Actif"
+    Dim nr As ListRow: Set nr = tblConf.ListRows.Add
+    nr.Range(1, 1).Value = NomParam: nr.Range(1, 2).Value = ValeurDefaut: nr.Range(1, 3).Value = "Filtre Actif"
     Obtenir_Parametre = ValeurDefaut
 End Function
 
@@ -70,9 +70,9 @@ Private Sub Upsert_Dico(tbl As ListObject, k As String, fr As String, en As Stri
     Dim i As Long: For i = 1 To tbl.ListRows.Count
         If tbl.DataBodyRange(i, 1).Value = k Then Exit Sub
     Next i
-    Dim nR As ListRow: Set nR = tbl.ListRows.Add
-    nR.Range(1, 1).Value = k: nR.Range(1, 2).Value = fr: nR.Range(1, 3).Value = en: nR.Range(1, 4).Value = es
-    nR.Range(1, 5).Value = pt: nR.Range(1, 6).Value = de: nR.Range(1, 7).Value = it: nR.Range(1, 8).Value = nl: nR.Range(1, 9).Value = sv
+    Dim nr As ListRow: Set nr = tbl.ListRows.Add
+    nr.Range(1, 1).Value = k: nr.Range(1, 2).Value = fr: nr.Range(1, 3).Value = en: nr.Range(1, 4).Value = es
+    nr.Range(1, 5).Value = pt: nr.Range(1, 6).Value = de: nr.Range(1, 7).Value = it: nr.Range(1, 8).Value = nl: nr.Range(1, 9).Value = sv
 End Sub
 
 Private Function TR(Cle As String) As String
@@ -295,9 +295,26 @@ Public Sub GENERER_DASHBOARD()
     Dim Gap As Double: Gap = 15
     Dim CardW As Double: CardW = (TotalW - (2 * Gap)) / 3
     
+    'Dessiner_Solid_Card wsDash, "CARD_INC", TR("KPI_INC") & " (" & DeviseFiltre & ")", TotRev, RGB(65, 105, 225), vbWhite, ZoneTable.Left, wsDash.Range("C7").Top, CardW, 85
+    'Dessiner_Solid_Card wsDash, "CARD_EXP", TR("KPI_EXP") & " (" & DeviseFiltre & ")", TotDep, RGB(120, 81, 169), vbWhite, ZoneTable.Left + CardW + Gap, wsDash.Range("C7").Top, CardW, 85
+    'Dessiner_Solid_Card wsDash, "CARD_NET", TR("KPI_NET") & " (" & DeviseFiltre & ")", TotRev - TotDep, RGB(250, 218, 94), RGB(40, 40, 40), ZoneTable.Left + (CardW * 2) + (Gap * 2), wsDash.Range("C7").Top, CardW, 85
+    
+    ' --- DEBUT PATCH (Couleur Conditionnelle KPI Cashflow) ---
+    Dim CashflowNet As Double: CashflowNet = TotRev - TotDep
+    Dim CF_Color As Long
+    
+    If CashflowNet > 0 Then
+        CF_Color = RGB(46, 204, 113) ' Vert Émeraude
+    ElseIf CashflowNet < 0 Then
+        CF_Color = RGB(231, 76, 60) ' Rouge Alerte
+    Else
+        CF_Color = RGB(128, 128, 128) ' Gris Neutre
+    End If
+    
     Dessiner_Solid_Card wsDash, "CARD_INC", TR("KPI_INC") & " (" & DeviseFiltre & ")", TotRev, RGB(65, 105, 225), vbWhite, ZoneTable.Left, wsDash.Range("C7").Top, CardW, 85
     Dessiner_Solid_Card wsDash, "CARD_EXP", TR("KPI_EXP") & " (" & DeviseFiltre & ")", TotDep, RGB(120, 81, 169), vbWhite, ZoneTable.Left + CardW + Gap, wsDash.Range("C7").Top, CardW, 85
-    Dessiner_Solid_Card wsDash, "CARD_NET", TR("KPI_NET") & " (" & DeviseFiltre & ")", TotRev - TotDep, RGB(250, 218, 94), RGB(40, 40, 40), ZoneTable.Left + (CardW * 2) + (Gap * 2), wsDash.Range("C7").Top, CardW, 85
+    Dessiner_Solid_Card wsDash, "CARD_NET", TR("KPI_NET") & " (" & DeviseFiltre & ")", CashflowNet, CF_Color, vbWhite, ZoneTable.Left + (CardW * 2) + (Gap * 2), wsDash.Range("C7").Top, CardW, 85
+    ' --- FIN PATCH ---
     
     wsDash.Rows("9:11").RowHeight = 15
     

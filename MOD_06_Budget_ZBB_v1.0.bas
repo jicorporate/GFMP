@@ -42,10 +42,10 @@ Public Function Obtenir_Parametre(NomParam As String, ValeurDefaut As String) As
         End If
     Next i
     
-    Dim nR As ListRow: Set nR = tblConf.ListRows.Add
-    nR.Range(1, 1).Value = NomParam
-    nR.Range(1, 2).Value = ValeurDefaut
-    nR.Range(1, 3).Value = "Filtre Actif"
+    Dim nr As ListRow: Set nr = tblConf.ListRows.Add
+    nr.Range(1, 1).Value = NomParam
+    nr.Range(1, 2).Value = ValeurDefaut
+    nr.Range(1, 3).Value = "Filtre Actif"
     Obtenir_Parametre = ValeurDefaut
 End Function
 
@@ -109,16 +109,16 @@ Private Sub Upsert_Dico(tbl As ListObject, k As String, fr As String, en As Stri
             Exit Sub
         End If
     Next i
-    Dim nR As ListRow: Set nR = tbl.ListRows.Add
-    nR.Range(1, 1).Value = k
-    nR.Range(1, 2).Value = fr
-    nR.Range(1, 3).Value = en
-    nR.Range(1, 4).Value = es
-    nR.Range(1, 5).Value = pt
-    nR.Range(1, 6).Value = de
-    nR.Range(1, 7).Value = it
-    nR.Range(1, 8).Value = nl
-    nR.Range(1, 9).Value = sv
+    Dim nr As ListRow: Set nr = tbl.ListRows.Add
+    nr.Range(1, 1).Value = k
+    nr.Range(1, 2).Value = fr
+    nr.Range(1, 3).Value = en
+    nr.Range(1, 4).Value = es
+    nr.Range(1, 5).Value = pt
+    nr.Range(1, 6).Value = de
+    nr.Range(1, 7).Value = it
+    nr.Range(1, 8).Value = nl
+    nr.Range(1, 9).Value = sv
 End Sub
 
 Private Function TR(Clé As String) As String
@@ -444,9 +444,26 @@ Public Sub GENERER_BUDGET_DASHBOARD()
     Dim Gap As Double: Gap = 15
     Dim CardW As Double: CardW = (TotalW - (2 * Gap)) / 3
     
+    'Dessiner_Shape_Card wsBud, "CARD_ALLO", TR("KPI_B_ALLO") & " (" & DeviseFiltre & ")", TotAlloc, RGB(52, 152, 219), vbWhite, ZoneTable.Left, wsBud.Range("C7").Top, CardW, 85
+    'Dessiner_Shape_Card wsBud, "CARD_SPEN", TR("KPI_B_SPEN") & " (" & DeviseFiltre & ")", TotSpent, RGB(120, 81, 169), vbWhite, ZoneTable.Left + CardW + Gap, wsBud.Range("C7").Top, CardW, 85
+    'Dessiner_Shape_Card wsBud, "CARD_LEFT", TR("KPI_B_LEFT") & " (" & DeviseFiltre & ")", TotAlloc - TotSpent, RGB(46, 204, 113), vbWhite, ZoneTable.Left + (CardW * 2) + (Gap * 2), wsBud.Range("C7").Top, CardW, 85
+    
+    ' --- DEBUT PATCH (Couleur Conditionnelle KPI Reste à Dépenser) ---
+    Dim ResteADepenser As Double: ResteADepenser = TotAlloc - TotSpent
+    Dim Budg_Color As Long
+    
+    If ResteADepenser > 0 Then
+        Budg_Color = RGB(46, 204, 113) ' Vert Émeraude (Dans le budget)
+    ElseIf ResteADepenser < 0 Then
+        Budg_Color = RGB(231, 76, 60) ' Rouge Alerte (Dépassement)
+    Else
+        Budg_Color = RGB(128, 128, 128) ' Gris Neutre (Exactement à 0)
+    End If
+    
     Dessiner_Shape_Card wsBud, "CARD_ALLO", TR("KPI_B_ALLO") & " (" & DeviseFiltre & ")", TotAlloc, RGB(52, 152, 219), vbWhite, ZoneTable.Left, wsBud.Range("C7").Top, CardW, 85
     Dessiner_Shape_Card wsBud, "CARD_SPEN", TR("KPI_B_SPEN") & " (" & DeviseFiltre & ")", TotSpent, RGB(120, 81, 169), vbWhite, ZoneTable.Left + CardW + Gap, wsBud.Range("C7").Top, CardW, 85
-    Dessiner_Shape_Card wsBud, "CARD_LEFT", TR("KPI_B_LEFT") & " (" & DeviseFiltre & ")", TotAlloc - TotSpent, RGB(46, 204, 113), vbWhite, ZoneTable.Left + (CardW * 2) + (Gap * 2), wsBud.Range("C7").Top, CardW, 85
+    Dessiner_Shape_Card wsBud, "CARD_LEFT", TR("KPI_B_LEFT") & " (" & DeviseFiltre & ")", ResteADepenser, Budg_Color, vbWhite, ZoneTable.Left + (CardW * 2) + (Gap * 2), wsBud.Range("C7").Top, CardW, 85
+    ' --- FIN PATCH ---
     
     wsBud.Rows("9:11").RowHeight = 15
     
