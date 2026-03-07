@@ -75,8 +75,8 @@ Private Sub Upsert_Dico(tbl As ListObject, k As String, fr As String, en As Stri
     nr.Range(1, 5).Value = pt: nr.Range(1, 6).Value = de: nr.Range(1, 7).Value = it: nr.Range(1, 8).Value = nl: nr.Range(1, 9).Value = sv
 End Sub
 
-Private Function TR(Clé As String) As String
-    TR = MOD_02_AppHome_Global.TR(Clé)
+Private Function TR(Cle As String) As String
+    TR = MOD_02_AppHome_Global.TR(Cle)
 End Function
 
 ' -------------------------------------------------------------------------
@@ -85,8 +85,13 @@ End Function
 Public Sub GENERER_DASHBOARD()
     Garantir_Lexique_Dashboard
     
-    Dim MoisFiltre As String: MoisFiltre = Obtenir_Parametre("DASH_FILTRE_MOIS", Format(Date, "yyyy-mm"))
+    'Dim MoisFiltre As String: MoisFiltre = Obtenir_Parametre("DASH_FILTRE_MOIS", Format(Date, "yyyy-mm"))
+    'Dim DeviseFiltre As String: DeviseFiltre = Obtenir_Parametre("DASH_FILTRE_DEV", "MUR")
+    ' --- DEBUT PATCH 1 (Filtres Séparés) ---
+    Dim AnneeFiltre As String: AnneeFiltre = Obtenir_Parametre("DASH_FILTRE_ANNEE", CStr(Year(Date)))
+    Dim MoisFiltreSeul As String: MoisFiltreSeul = Obtenir_Parametre("DASH_FILTRE_MOIS_SEUL", Format(Month(Date), "00"))
     Dim DeviseFiltre As String: DeviseFiltre = Obtenir_Parametre("DASH_FILTRE_DEV", "MUR")
+    ' --- FIN PATCH 1 ---
 
     Dim wsDash As Worksheet
     Application.DisplayAlerts = False
@@ -126,17 +131,40 @@ Public Sub GENERER_DASHBOARD()
     
     ' --- TITRE VECTORIEL (Séparé des cellules pour éviter tout chevauchement) ---
     Dim shpTitle As Shape
-    Set shpTitle = wsDash.Shapes.AddTextbox(msoTextOrientationHorizontal, 240, 10, 300, 40)
+    Set shpTitle = wsDash.Shapes.AddTextbox(msoTextOrientationHorizontal, 225, 10, 300, 40)
     shpTitle.Fill.Visible = msoFalse: shpTitle.Line.Visible = msoFalse
     shpTitle.TextFrame2.TextRange.Text = UCase(TR("DASH_T")) & vbCrLf & Format(Date, "dd mmm yyyy")
     shpTitle.TextFrame2.TextRange.Lines(1).Font.Name = "ADLaM Display": shpTitle.TextFrame2.TextRange.Lines(1).Font.Size = 18: shpTitle.TextFrame2.TextRange.Lines(1).Font.Bold = True: shpTitle.TextFrame2.TextRange.Lines(1).Font.Fill.ForeColor.RGB = vbWhite
     shpTitle.TextFrame2.TextRange.Lines(2).Font.Name = "ADLaM Display": shpTitle.TextFrame2.TextRange.Lines(2).Font.Size = 10: shpTitle.TextFrame2.TextRange.Lines(2).Font.Fill.ForeColor.RGB = RGB(220, 220, 255)
     
     ' --- LE TIME SLIDER (Flèches ANSI) ---
-    Dim LabelDate As String: LabelDate = UCase(Format(CDate(MoisFiltre & "-01"), "mmmm yyyy"))
-    Dessiner_Widget wsDash, "BTN_PREV_MONTH", "<", 440, 15, 20, 32, RGB(220, 220, 220), RGB(0, 0, 0), "MOD_04_Dashboard_ETL.MOIS_PRECEDENT"
-    Dessiner_Widget wsDash, "LBL_MONTH", LabelDate, 465, 15, 145, 32, RGB(220, 220, 220), RGB(0, 0, 0), ""
-    Dessiner_Widget wsDash, "BTN_NEXT_MONTH", ">", 615, 15, 25, 32, RGB(220, 220, 220), RGB(0, 0, 0), "MOD_04_Dashboard_ETL.MOIS_SUIVANT"
+    'Dim LabelDate As String: LabelDate = UCase(Format(CDate(MoisFiltre & "-01"), "mmmm yyyy"))
+    'Dessiner_Widget wsDash, "BTN_PREV_MONTH", "<", 440, 15, 20, 32, RGB(220, 220, 220), RGB(0, 0, 0), "MOD_04_Dashboard_ETL.MOIS_PRECEDENT"
+    'Dessiner_Widget wsDash, "LBL_MONTH", LabelDate, 465, 15, 145, 32, RGB(220, 220, 220), RGB(0, 0, 0), ""
+    'Dessiner_Widget wsDash, "BTN_NEXT_MONTH", ">", 615, 15, 25, 32, RGB(220, 220, 220), RGB(0, 0, 0), "MOD_04_Dashboard_ETL.MOIS_SUIVANT"
+    ' --- DEBUT PATCH 2 (Sliders Séparés) ---
+    Dim LabelAnnee As String: LabelAnnee = AnneeFiltre
+    Dim LabelMois As String
+    'If MoisFiltreSeul = "00" Then LabelMois = "ANNEE ENTIERE" Else LabelMois = UCase(Format(CDate("2020-" & MoisFiltreSeul & "-01"), "mmmm"))
+    ' --- PATCH ANTI-CRASH (DATE SERIAL) ---
+    If MoisFiltreSeul = "00" Then
+        LabelMois = "ANNEE ENTIERE"
+    Else
+        ' Utilisation de DateSerial pour forcer le typage Date sans passer par du texte (Zéro Erreur 13)
+        LabelMois = UCase(Format(DateSerial(2020, CInt(MoisFiltreSeul), 1), "mmmm"))
+    End If
+    ' --- FIN PATCH ---
+    
+    ' Slider Année
+    Dessiner_Widget wsDash, "BTN_PREV_YEAR", "<", 400, 15, 20, 32, RGB(220, 220, 220), RGB(0, 0, 0), "MOD_04_Dashboard_ETL.ANNEE_PRECEDENTE"
+    Dessiner_Widget wsDash, "LBL_YEAR", LabelAnnee, 425, 15, 30, 32, RGB(220, 220, 220), RGB(0, 0, 0), ""
+    Dessiner_Widget wsDash, "BTN_NEXT_YEAR", ">", 460, 15, 20, 32, RGB(220, 220, 220), RGB(0, 0, 0), "MOD_04_Dashboard_ETL.ANNEE_SUIVANTE"
+    
+    ' Slider Mois ("00" = Année Entière)
+    Dessiner_Widget wsDash, "BTN_PREV_MONTH", "<", 515, 15, 20, 32, RGB(220, 220, 220), RGB(0, 0, 0), "MOD_04_Dashboard_ETL.MOIS_PRECEDENT"
+    Dessiner_Widget wsDash, "LBL_MONTH", LabelMois, 540, 15, 110, 32, RGB(220, 220, 220), RGB(0, 0, 0), ""
+    Dessiner_Widget wsDash, "BTN_NEXT_MONTH", ">", 655, 15, 20, 32, RGB(220, 220, 220), RGB(0, 0, 0), "MOD_04_Dashboard_ETL.MOIS_SUIVANT"
+    ' --- FIN PATCH 2 ---
     
     ' --- LE CONVERTISSEUR DE DEVISES (Les 3 boutons tactiles) ---
     Dim devLeft As Integer: devLeft = 710
@@ -165,10 +193,16 @@ Public Sub GENERER_DASHBOARD()
     
     If Not tblFact Is Nothing Then
         If tblFact.ListRows.Count > 0 Then
+            ' --- DEBUT DU PATCH MOD_04 (Correction Index Colonne Type) ---
             Dim dictCompte As Object: Set dictCompte = Charger_Dico("T_DIM_Compte", 1, 2)
             Dim dictCat As Object: Set dictCat = Charger_Dico("T_DIM_Categorie", 1, 2)
+            
+            ' CORRECTION ICI : On charge la colonne 3 (Type_Flux) et non la 2 (Nom)
+            ' Cela permet aux nouvelles catégories (ex: Épargne) d'être reconnues comme REVENU/DEPENSE
             Dim dictCatType As Object: Set dictCatType = Charger_Dico("T_DIM_Categorie", 1, 3)
+            
             Dim dictTiers As Object: Set dictTiers = Charger_Dico("T_DIM_Tiers", 1, 2)
+            ' --- FIN DU PATCH MOD_04 ---
             
             Dim arrFact As Variant: arrFact = tblFact.DataBodyRange.Value
             ReDim arrConsolide(1 To UBound(arrFact, 1), 1 To 11)
@@ -185,7 +219,15 @@ Public Sub GENERER_DASHBOARD()
                     dTx = CDate(arrFact(i, 2))
                     
                     ' FILTRE TEMPOREL
-                    If Format(dTx, "yyyy-mm") = MoisFiltre Then
+                    'If Format(dTx, "yyyy-mm") = MoisFiltre Then
+                    ' --- DEBUT PATCH 3 (ETL Filtrage Global) ---
+                    'If CStr(Year(dTx)) = AnneeFiltre And (MoisFiltreSeul = "00" Or Format(Month(dTx), "00") = MoisFiltreSeul) Then
+                    ' --- FIN PATCH 3 ---
+                    ' --- DEBUT PATCH : FILTRAGE MATHÉMATIQUE STRICT (CORRECTION) ---
+                    ' On compare des Nombres Entiers (Integer) pour éviter tout bug de texte ("02" vs "2")
+                    ' CInt(MoisFiltreSeul) = 0 correspond au mode "ANNÉE ENTIÈRE"
+                    If Year(dTx) = CInt(AnneeFiltre) And (CInt(MoisFiltreSeul) = 0 Or Month(dTx) = CInt(MoisFiltreSeul)) Then
+                    ' --- FIN PATCH ---
                         Ligne = Ligne + 1
                         IDCompte = Trim(CStr(arrFact(i, 3))): idCat = Trim(CStr(arrFact(i, 4))): IDTiers = Trim(CStr(arrFact(i, 5)))
                         TypeFlux = IIf(dictCatType.exists(idCat), dictCatType(idCat), "AUTRE")
@@ -198,8 +240,16 @@ Public Sub GENERER_DASHBOARD()
                         ' Mathématique de conversion : (Montant * TauxOrigineEnMur) / TauxCibleEnMur
                         MontantConverti = (Montant * TauxO) / TauxC
                         
-                        If UCase(TypeFlux) = "REVENU" Then TotRev = TotRev + MontantConverti
-                        If UCase(TypeFlux) = "DEPENSE" Then TotDep = TotDep + MontantConverti
+                        'If UCase(TypeFlux) = "REVENU" Then TotRev = TotRev + MontantConverti
+                        'If UCase(TypeFlux) = "DEPENSE" Then TotDep = TotDep + MontantConverti
+                        ' --- DEBUT PATCH 3 (Étanchéité Absolue Cashflow) ---
+                        ' On comptabilise tout, sauf la ligne de compensation Transfert qui est transparente en cashflow
+                        If UCase(TypeFlux) = "REVENU" Then
+                            TotRev = TotRev + MontantConverti
+                        ElseIf UCase(TypeFlux) <> "TRANSFERT" Then
+                            TotDep = TotDep + MontantConverti
+                        End If
+                        ' --- FIN PATCH 3 ---
                         
                         arrConsolide(Ligne, 1) = arrFact(i, 1): arrConsolide(Ligne, 2) = arrFact(i, 2)
                         arrConsolide(Ligne, 3) = Year(dTx): arrConsolide(Ligne, 4) = Month(dTx)
@@ -245,9 +295,26 @@ Public Sub GENERER_DASHBOARD()
     Dim Gap As Double: Gap = 15
     Dim CardW As Double: CardW = (TotalW - (2 * Gap)) / 3
     
+    'Dessiner_Solid_Card wsDash, "CARD_INC", TR("KPI_INC") & " (" & DeviseFiltre & ")", TotRev, RGB(65, 105, 225), vbWhite, ZoneTable.Left, wsDash.Range("C7").Top, CardW, 85
+    'Dessiner_Solid_Card wsDash, "CARD_EXP", TR("KPI_EXP") & " (" & DeviseFiltre & ")", TotDep, RGB(120, 81, 169), vbWhite, ZoneTable.Left + CardW + Gap, wsDash.Range("C7").Top, CardW, 85
+    'Dessiner_Solid_Card wsDash, "CARD_NET", TR("KPI_NET") & " (" & DeviseFiltre & ")", TotRev - TotDep, RGB(250, 218, 94), RGB(40, 40, 40), ZoneTable.Left + (CardW * 2) + (Gap * 2), wsDash.Range("C7").Top, CardW, 85
+    
+    ' --- DEBUT PATCH (Couleur Conditionnelle KPI Cashflow) ---
+    Dim CashflowNet As Double: CashflowNet = TotRev - TotDep
+    Dim CF_Color As Long
+    
+    If CashflowNet > 0 Then
+        CF_Color = RGB(46, 204, 113) ' Vert Émeraude
+    ElseIf CashflowNet < 0 Then
+        CF_Color = RGB(231, 76, 60) ' Rouge Alerte
+    Else
+        CF_Color = RGB(128, 128, 128) ' Gris Neutre
+    End If
+    
     Dessiner_Solid_Card wsDash, "CARD_INC", TR("KPI_INC") & " (" & DeviseFiltre & ")", TotRev, RGB(65, 105, 225), vbWhite, ZoneTable.Left, wsDash.Range("C7").Top, CardW, 85
     Dessiner_Solid_Card wsDash, "CARD_EXP", TR("KPI_EXP") & " (" & DeviseFiltre & ")", TotDep, RGB(120, 81, 169), vbWhite, ZoneTable.Left + CardW + Gap, wsDash.Range("C7").Top, CardW, 85
-    Dessiner_Solid_Card wsDash, "CARD_NET", TR("KPI_NET") & " (" & DeviseFiltre & ")", TotRev - TotDep, RGB(250, 218, 94), RGB(40, 40, 40), ZoneTable.Left + (CardW * 2) + (Gap * 2), wsDash.Range("C7").Top, CardW, 85
+    Dessiner_Solid_Card wsDash, "CARD_NET", TR("KPI_NET") & " (" & DeviseFiltre & ")", CashflowNet, CF_Color, vbWhite, ZoneTable.Left + (CardW * 2) + (Gap * 2), wsDash.Range("C7").Top, CardW, 85
+    ' --- FIN PATCH ---
     
     wsDash.Rows("9:11").RowHeight = 15
     
@@ -317,23 +384,35 @@ Public Sub CHANGER_DEVISE()
     End If
 End Sub
 
+' --- DEBUT PATCH 4 (Nouveau Moteur Interactif Temporel) ---
+Public Sub ANNEE_PRECEDENTE()
+    Anim_Btn_Bleu Application.Caller
+    Modifier_Parametre "DASH_FILTRE_ANNEE", CStr(CInt(Obtenir_Parametre("DASH_FILTRE_ANNEE", Year(Date))) - 1)
+    Rafraichir_Dashboard
+End Sub
+
+Public Sub ANNEE_SUIVANTE()
+    Anim_Btn_Bleu Application.Caller
+    Modifier_Parametre "DASH_FILTRE_ANNEE", CStr(CInt(Obtenir_Parametre("DASH_FILTRE_ANNEE", Year(Date))) + 1)
+    Rafraichir_Dashboard
+End Sub
+
 Public Sub MOIS_PRECEDENT()
     Anim_Btn_Bleu Application.Caller
-    Modifier_Mois_Filtre -1
+    Dim m As Integer: m = CInt(Obtenir_Parametre("DASH_FILTRE_MOIS_SEUL", Month(Date)))
+    m = m - 1: If m < 0 Then m = 12 ' 0 = ANNEE ENTIERE
+    Modifier_Parametre "DASH_FILTRE_MOIS_SEUL", Format(m, "00")
     Rafraichir_Dashboard
 End Sub
 
 Public Sub MOIS_SUIVANT()
     Anim_Btn_Bleu Application.Caller
-    Modifier_Mois_Filtre 1
+    Dim m As Integer: m = CInt(Obtenir_Parametre("DASH_FILTRE_MOIS_SEUL", Month(Date)))
+    m = m + 1: If m > 12 Then m = 0 ' 0 = ANNEE ENTIERE
+    Modifier_Parametre "DASH_FILTRE_MOIS_SEUL", Format(m, "00")
     Rafraichir_Dashboard
 End Sub
-
-Private Sub Modifier_Mois_Filtre(DeltaMois As Integer)
-    Dim actuel As String: actuel = Obtenir_Parametre("DASH_FILTRE_MOIS", Format(Date, "yyyy-mm"))
-    Dim d As Date: d = DateAdd("m", DeltaMois, CDate(actuel & "-01"))
-    Modifier_Parametre "DASH_FILTRE_MOIS", Format(d, "yyyy-mm")
-End Sub
+' --- FIN PATCH 4 ---
 
 Private Sub Rafraichir_Dashboard()
     Application.ScreenUpdating = False

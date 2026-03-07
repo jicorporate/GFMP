@@ -36,8 +36,8 @@ Private Function Obtenir_Parametre(NomParam As String, ValeurDefaut As String) A
         End If
     Next i
     
-    Dim nr As ListRow: Set nr = tblConf.ListRows.Add
-    nr.Range(1, 1).Value = NomParam: nr.Range(1, 2).Value = ValeurDefaut: nr.Range(1, 3).Value = "Filtre Actif"
+    Dim nR As ListRow: Set nR = tblConf.ListRows.Add
+    nR.Range(1, 1).Value = NomParam: nR.Range(1, 2).Value = ValeurDefaut: nR.Range(1, 3).Value = "Filtre Actif"
     Obtenir_Parametre = ValeurDefaut
 End Function
 
@@ -83,9 +83,9 @@ Private Sub Upsert_Dico(tbl As ListObject, k As String, fr As String, en As Stri
             Exit Sub
         End If
     Next i
-    Dim nr As ListRow: Set nr = tbl.ListRows.Add
-    nr.Range(1, 1).Value = k: nr.Range(1, 2).Value = fr: nr.Range(1, 3).Value = en: nr.Range(1, 4).Value = es
-    nr.Range(1, 5).Value = pt: nr.Range(1, 6).Value = de: nr.Range(1, 7).Value = it: nr.Range(1, 8).Value = nl: nr.Range(1, 9).Value = sv
+    Dim nR As ListRow: Set nR = tbl.ListRows.Add
+    nR.Range(1, 1).Value = k: nR.Range(1, 2).Value = fr: nR.Range(1, 3).Value = en: nR.Range(1, 4).Value = es
+    nR.Range(1, 5).Value = pt: nR.Range(1, 6).Value = de: nR.Range(1, 7).Value = it: nR.Range(1, 8).Value = nl: nR.Range(1, 9).Value = sv
 End Sub
 
 Private Function TR(Cle As String) As String
@@ -226,25 +226,36 @@ Public Sub GENERER_NET_WORTH_DASHBOARD()
                     If aDesTransactions Then
                         For j = 1 To UBound(arrTx, 1)
                             If Trim(CStr(arrTx(j, 3))) = ID_Cpt And Trim(CStr(arrTx(j, 1))) <> "" Then
+                                ' --- DEBUT DU PATCH MOD_05 (Moteur Multi-Devises Transactionnel) ---
                                 If IsDate(arrTx(j, 2)) Then
                                     dTx = CDate(arrTx(j, 2))
                                     If Format(dTx, "yyyy-mm") <= MoisFiltre Then
                                         
-                                        ' =========================================================================
-                                        ' CORRECTION 3 : SUPPRESSION DU CONFLIT DE DEVISE (LA TRANSACTION EST IGNORÉE)
-                                        ' On assume que le Montant saisi EST dans la Devise Native du Compte.
-                                        ' On additionne directement le montant sans conversion hasardeuse.
-                                        ' =========================================================================
                                         FluxType = IIf(CatTypeDict.exists(Trim(CStr(arrTx(j, 4)))), CatTypeDict(Trim(CStr(arrTx(j, 4)))), "AUTRE")
                                         
+                                        ' 1. Identification des devises
+                                        Dim DevTx As String: DevTx = UCase(Trim(CStr(arrTx(j, 7)))) ' Devise de la transaction (ex: XOF)
+                                        Dim TauxTx As Double: TauxTx = IIf(dictTaux.exists(DevTx), dictTaux(DevTx), 1)
+                                        
+                                        ' 2. Conversion : Montant Transaction -> MUR -> Devise Compte (Native)
+                                        ' Formule : (Montant * TauxTx_vs_MUR) / TauxCompte_vs_MUR
+                                        Dim MontantBrut As Double: MontantBrut = CDbl(arrTx(j, 6))
+                                        Dim MontantNormalise As Double
+                                        
+                                        MontantNormalise = (MontantBrut * TauxTx) / TauxC_Native
+                                        
+                                        ' --- DEBUT PATCH 2 (Atomicité Stricte du Net Worth) ---
+                                        ' Tout ce qui n'est pas Revenu ou Transfert est déduit de force (Règle BDD)
                                         If UCase(FluxType) = "REVENU" Or UCase(FluxType) = "TRANSFERT" Then
-                                            SoldeNatif = SoldeNatif + CDbl(arrTx(j, 6))
-                                        ElseIf UCase(FluxType) = "DEPENSE" Then
-                                            SoldeNatif = SoldeNatif - CDbl(arrTx(j, 6))
+                                            SoldeNatif = SoldeNatif + MontantNormalise
+                                        Else
+                                            SoldeNatif = SoldeNatif - MontantNormalise
                                         End If
+                                        ' --- FIN PATCH 2 ---
                                         
                                     End If
                                 End If
+                                ' --- FIN DU PATCH MOD_05 ---
                             End If
                         Next j
                     End If

@@ -84,6 +84,14 @@ Private Sub Garantir_Lexique_Budget()
     Upsert_Dico tblDic, "COL_B_DIFF", "ÉCART", "VARIANCE", "DIFERENCIA", "DIFERENÇA", "ABWEICHUNG", "VARIAZIONE", "VERSCHIL", "AVVIKELSE"
     Upsert_Dico tblDic, "COL_B_PROG", "CONSOMMATION", "CONSUMPTION", "CONSUMO", "CONSUMO", "VERBRAUCH", "CONSUMO", "VERBRUIK", "FÖRBRUKNING"
     Upsert_Dico tblDic, "NO_BUDG", "Aucun budget alloué", "No budget allocated", "Sin presupuesto", "Sem orçamento", "Kein Budget", "Nessun budget", "Geen budget", "Ingen budget"
+
+    ' --- DEBUT PATCH 4 (Lexique USF_Budget) ---
+    Upsert_Dico tblDic, "FRM_B_MOIS", "Mois cible (AAAA-MM) :", "Target Month (YYYY-MM) :", "Mes objetivo (AAAA-MM) :", "Mês alvo (AAAA-MM) :", "Zielmonat (JJJJ-MM) :", "Mese target (AAAA-MM) :", "Doelmaand (JJJJ-MM) :", "Målmånad (ÅÅÅÅ-MM) :"
+    Upsert_Dico tblDic, "FRM_B_CAT", "Enveloppe (Catégorie) :", "Envelope (Category) :", "Sobre (Categoría) :", "Envelope (Categoria) :", "Umschlag (Kategorie) :", "Busta (Categoria) :", "Envelop (Categorie) :", "Kuvert (Kategori) :"
+    Upsert_Dico tblDic, "FRM_B_AMT", "Montant Alloué :", "Allocated Amount :", "Monto Asignado :", "Valor Alocado :", "Zugewiesener Betrag :", "Importo Assegnato :", "Toegewezen Bedrag :", "Tilldelat Belopp :"
+    Upsert_Dico tblDic, "FRM_B_SAVE", "ALLOUER", "ALLOCATE", "ASIGNAR", "ALOCAR", "ZUWEISEN", "ASSEGNA", "TOEWIJZEN", "TILLDELA"
+    Upsert_Dico tblDic, "FRM_B_CANCEL", "ANNULER", "CANCEL", "CANCELAR", "CANCELAR", "ABBRECHEN", "ANNULLA", "ANNULEREN", "AVBRYT"
+    ' --- FIN PATCH 4 ---
 End Sub
 
 Private Sub Upsert_Dico(tbl As ListObject, k As String, fr As String, en As String, es As String, pt As String, de As String, it As String, nl As String, sv As String)
@@ -171,6 +179,15 @@ Private Function Code_VBA_USF_Budget() As String
     c = "Option Explicit" & vbCrLf
     c = c & "Private Sub UserForm_Initialize()" & vbCrLf
     c = c & "    Me.txt_Mois.Value = MOD_06_Budget_ZBB.Obtenir_Parametre(""BUDG_FILTRE_MOIS"", Format(Date, ""yyyy-mm""))" & vbCrLf
+    
+    ' --- DEBUT PATCH 5 (Application Dynamique du Lexique) ---
+    c = c & "    Me.lbl_Mois.Caption = MOD_02_AppHome_Global.TR(""FRM_B_MOIS"")" & vbCrLf
+    c = c & "    Me.lbl_Cat.Caption = MOD_02_AppHome_Global.TR(""FRM_B_CAT"")" & vbCrLf
+    c = c & "    Me.lbl_Montant.Caption = MOD_02_AppHome_Global.TR(""FRM_B_AMT"")" & vbCrLf
+    c = c & "    Me.btn_Save.Caption = MOD_02_AppHome_Global.TR(""FRM_B_SAVE"")" & vbCrLf
+    c = c & "    Me.btn_Cancel.Caption = MOD_02_AppHome_Global.TR(""FRM_B_CANCEL"")" & vbCrLf
+    ' --- FIN PATCH 5 ---
+    
     c = c & "    Me.Caption = MOD_02_AppHome_Global.TR(""BTN_ALLOC"")" & vbCrLf
     c = c & "    Dim tbl As ListObject, i As Long" & vbCrLf
     c = c & "    On Error Resume Next: Set tbl = ThisWorkbook.Sheets(""DIM_Categorie"").ListObjects(""T_DIM_Categorie""): On Error GoTo 0" & vbCrLf
@@ -427,9 +444,26 @@ Public Sub GENERER_BUDGET_DASHBOARD()
     Dim Gap As Double: Gap = 15
     Dim CardW As Double: CardW = (TotalW - (2 * Gap)) / 3
     
+    'Dessiner_Shape_Card wsBud, "CARD_ALLO", TR("KPI_B_ALLO") & " (" & DeviseFiltre & ")", TotAlloc, RGB(52, 152, 219), vbWhite, ZoneTable.Left, wsBud.Range("C7").Top, CardW, 85
+    'Dessiner_Shape_Card wsBud, "CARD_SPEN", TR("KPI_B_SPEN") & " (" & DeviseFiltre & ")", TotSpent, RGB(120, 81, 169), vbWhite, ZoneTable.Left + CardW + Gap, wsBud.Range("C7").Top, CardW, 85
+    'Dessiner_Shape_Card wsBud, "CARD_LEFT", TR("KPI_B_LEFT") & " (" & DeviseFiltre & ")", TotAlloc - TotSpent, RGB(46, 204, 113), vbWhite, ZoneTable.Left + (CardW * 2) + (Gap * 2), wsBud.Range("C7").Top, CardW, 85
+    
+    ' --- DEBUT PATCH (Couleur Conditionnelle KPI Reste à Dépenser) ---
+    Dim ResteADepenser As Double: ResteADepenser = TotAlloc - TotSpent
+    Dim Budg_Color As Long
+    
+    If ResteADepenser > 0 Then
+        Budg_Color = RGB(46, 204, 113) ' Vert Émeraude (Dans le budget)
+    ElseIf ResteADepenser < 0 Then
+        Budg_Color = RGB(231, 76, 60) ' Rouge Alerte (Dépassement)
+    Else
+        Budg_Color = RGB(128, 128, 128) ' Gris Neutre (Exactement à 0)
+    End If
+    
     Dessiner_Shape_Card wsBud, "CARD_ALLO", TR("KPI_B_ALLO") & " (" & DeviseFiltre & ")", TotAlloc, RGB(52, 152, 219), vbWhite, ZoneTable.Left, wsBud.Range("C7").Top, CardW, 85
     Dessiner_Shape_Card wsBud, "CARD_SPEN", TR("KPI_B_SPEN") & " (" & DeviseFiltre & ")", TotSpent, RGB(120, 81, 169), vbWhite, ZoneTable.Left + CardW + Gap, wsBud.Range("C7").Top, CardW, 85
-    Dessiner_Shape_Card wsBud, "CARD_LEFT", TR("KPI_B_LEFT") & " (" & DeviseFiltre & ")", TotAlloc - TotSpent, RGB(46, 204, 113), vbWhite, ZoneTable.Left + (CardW * 2) + (Gap * 2), wsBud.Range("C7").Top, CardW, 85
+    Dessiner_Shape_Card wsBud, "CARD_LEFT", TR("KPI_B_LEFT") & " (" & DeviseFiltre & ")", ResteADepenser, Budg_Color, vbWhite, ZoneTable.Left + (CardW * 2) + (Gap * 2), wsBud.Range("C7").Top, CardW, 85
+    ' --- FIN PATCH ---
     
     wsBud.Rows("9:11").RowHeight = 15
     
