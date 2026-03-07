@@ -1,4 +1,3 @@
-Attribute VB_Name = "MOD_02_AppHome_Global"
 Option Explicit
 
 ' =========================================================================
@@ -224,20 +223,61 @@ End Sub
 ' -------------------------------------------------------------------------
 ' 3. ACTIONS EXÉCUTABLES PAR LE CERVEAU (ThisWorkbook)
 ' -------------------------------------------------------------------------
+'Public Sub EXECUTER_CHANGER_LANGUE(LangueCible As String)
+    'Application.ScreenUpdating = False
+    'Dim wsSys As Worksheet: Set wsSys = ThisWorkbook.Sheets("SYS_Config"): wsSys.Unprotect "SFP_ADMIN_2026"
+    'Dim tblConf As ListObject: Set tblConf = wsSys.ListObjects("T_SYS_Config")
+    'Dim i As Long: For i = 1 To tblConf.ListRows.Count
+        'If tblConf.DataBodyRange(i, 1).Value = "LANGUE_UI" Then tblConf.DataBodyRange(i, 2).Value = LangueCible: Exit For
+    'Next i
+    'wsSys.Protect "SFP_ADMIN_2026", UserInterfaceOnly:=True
+    
+    'Dim ws As Worksheet: For Each ws In ThisWorkbook.Worksheets: ws.Unprotect "SFP_ADMIN_2026": Next ws
+    'Preparer_Hub_Central ' Redessin in-place
+    'For Each ws In ThisWorkbook.Worksheets: ws.Protect "SFP_ADMIN_2026", UserInterfaceOnly:=True: Next ws
+    'Application.ScreenUpdating = True
+'End Sub
+
+' --- DEBUT PATCH (Réanimation U.C.R & Auto-Cicatrisation i18n) ---
 Public Sub EXECUTER_CHANGER_LANGUE(LangueCible As String)
+    ' 1. FORCE LE DÉBLOCAGE DU MOTEUR INTERACTIF (Anti-Freeze)
+    Application.EnableEvents = True
     Application.ScreenUpdating = False
-    Dim wsSys As Worksheet: Set wsSys = ThisWorkbook.Sheets("SYS_Config"): wsSys.Unprotect "SFP_ADMIN_2026"
+    
+    Dim wsSys As Worksheet: Set wsSys = ThisWorkbook.Sheets("SYS_Config")
+    wsSys.Unprotect "SFP_ADMIN_2026"
+    
     Dim tblConf As ListObject: Set tblConf = wsSys.ListObjects("T_SYS_Config")
-    Dim i As Long: For i = 1 To tblConf.ListRows.Count
-        If tblConf.DataBodyRange(i, 1).Value = "LANGUE_UI" Then tblConf.DataBodyRange(i, 2).Value = LangueCible: Exit For
-    Next i
+    Dim i As Long, trouve As Boolean: trouve = False
+    
+    ' 2. LOGIQUE UPSERT (Met à jour si existe, Créé sinon)
+    If tblConf.ListRows.Count > 0 Then
+        For i = 1 To tblConf.ListRows.Count
+            If tblConf.DataBodyRange(i, 1).Value = "LANGUE_UI" Then
+                tblConf.DataBodyRange(i, 2).Value = LangueCible
+                trouve = True
+                Exit For
+            End If
+        Next i
+    End If
+    
+    If Not trouve Then
+        Dim nR As ListRow: Set nR = tblConf.ListRows.Add
+        nR.Range(1, 1).Value = "LANGUE_UI"
+        nR.Range(1, 2).Value = LangueCible
+        nR.Range(1, 3).Value = "Langue UI Globale"
+    End If
+    
     wsSys.Protect "SFP_ADMIN_2026", UserInterfaceOnly:=True
     
+    ' 3. REDESSIN DU HUB
     Dim ws As Worksheet: For Each ws In ThisWorkbook.Worksheets: ws.Unprotect "SFP_ADMIN_2026": Next ws
-    Preparer_Hub_Central ' Redessin in-place
+    Preparer_Hub_Central
     For Each ws In ThisWorkbook.Worksheets: ws.Protect "SFP_ADMIN_2026", UserInterfaceOnly:=True: Next ws
+    
     Application.ScreenUpdating = True
 End Sub
+' --- FIN PATCH ---
 
 Public Sub EXECUTER_ROUTER_SAISIE()
     On Error GoTo ErrForm

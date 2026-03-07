@@ -240,8 +240,16 @@ Public Sub GENERER_DASHBOARD()
                         ' Mathématique de conversion : (Montant * TauxOrigineEnMur) / TauxCibleEnMur
                         MontantConverti = (Montant * TauxO) / TauxC
                         
-                        If UCase(TypeFlux) = "REVENU" Then TotRev = TotRev + MontantConverti
-                        If UCase(TypeFlux) = "DEPENSE" Then TotDep = TotDep + MontantConverti
+                        'If UCase(TypeFlux) = "REVENU" Then TotRev = TotRev + MontantConverti
+                        'If UCase(TypeFlux) = "DEPENSE" Then TotDep = TotDep + MontantConverti
+                        ' --- DEBUT PATCH 3 (Étanchéité Absolue Cashflow) ---
+                        ' On comptabilise tout, sauf la ligne de compensation Transfert qui est transparente en cashflow
+                        If UCase(TypeFlux) = "REVENU" Then
+                            TotRev = TotRev + MontantConverti
+                        ElseIf UCase(TypeFlux) <> "TRANSFERT" Then
+                            TotDep = TotDep + MontantConverti
+                        End If
+                        ' --- FIN PATCH 3 ---
                         
                         arrConsolide(Ligne, 1) = arrFact(i, 1): arrConsolide(Ligne, 2) = arrFact(i, 2)
                         arrConsolide(Ligne, 3) = Year(dTx): arrConsolide(Ligne, 4) = Month(dTx)
@@ -287,9 +295,26 @@ Public Sub GENERER_DASHBOARD()
     Dim Gap As Double: Gap = 15
     Dim CardW As Double: CardW = (TotalW - (2 * Gap)) / 3
     
+    'Dessiner_Solid_Card wsDash, "CARD_INC", TR("KPI_INC") & " (" & DeviseFiltre & ")", TotRev, RGB(65, 105, 225), vbWhite, ZoneTable.Left, wsDash.Range("C7").Top, CardW, 85
+    'Dessiner_Solid_Card wsDash, "CARD_EXP", TR("KPI_EXP") & " (" & DeviseFiltre & ")", TotDep, RGB(120, 81, 169), vbWhite, ZoneTable.Left + CardW + Gap, wsDash.Range("C7").Top, CardW, 85
+    'Dessiner_Solid_Card wsDash, "CARD_NET", TR("KPI_NET") & " (" & DeviseFiltre & ")", TotRev - TotDep, RGB(250, 218, 94), RGB(40, 40, 40), ZoneTable.Left + (CardW * 2) + (Gap * 2), wsDash.Range("C7").Top, CardW, 85
+    
+    ' --- DEBUT PATCH (Couleur Conditionnelle KPI Cashflow) ---
+    Dim CashflowNet As Double: CashflowNet = TotRev - TotDep
+    Dim CF_Color As Long
+    
+    If CashflowNet > 0 Then
+        CF_Color = RGB(46, 204, 113) ' Vert Émeraude
+    ElseIf CashflowNet < 0 Then
+        CF_Color = RGB(231, 76, 60) ' Rouge Alerte
+    Else
+        CF_Color = RGB(128, 128, 128) ' Gris Neutre
+    End If
+    
     Dessiner_Solid_Card wsDash, "CARD_INC", TR("KPI_INC") & " (" & DeviseFiltre & ")", TotRev, RGB(65, 105, 225), vbWhite, ZoneTable.Left, wsDash.Range("C7").Top, CardW, 85
     Dessiner_Solid_Card wsDash, "CARD_EXP", TR("KPI_EXP") & " (" & DeviseFiltre & ")", TotDep, RGB(120, 81, 169), vbWhite, ZoneTable.Left + CardW + Gap, wsDash.Range("C7").Top, CardW, 85
-    Dessiner_Solid_Card wsDash, "CARD_NET", TR("KPI_NET") & " (" & DeviseFiltre & ")", TotRev - TotDep, RGB(250, 218, 94), RGB(40, 40, 40), ZoneTable.Left + (CardW * 2) + (Gap * 2), wsDash.Range("C7").Top, CardW, 85
+    Dessiner_Solid_Card wsDash, "CARD_NET", TR("KPI_NET") & " (" & DeviseFiltre & ")", CashflowNet, CF_Color, vbWhite, ZoneTable.Left + (CardW * 2) + (Gap * 2), wsDash.Range("C7").Top, CardW, 85
+    ' --- FIN PATCH ---
     
     wsDash.Rows("9:11").RowHeight = 15
     
