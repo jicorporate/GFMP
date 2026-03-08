@@ -1,3 +1,4 @@
+Attribute VB_Name = "MOD_05_Advanced_Modules"
 Option Explicit
 
 ' =========================================================================
@@ -36,8 +37,8 @@ Private Function Obtenir_Parametre(NomParam As String, ValeurDefaut As String) A
         End If
     Next i
     
-    Dim nR As ListRow: Set nR = tblConf.ListRows.Add
-    nR.Range(1, 1).Value = NomParam: nR.Range(1, 2).Value = ValeurDefaut: nR.Range(1, 3).Value = "Filtre Actif"
+    Dim nr As ListRow: Set nr = tblConf.ListRows.Add
+    nr.Range(1, 1).Value = NomParam: nr.Range(1, 2).Value = ValeurDefaut: nr.Range(1, 3).Value = "Filtre Actif"
     Obtenir_Parametre = ValeurDefaut
 End Function
 
@@ -83,9 +84,9 @@ Private Sub Upsert_Dico(tbl As ListObject, k As String, fr As String, en As Stri
             Exit Sub
         End If
     Next i
-    Dim nR As ListRow: Set nR = tbl.ListRows.Add
-    nR.Range(1, 1).Value = k: nR.Range(1, 2).Value = fr: nR.Range(1, 3).Value = en: nR.Range(1, 4).Value = es
-    nR.Range(1, 5).Value = pt: nR.Range(1, 6).Value = de: nR.Range(1, 7).Value = it: nR.Range(1, 8).Value = nl: nR.Range(1, 9).Value = sv
+    Dim nr As ListRow: Set nr = tbl.ListRows.Add
+    nr.Range(1, 1).Value = k: nr.Range(1, 2).Value = fr: nr.Range(1, 3).Value = en: nr.Range(1, 4).Value = es
+    nr.Range(1, 5).Value = pt: nr.Range(1, 6).Value = de: nr.Range(1, 7).Value = it: nr.Range(1, 8).Value = nl: nr.Range(1, 9).Value = sv
 End Sub
 
 Private Function TR(Cle As String) As String
@@ -156,9 +157,9 @@ Public Sub GENERER_NET_WORTH_DASHBOARD()
     Dessiner_Widget wsNW, "BTN_NW_DEV_USD", "USD", devLeft + 110, 15, 50, 32, IIf(DeviseFiltre = "USD", RGB(250, 218, 94), RGB(40, 70, 180)), IIf(DeviseFiltre = "USD", RGB(40, 40, 40), vbWhite), "MOD_05_Advanced_Modules.CHANGER_DEVISE_NW"
     Dessiner_Widget wsNW, "BTN_NW_DEV_XOF", "XOF", devLeft + 165, 15, 50, 32, IIf(DeviseFiltre = "XOF", RGB(250, 218, 94), RGB(40, 70, 180)), IIf(DeviseFiltre = "XOF", RGB(40, 40, 40), vbWhite), "MOD_05_Advanced_Modules.CHANGER_DEVISE_NW"
     
-    ' --- MOTEUR DE TAUX DE CHANGE ---
-    Dim dictTaux As Object: Set dictTaux = CreateObject("Scripting.Dictionary")
-    dictTaux("MUR") = 1: dictTaux("EUR") = 49.5: dictTaux("USD") = 46.2: dictTaux("GBP") = 58.1: dictTaux("ZAR") = 2.4: dictTaux("XOF") = 0.083
+    ' --- DEBUT PATCH 3 ---
+    Dim dictTaux As Object: Set dictTaux = MOD_01_CoreEngine.GET_TAUX_CHANGE()
+    ' --- FIN PATCH 3 ---
     
     ' --- 7. PHASE D'EXTRACTION (ETL CUMULATIF ACCOUNT-CENTRIC CORRIGÉ) ---
     Dim tblCompte As ListObject, tblFact As ListObject
@@ -389,18 +390,23 @@ End Sub
 ' -------------------------------------------------------------------------
 ' 4. MOTEUR INTERACTIF (Time Slider, Devises, Retour Tactile)
 ' -------------------------------------------------------------------------
+' --- DEBUT PATCH 2 (Navigation Temporelle Sécurisée MOD_05) ---
 Public Sub MOIS_PRECEDENT_NW()
     Anim_Btn_Bleu Application.Caller
-    Modifier_Parametre "NW_FILTRE_MOIS", Format(DateAdd("m", -1, CDate(Obtenir_Parametre("NW_FILTRE_MOIS", Format(Date, "yyyy-mm")) & "-01")), "yyyy-mm")
+    Dim actuel As String: actuel = Obtenir_Parametre("NW_FILTRE_MOIS", Format(Date, "yyyy-mm"))
+    Dim arrM() As String: arrM = Split(actuel, "-")
+    Modifier_Parametre "NW_FILTRE_MOIS", Format(DateSerial(CInt(arrM(0)), CInt(arrM(1)) - 1, 1), "yyyy-mm")
     Rafraichir_NW_Dashboard
 End Sub
 
 Public Sub MOIS_SUIVANT_NW()
     Anim_Btn_Bleu Application.Caller
-    Modifier_Parametre "NW_FILTRE_MOIS", Format(DateAdd("m", 1, CDate(Obtenir_Parametre("NW_FILTRE_MOIS", Format(Date, "yyyy-mm")) & "-01")), "yyyy-mm")
+    Dim actuel As String: actuel = Obtenir_Parametre("NW_FILTRE_MOIS", Format(Date, "yyyy-mm"))
+    Dim arrM() As String: arrM = Split(actuel, "-")
+    Modifier_Parametre "NW_FILTRE_MOIS", Format(DateSerial(CInt(arrM(0)), CInt(arrM(1)) + 1, 1), "yyyy-mm")
     Rafraichir_NW_Dashboard
 End Sub
-
+' --- FIN PATCH 2 ---
 Public Sub CHANGER_DEVISE_NW()
     Dim btnName As String: On Error Resume Next: btnName = Application.Caller: On Error GoTo 0
     If btnName <> "" Then

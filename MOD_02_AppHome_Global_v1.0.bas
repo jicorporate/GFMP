@@ -1,3 +1,4 @@
+Attribute VB_Name = "MOD_02_AppHome_Global"
 Option Explicit
 
 ' =========================================================================
@@ -21,7 +22,7 @@ Public Sub DEPLOIEMENT_ETAPE_3_GLOBAL()
     MsgBox "LE HUB CENTRAL 'MASTER CLASS' EST DÉPLOYÉ." & vbCrLf & vbCrLf & _
            "1. L'esthétique 'Solid Cards' (Ombres Portées) est appliquée aux menus." & vbCrLf & _
            "2. Police ADLaM Display (Taille 10) et Zoom 100% verrouillés." & vbCrLf & _
-           "3. Zéro régression sur le moteur U.C.R : l'interactivité est intacte.", vbInformation, "SFP v3.2 - Hub Premium"
+           "3. Zéro régression sur le moteur U.C.R : l'interactivité est intacte.", vbInformation, "SFP v1.0 - Hub Premium"
 End Sub
 
 ' -------------------------------------------------------------------------
@@ -63,6 +64,9 @@ Private Sub Preparer_Dictionnaire_Global()
     Upsert_Trad tblDic, "NETW_D", "Calcul de la Valeur Nette.", "Net Worth calculation.", "Cálculo del patrimonio neto.", "Cálculo do patrimônio líquido.", "Berechnung des Nettovermögens.", "Calcolo del patrimonio netto.", "Berekening nettowaarde.", "Beräkning av nettovärde."
     Upsert_Trad tblDic, "WELCOME", "Sélectionnez un module d'application ci-dessous pour démarrer.", "Select an application module below to get started.", "Seleccione un módulo de aplicación a continuación.", "Selecione um módulo de aplicativo abaixo.", "Wählen Sie unten ein Anwendungsmodul aus.", "Seleziona un modulo dell'applicazione di seguito.", "Selecteer hieronder een applicatiemodule.", "Välj en applikationsmodul nedan."
     Upsert_Trad tblDic, "TT_LANG", "Changer la langue : ", "Change language : ", "Cambiar idioma : ", "Mudar idioma : ", "Sprache ändern : ", "Cambia lingua : ", "Taal wijzigen : ", "Ändra språk : "
+    ' --- DEBUT PATCH 1 (Lexique Bouton Sync FX) ---
+    Upsert_Trad tblDic, "BTN_SYNC", "ACTUALISER TAUX FX", "UPDATE FX RATES", "ACTUALIZAR TIPOS FX", "ATUALIZAR TAXAS FX", "FX-KURSE AKTUALISIEREN", "AGGIORNA TASSI FX", "FX-TARIEVEN BIJWERKEN", "UPPDATERA FX-KURSER"
+    ' --- FIN PATCH 1 ---
 End Sub
 
 Private Sub Upsert_Trad(tbl As ListObject, k As String, fr As String, en As String, es As String, pt As String, de As String, it As String, nl As String, sv As String)
@@ -74,9 +78,9 @@ Private Sub Upsert_Trad(tbl As ListObject, k As String, fr As String, en As Stri
             Exit Sub
         End If
     Next i
-    Dim nR As ListRow: Set nR = tbl.ListRows.Add
-    nR.Range(1, 1).Value = k: nR.Range(1, 2).Value = fr: nR.Range(1, 3).Value = en: nR.Range(1, 4).Value = es
-    nR.Range(1, 5).Value = pt: nR.Range(1, 6).Value = de: nR.Range(1, 7).Value = it: nR.Range(1, 8).Value = nl: nR.Range(1, 9).Value = sv
+    Dim nr As ListRow: Set nr = tbl.ListRows.Add
+    nr.Range(1, 1).Value = k: nr.Range(1, 2).Value = fr: nr.Range(1, 3).Value = en: nr.Range(1, 4).Value = es
+    nr.Range(1, 5).Value = pt: nr.Range(1, 6).Value = de: nr.Range(1, 7).Value = it: nr.Range(1, 8).Value = nl: nr.Range(1, 9).Value = sv
 End Sub
 
 Public Function TR(Clé As String) As String
@@ -137,15 +141,29 @@ Private Sub Preparer_Hub_Central()
     shpTitle.TextFrame2.TextRange.Lines(1).Font.Name = "ADLaM Display": shpTitle.TextFrame2.TextRange.Lines(1).Font.Size = 22: shpTitle.TextFrame2.TextRange.Lines(1).Font.Bold = True: shpTitle.TextFrame2.TextRange.Lines(1).Font.Fill.ForeColor.RGB = vbWhite
     shpTitle.TextFrame2.TextRange.Lines(2).Font.Name = "ADLaM Display": shpTitle.TextFrame2.TextRange.Lines(2).Font.Size = 11: shpTitle.TextFrame2.TextRange.Lines(2).Font.Fill.ForeColor.RGB = RGB(220, 220, 255)
     
-    ' --- LA SIGNATURE "SFP v3.2" TOP-RIGHT ---
+    ' --- LA SIGNATURE "SFP v1.0" TOP-RIGHT ---
     Dim lblVersion As Shape
     Set lblVersion = wsHome.Shapes.AddTextbox(msoTextOrientationHorizontal, 900, 5, 220, 20)
     lblVersion.Fill.Visible = msoFalse: lblVersion.Line.Visible = msoFalse
-    lblVersion.TextFrame2.TextRange.Text = "SFP v3.2"
+    lblVersion.TextFrame2.TextRange.Text = "SFP v1.0"
     lblVersion.TextFrame2.TextRange.Font.Name = "ADLaM Display": lblVersion.TextFrame2.TextRange.Font.Fill.ForeColor.RGB = vbWhite: lblVersion.TextFrame2.TextRange.Font.Bold = True: lblVersion.TextFrame2.TextRange.Font.Size = 9
     lblVersion.TextFrame2.TextRange.ParagraphFormat.Alignment = msoAlignRight
     
     ' --- LES 8 LANGUES (Cercles parfaits) ---
+    ' --- DEBUT PATCH 2 (Bouton Sync FX Tactile) ---
+    Dim btnSync As Shape
+    Set btnSync = wsHome.Shapes.AddShape(msoShapeRoundedRectangle, 600, 30, 150, 35)
+    btnSync.Fill.ForeColor.RGB = RGB(250, 218, 94) 'RGB(46, 204, 113) ' Vert Émeraude
+    btnSync.Line.Visible = msoFalse
+    btnSync.TextFrame2.TextRange.Text = TR("BTN_SYNC")
+    btnSync.TextFrame2.TextRange.Font.Name = "ADLaM Display": btnSync.TextFrame2.TextRange.Font.Bold = True: btnSync.TextFrame2.TextRange.Font.Size = 9: btnSync.TextFrame2.TextRange.Font.Fill.ForeColor.RGB = vbWhite
+    btnSync.TextFrame2.VerticalAnchor = msoAnchorMiddle: btnSync.TextFrame2.TextRange.ParagraphFormat.Alignment = msoAlignCenter
+    With btnSync.Shadow
+        .Type = msoShadow21: .Visible = msoTrue: .Style = msoShadowStyleOuterShadow: .Blur = 4: .OffsetX = 0: .OffsetY = 2: .Transparency = 0.5: .ForeColor.RGB = RGB(0, 0, 0)
+    End With
+    ' Routage U.C.R vers la cellule A25
+    wsHome.Hyperlinks.Add Anchor:=btnSync, Address:="", SubAddress:="'" & wsHome.Name & "'!A25", ScreenTip:=TR("BTN_SYNC")
+    ' --- FIN PATCH 2 ---
     Dim arrLang As Variant: arrLang = Array("FR", "EN", "ES", "PT", "DE", "IT", "NL", "SV")
     Dim i As Integer, xPos As Integer: xPos = 770
     For i = LBound(arrLang) To UBound(arrLang)
@@ -262,10 +280,10 @@ Public Sub EXECUTER_CHANGER_LANGUE(LangueCible As String)
     End If
     
     If Not trouve Then
-        Dim nR As ListRow: Set nR = tblConf.ListRows.Add
-        nR.Range(1, 1).Value = "LANGUE_UI"
-        nR.Range(1, 2).Value = LangueCible
-        nR.Range(1, 3).Value = "Langue UI Globale"
+        Dim nr As ListRow: Set nr = tblConf.ListRows.Add
+        nr.Range(1, 1).Value = "LANGUE_UI"
+        nr.Range(1, 2).Value = LangueCible
+        nr.Range(1, 3).Value = "Langue UI Globale"
     End If
     
     wsSys.Protect "SFP_ADMIN_2026", UserInterfaceOnly:=True

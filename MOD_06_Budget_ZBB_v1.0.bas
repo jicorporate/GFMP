@@ -1,3 +1,4 @@
+Attribute VB_Name = "MOD_06_Budget_ZBB"
 Option Explicit
 
 ' =========================================================================
@@ -91,6 +92,11 @@ Private Sub Garantir_Lexique_Budget()
     Upsert_Dico tblDic, "FRM_B_AMT", "Montant Alloué :", "Allocated Amount :", "Monto Asignado :", "Valor Alocado :", "Zugewiesener Betrag :", "Importo Assegnato :", "Toegewezen Bedrag :", "Tilldelat Belopp :"
     Upsert_Dico tblDic, "FRM_B_SAVE", "ALLOUER", "ALLOCATE", "ASIGNAR", "ALOCAR", "ZUWEISEN", "ASSEGNA", "TOEWIJZEN", "TILLDELA"
     Upsert_Dico tblDic, "FRM_B_CANCEL", "ANNULER", "CANCEL", "CANCELAR", "CANCELAR", "ABBRECHEN", "ANNULLA", "ANNULEREN", "AVBRYT"
+    
+    ' --- DEBUT PATCH 1 (Lexique Devise Budget) ---
+    Upsert_Dico tblDic, "FRM_B_DEV", "Devise :", "Currency :", "Divisa :", "Moeda :", "Währung :", "Valuta :", "Valuta :", "Valuta :"
+    ' --- FIN PATCH 1 ---
+    
     ' --- FIN PATCH 4 ---
 End Sub
 
@@ -140,9 +146,10 @@ Private Sub Generer_Formulaire_Budget()
     Set VBComp = VBP.VBComponents.Add(3)
     VBComp.Properties("Name") = "USF_Budget"
     Set myForm = VBComp.Designer
-    VBComp.Properties("Width") = 250: VBComp.Properties("Height") = 250
+    VBComp.Properties("Width") = 250: VBComp.Properties("Height") = 290 '250
     VBComp.Properties("Caption") = "Allocation Budgétaire"
     
+    ' --- DEBUT PATCH 1 (Réorganisation UX Parfaite) ---
     Dim t As Integer: t = 10
     
     Set ctrl = myForm.Controls.Add("Forms.Label.1", "lbl_Mois")
@@ -157,12 +164,18 @@ Private Sub Generer_Formulaire_Budget()
     ctrl.Top = t + 12: ctrl.Left = 20: ctrl.Width = 200: ctrl.Height = 18
     t = t + 35
     
-    Set ctrl = myForm.Controls.Add("Forms.Label.1", "lbl_Montant")
-    ctrl.Caption = "Montant Alloué (Base Devise) :": ctrl.Top = t: ctrl.Left = 20: ctrl.Width = 200: ctrl.Height = 12
-    Set ctrl = myForm.Controls.Add("Forms.TextBox.1", "txt_Montant")
+    Set ctrl = myForm.Controls.Add("Forms.Label.1", "lbl_Devise")
+    ctrl.Caption = "Devise :": ctrl.Top = t: ctrl.Left = 20: ctrl.Width = 200: ctrl.Height = 12
+    Set ctrl = myForm.Controls.Add("Forms.ComboBox.1", "cmb_Devise")
     ctrl.Top = t + 12: ctrl.Left = 20: ctrl.Width = 200: ctrl.Height = 18
     t = t + 35
     
+    Set ctrl = myForm.Controls.Add("Forms.Label.1", "lbl_Montant")
+    ctrl.Caption = "Montant Alloué :": ctrl.Top = t: ctrl.Left = 20: ctrl.Width = 200: ctrl.Height = 12
+    Set ctrl = myForm.Controls.Add("Forms.TextBox.1", "txt_Montant")
+    ctrl.Top = t + 12: ctrl.Left = 20: ctrl.Width = 200: ctrl.Height = 18
+    t = t + 35
+    ' --- FIN PATCH 1 ---
     Set ctrl = myForm.Controls.Add("Forms.CommandButton.1", "btn_Save")
     ctrl.Caption = "ALLOUER": ctrl.Top = t + 10: ctrl.Left = 20: ctrl.Width = 90: ctrl.Height = 25
     ctrl.BackColor = RGB(250, 218, 94): ctrl.Font.Bold = True
@@ -176,19 +189,22 @@ End Sub
 
 Private Function Code_VBA_USF_Budget() As String
     Dim c As String
+    ' --- DEBUT PATCH 2 (Initialisation Complète) ---
     c = "Option Explicit" & vbCrLf
     c = c & "Private Sub UserForm_Initialize()" & vbCrLf
     c = c & "    Me.txt_Mois.Value = MOD_06_Budget_ZBB.Obtenir_Parametre(""BUDG_FILTRE_MOIS"", Format(Date, ""yyyy-mm""))" & vbCrLf
-    
-    ' --- DEBUT PATCH 5 (Application Dynamique du Lexique) ---
+    c = c & "    Me.Caption = MOD_02_AppHome_Global.TR(""BTN_ALLOC"")" & vbCrLf
     c = c & "    Me.lbl_Mois.Caption = MOD_02_AppHome_Global.TR(""FRM_B_MOIS"")" & vbCrLf
     c = c & "    Me.lbl_Cat.Caption = MOD_02_AppHome_Global.TR(""FRM_B_CAT"")" & vbCrLf
+    c = c & "    Me.lbl_Devise.Caption = MOD_02_AppHome_Global.TR(""FRM_B_DEV"")" & vbCrLf
     c = c & "    Me.lbl_Montant.Caption = MOD_02_AppHome_Global.TR(""FRM_B_AMT"")" & vbCrLf
     c = c & "    Me.btn_Save.Caption = MOD_02_AppHome_Global.TR(""FRM_B_SAVE"")" & vbCrLf
     c = c & "    Me.btn_Cancel.Caption = MOD_02_AppHome_Global.TR(""FRM_B_CANCEL"")" & vbCrLf
-    ' --- FIN PATCH 5 ---
     
-    c = c & "    Me.Caption = MOD_02_AppHome_Global.TR(""BTN_ALLOC"")" & vbCrLf
+    ' Injection forcée de la liste des devises
+    c = c & "    Me.cmb_Devise.List = Array(""MUR"", ""EUR"", ""USD"", ""GBP"", ""ZAR"", ""XOF"")" & vbCrLf
+    c = c & "    Me.cmb_Devise.ListIndex = 0" & vbCrLf
+    
     c = c & "    Dim tbl As ListObject, i As Long" & vbCrLf
     c = c & "    On Error Resume Next: Set tbl = ThisWorkbook.Sheets(""DIM_Categorie"").ListObjects(""T_DIM_Categorie""): On Error GoTo 0" & vbCrLf
     c = c & "    If Not tbl Is Nothing Then" & vbCrLf
@@ -201,37 +217,43 @@ Private Function Code_VBA_USF_Budget() As String
     c = c & "        Next i" & vbCrLf
     c = c & "    End If" & vbCrLf
     c = c & "End Sub" & vbCrLf
-    
+    ' --- FIN PATCH 2 ---
+    ' --- DEBUT PATCH 3B (Sauvegarde Budgétaire Multi-Devises) ---
     c = c & "Private Sub btn_Save_Click()" & vbCrLf
-    c = c & "    If Me.cmb_Cat.ListIndex = -1 Then MsgBox ""Sélectionnez una catégorie."", vbCritical: Exit Sub" & vbCrLf
+    c = c & "    If Me.cmb_Cat.ListIndex = -1 Then MsgBox ""Sélectionnez une catégorie."", vbCritical: Exit Sub" & vbCrLf
     c = c & "    Dim m As String: m = Replace(Me.txt_Montant.Value, "","", ""."")" & vbCrLf
     c = c & "    If Val(m) <= 0 Then MsgBox ""Montant invalide."", vbCritical: Exit Sub" & vbCrLf
-    
     c = c & "    Dim ws As Worksheet: Set ws = ThisWorkbook.Sheets(""FACT_Budget"")" & vbCrLf
     c = c & "    ws.Unprotect ""SFP_ADMIN_2026""" & vbCrLf
     c = c & "    Dim tbl As ListObject: Set tbl = ws.ListObjects(""T_FACT_Budget"")" & vbCrLf
-    
+    c = c & "    If tbl.ListColumns.Count < 7 Then tbl.ListColumns.Add.Name = ""Devise""" & vbCrLf
     c = c & "    Dim i As Long, found As Boolean, idCat As String, targetMois As String" & vbCrLf
     c = c & "    found = False: idCat = Me.cmb_Cat.List(Me.cmb_Cat.ListIndex, 0): targetMois = Trim(Me.txt_Mois.Value)" & vbCrLf
     c = c & "    If tbl.ListRows.Count > 0 Then" & vbCrLf
     c = c & "        For i = 1 To tbl.ListRows.Count" & vbCrLf
     c = c & "            If CStr(tbl.DataBodyRange(i, 2).Value) = targetMois And CStr(tbl.DataBodyRange(i, 3).Value) = idCat Then" & vbCrLf
-    c = c & "                tbl.DataBodyRange(i, 4).Value = Val(m): tbl.DataBodyRange(i, 6).Value = Now" & vbCrLf
+    c = c & "                tbl.DataBodyRange(i, 4).Value = Val(m): tbl.DataBodyRange(i, 6).Value = Now: tbl.DataBodyRange(i, 7).Value = Me.cmb_Devise.Value" & vbCrLf
     c = c & "                found = True: Exit For" & vbCrLf
     c = c & "            End If" & vbCrLf
     c = c & "        Next i" & vbCrLf
     c = c & "    End If" & vbCrLf
-    
     c = c & "    If Not found Then" & vbCrLf
     c = c & "        Dim nr As ListRow: Set nr = tbl.ListRows.Add" & vbCrLf
     c = c & "        nr.Range(1, 1).Value = MOD_01_CoreEngine.GENERER_NOUVEL_ID(""T_FACT_Budget"")" & vbCrLf
     c = c & "        nr.Range(1, 2).Value = targetMois: nr.Range(1, 3).Value = idCat" & vbCrLf
-    c = c & "        nr.Range(1, 4).Value = Val(m): nr.Range(1, 5).Value = Application.UserName: nr.Range(1, 6).Value = Now" & vbCrLf
+    c = c & "        nr.Range(1, 4).Value = Val(m): nr.Range(1, 5).Value = Application.UserName: nr.Range(1, 6).Value = Now: nr.Range(1, 7).Value = Me.cmb_Devise.Value" & vbCrLf
     c = c & "    End If" & vbCrLf
-    
     c = c & "    ws.Protect ""SFP_ADMIN_2026"", UserInterfaceOnly:=True" & vbCrLf
-    c = c & "    Unload Me" & vbCrLf
-    c = c & "    MOD_06_Budget_ZBB.Rafraichir_Budget" & vbCrLf
+    c = c & "    Unload Me: MOD_06_Budget_ZBB.Rafraichir_Budget" & vbCrLf
+    c = c & "End Sub" & vbCrLf
+    ' --- FIN PATCH 3B ---
+    
+    ' --- DEBUT PATCH 3A (Initialisation Devise) ---
+    c = c & "    Me.cmb_Devise.List = Array(""MUR"", ""EUR"", ""USD"", ""GBP"", ""ZAR"", ""XOF"")" & vbCrLf
+    c = c & "    Me.cmb_Devise.ListIndex = 0" & vbCrLf
+    c = c & "    Me.lbl_Devise.Caption = MOD_02_AppHome_Global.TR(""FRM_B_DEV"")" & vbCrLf
+    ' --- FIN PATCH 3A ---
+    
     c = c & "End Sub" & vbCrLf
     c = c & "Private Sub btn_Cancel_Click(): Unload Me: End Sub"
     Code_VBA_USF_Budget = c
@@ -289,16 +311,21 @@ Public Sub GENERER_BUDGET_DASHBOARD()
     btnBack.TextFrame2.VerticalAnchor = msoAnchorMiddle: btnBack.TextFrame2.TextRange.ParagraphFormat.Alignment = msoAlignCenter
     btnBack.OnAction = "MOD_06_Budget_ZBB.ANIMATION_RETOUR"
     
+    ' --- DEBUT PATCH 3 (Titres et Sliders Sécurisés MOD_06) ---
+    Dim arrD() As String: arrD = Split(MoisFiltre, "-")
+    Dim dtFiltre As Date: dtFiltre = DateSerial(CInt(arrD(0)), CInt(arrD(1)), 1)
+    
     ' --- TITRE VECTORIEL (Protégé) ---
     Dim shpTitle As Shape
     Set shpTitle = wsBud.Shapes.AddTextbox(msoTextOrientationHorizontal, 180, 10, 300, 40)
     shpTitle.Fill.Visible = msoFalse: shpTitle.Line.Visible = msoFalse
-    shpTitle.TextFrame2.TextRange.Text = UCase(TR("BUDG_TITLE")) & vbCrLf & "As of : " & Format(CDate(MoisFiltre & "-01"), "mmm yyyy")
+    shpTitle.TextFrame2.TextRange.Text = UCase(TR("BUDG_TITLE")) & vbCrLf & "As of : " & Format(dtFiltre, "mmm yyyy")
     shpTitle.TextFrame2.TextRange.Lines(1).Font.Name = "ADLaM Display": shpTitle.TextFrame2.TextRange.Lines(1).Font.Size = 18: shpTitle.TextFrame2.TextRange.Lines(1).Font.Bold = True: shpTitle.TextFrame2.TextRange.Lines(1).Font.Fill.ForeColor.RGB = vbWhite
     shpTitle.TextFrame2.TextRange.Lines(2).Font.Name = "ADLaM Display": shpTitle.TextFrame2.TextRange.Lines(2).Font.Size = 10: shpTitle.TextFrame2.TextRange.Lines(2).Font.Fill.ForeColor.RGB = RGB(220, 220, 255)
     
     ' --- TIME SLIDER (Mois) ---
-    Dim LabelDate As String: LabelDate = UCase(Format(CDate(MoisFiltre & "-01"), "mmmm yyyy"))
+    Dim LabelDate As String: LabelDate = UCase(Format(dtFiltre, "mmmm yyyy"))
+    ' --- FIN PATCH 3 ---
     Dessiner_Widget wsBud, "BTN_BUDG_PREV", "<", 480, 15, 35, 32, RGB(220, 220, 220), RGB(0, 0, 0), "MOD_06_Budget_ZBB.MOIS_PRECEDENT_BUDG"
     Dessiner_Widget wsBud, "LBL_BUDG_MONTH", LabelDate, 520, 15, 150, 32, RGB(220, 220, 220), RGB(0, 0, 0), ""
     Dessiner_Widget wsBud, "BTN_BUDG_NEXT", ">", 675, 15, 35, 32, RGB(220, 220, 220), RGB(0, 0, 0), "MOD_06_Budget_ZBB.MOIS_SUIVANT_BUDG"
@@ -325,9 +352,9 @@ Public Sub GENERER_BUDGET_DASHBOARD()
     End With
     btnAlloc.OnAction = "MOD_06_Budget_ZBB.ANIMATION_OUVRIR_ALLOC"
     
-    ' --- MOTEUR DE TAUX DE CHANGE ---
-    Dim dictTaux As Object: Set dictTaux = CreateObject("Scripting.Dictionary")
-    dictTaux("MUR") = 1: dictTaux("EUR") = 49.5: dictTaux("USD") = 46.2: dictTaux("GBP") = 58.1: dictTaux("ZAR") = 2.4: dictTaux("XOF") = 0.083
+    ' --- DEBUT PATCH 4 ---
+    Dim dictTaux As Object: Set dictTaux = MOD_01_CoreEngine.GET_TAUX_CHANGE()
+    ' --- FIN PATCH 4 ---
     Dim TauxC As Double: TauxC = IIf(dictTaux.exists(DeviseFiltre), dictTaux(DeviseFiltre), 1)
     
     ' --- MOTEUR ETL DOUBLE ---
@@ -359,13 +386,26 @@ Public Sub GENERER_BUDGET_DASHBOARD()
     Dim dictAlloc As Object: Set dictAlloc = CreateObject("Scripting.Dictionary")
     Dim TotAlloc As Double: TotAlloc = 0
     
+    ' --- DEBUT PATCH 4 (ETL Budgétaire Multi-Devises) ---
     If Not tblBud Is Nothing Then
         If tblBud.ListRows.Count > 0 Then
             Dim arrB As Variant: arrB = tblBud.DataBodyRange.Value
             For x = 1 To UBound(arrB, 1)
                 If Trim(CStr(arrB(x, 2))) = MoisFiltre Then
                     Dim idC_B As String: idC_B = CStr(arrB(x, 3))
-                    Dim ValAlloc As Double: ValAlloc = CDbl(arrB(x, 4)) / TauxC
+                    
+                    ' Rétrocompatibilité : Si la colonne Devise est vide ou inexistante, on assume MUR
+                    Dim devB As String: devB = "MUR"
+                    If UBound(arrB, 2) >= 7 Then
+                        If Trim(CStr(arrB(x, 7))) <> "" Then devB = UCase(Trim(CStr(arrB(x, 7))))
+                    End If
+                    
+                    ' Extraction du Taux d'origine du Budget
+                    Dim TauxB As Double: TauxB = IIf(dictTaux.exists(devB), dictTaux(devB), 1)
+                    
+                    ' Mathématique ZBB : (Allocation * Taux Origine) / Taux Dashboard
+                    Dim ValAlloc As Double: ValAlloc = (CDbl(arrB(x, 4)) * TauxB) / TauxC
+                    
                     dictAlloc(idC_B) = dictAlloc(idC_B) + ValAlloc
                     TotAlloc = TotAlloc + ValAlloc
                     dictMaster(idC_B) = True ' Ajout au Master
@@ -373,7 +413,7 @@ Public Sub GENERER_BUDGET_DASHBOARD()
             Next x
         End If
     End If
-    
+    ' --- FIN PATCH 4 ---
     Dim dictSpent As Object: Set dictSpent = CreateObject("Scripting.Dictionary")
     Dim TotSpent As Double: TotSpent = 0
     
@@ -554,11 +594,14 @@ Public Sub MOIS_SUIVANT_BUDG()
     Rafraichir_Budget
 End Sub
 
+' --- DEBUT PATCH 4 (Navigation Temporelle Sécurisée MOD_06) ---
 Private Sub Modifier_Mois_Filtre_BUDG(DeltaMois As Integer)
     Dim actuel As String: actuel = Obtenir_Parametre("BUDG_FILTRE_MOIS", Format(Date, "yyyy-mm"))
-    Dim d As Date: d = DateAdd("m", DeltaMois, CDate(actuel & "-01"))
+    Dim arrM() As String: arrM = Split(actuel, "-")
+    Dim d As Date: d = DateSerial(CInt(arrM(0)), CInt(arrM(1)) + DeltaMois, 1)
     Modifier_Parametre "BUDG_FILTRE_MOIS", Format(d, "yyyy-mm")
 End Sub
+' --- FIN PATCH 4 ---
 
 Public Sub Rafraichir_Budget()
     Application.ScreenUpdating = False

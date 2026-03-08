@@ -1,3 +1,4 @@
+Attribute VB_Name = "MOD_04_Dashboard_ETL"
 Option Explicit
 
 ' =========================================================================
@@ -139,6 +140,11 @@ Public Sub GENERER_DASHBOARD()
     
     ' --- LE TIME SLIDER (Flèches ANSI) ---
     'Dim LabelDate As String: LabelDate = UCase(Format(CDate(MoisFiltre & "-01"), "mmmm yyyy"))
+    ' --- DEBUT PATCH 1 (Extraction Mathématique MOD_05) ---
+    ' --- 5. LE TIME SLIDER (Machine à remonter le temps) ---
+    'Dim arrD() As String: arrD = Split(MoisFiltre, "-")
+    'Dim LabelDate As String: LabelDate = UCase(Format(DateSerial(CInt(arrD(0)), CInt(arrD(1)), 1), "mmmm yyyy"))
+    ' --- FIN PATCH 1 ---
     'Dessiner_Widget wsDash, "BTN_PREV_MONTH", "<", 440, 15, 20, 32, RGB(220, 220, 220), RGB(0, 0, 0), "MOD_04_Dashboard_ETL.MOIS_PRECEDENT"
     'Dessiner_Widget wsDash, "LBL_MONTH", LabelDate, 465, 15, 145, 32, RGB(220, 220, 220), RGB(0, 0, 0), ""
     'Dessiner_Widget wsDash, "BTN_NEXT_MONTH", ">", 615, 15, 25, 32, RGB(220, 220, 220), RGB(0, 0, 0), "MOD_04_Dashboard_ETL.MOIS_SUIVANT"
@@ -173,14 +179,9 @@ Public Sub GENERER_DASHBOARD()
     Dessiner_Widget wsDash, "BTN_DEV_USD", "USD", devLeft + 110, 15, 50, 35, IIf(DeviseFiltre = "USD", RGB(250, 218, 94), RGB(40, 70, 180)), IIf(DeviseFiltre = "USD", RGB(40, 40, 40), vbWhite), "MOD_04_Dashboard_ETL.CHANGER_DEVISE"
     Dessiner_Widget wsDash, "BTN_DEV_XOF", "XOF", devLeft + 165, 15, 50, 35, IIf(DeviseFiltre = "XOF", RGB(250, 218, 94), RGB(40, 70, 180)), IIf(DeviseFiltre = "XOF", RGB(40, 40, 40), vbWhite), "MOD_04_Dashboard_ETL.CHANGER_DEVISE"
     
-    ' --- MOTEUR DE TAUX DE CHANGE (Taux basés sur 1 MUR) ---
-    Dim dictTaux As Object: Set dictTaux = CreateObject("Scripting.Dictionary")
-    dictTaux("MUR") = 1
-    dictTaux("EUR") = 49.5  ' 1 EUR = 49.5 MUR
-    dictTaux("USD") = 46.2  ' 1 USD = 46.2 MUR
-    dictTaux("GBP") = 58.1
-    dictTaux("ZAR") = 2.4
-    dictTaux("XOF") = 0.083
+    ' --- DEBUT PATCH 2 ---
+    Dim dictTaux As Object: Set dictTaux = MOD_01_CoreEngine.GET_TAUX_CHANGE()
+    ' --- FIN PATCH 2 ---
     
     ' --- PHASE D'EXTRACTION (ETL FILTRÉ EN MÉMOIRE) ---
     Dim tblFact As ListObject
