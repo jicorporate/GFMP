@@ -156,7 +156,7 @@ Private Sub Preparer_Hub_Central()
     btnSync.Fill.ForeColor.RGB = RGB(250, 218, 94) 'RGB(46, 204, 113) ' Vert Émeraude
     btnSync.Line.Visible = msoFalse
     btnSync.TextFrame2.TextRange.Text = TR("BTN_SYNC")
-    btnSync.TextFrame2.TextRange.Font.Name = "ADLaM Display": btnSync.TextFrame2.TextRange.Font.Bold = True: btnSync.TextFrame2.TextRange.Font.Size = 9: btnSync.TextFrame2.TextRange.Font.Fill.ForeColor.RGB = vbWhite
+    btnSync.TextFrame2.TextRange.Font.Name = "ADLaM Display": btnSync.TextFrame2.TextRange.Font.Bold = True: btnSync.TextFrame2.TextRange.Font.Size = 9: btnSync.TextFrame2.TextRange.Font.Fill.ForeColor.RGB = RGB(0, 0, 0) ' vbWhite
     btnSync.TextFrame2.VerticalAnchor = msoAnchorMiddle: btnSync.TextFrame2.TextRange.ParagraphFormat.Alignment = msoAlignCenter
     With btnSync.Shadow
         .Type = msoShadow21: .Visible = msoTrue: .Style = msoShadowStyleOuterShadow: .Blur = 4: .OffsetX = 0: .OffsetY = 2: .Transparency = 0.5: .ForeColor.RGB = RGB(0, 0, 0)
