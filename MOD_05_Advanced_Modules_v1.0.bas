@@ -1,3 +1,4 @@
+Attribute VB_Name = "MOD_05_Advanced_Modules"
 Option Explicit
 
 ' =========================================================================
@@ -156,9 +157,9 @@ Public Sub GENERER_NET_WORTH_DASHBOARD()
     Dessiner_Widget wsNW, "BTN_NW_DEV_USD", "USD", devLeft + 110, 15, 50, 32, IIf(DeviseFiltre = "USD", RGB(250, 218, 94), RGB(40, 70, 180)), IIf(DeviseFiltre = "USD", RGB(40, 40, 40), vbWhite), "MOD_05_Advanced_Modules.CHANGER_DEVISE_NW"
     Dessiner_Widget wsNW, "BTN_NW_DEV_XOF", "XOF", devLeft + 165, 15, 50, 32, IIf(DeviseFiltre = "XOF", RGB(250, 218, 94), RGB(40, 70, 180)), IIf(DeviseFiltre = "XOF", RGB(40, 40, 40), vbWhite), "MOD_05_Advanced_Modules.CHANGER_DEVISE_NW"
     
-    ' --- MOTEUR DE TAUX DE CHANGE ---
-    Dim dictTaux As Object: Set dictTaux = CreateObject("Scripting.Dictionary")
-    dictTaux("MUR") = 1: dictTaux("EUR") = 49.5: dictTaux("USD") = 46.2: dictTaux("GBP") = 58.1: dictTaux("ZAR") = 2.4: dictTaux("XOF") = 0.083
+    ' --- DEBUT PATCH 3 ---
+    Dim dictTaux As Object: Set dictTaux = MOD_01_CoreEngine.GET_TAUX_CHANGE()
+    ' --- FIN PATCH 3 ---
     
     ' --- 7. PHASE D'EXTRACTION (ETL CUMULATIF ACCOUNT-CENTRIC CORRIGÉ) ---
     Dim tblCompte As ListObject, tblFact As ListObject
@@ -389,18 +390,23 @@ End Sub
 ' -------------------------------------------------------------------------
 ' 4. MOTEUR INTERACTIF (Time Slider, Devises, Retour Tactile)
 ' -------------------------------------------------------------------------
+' --- DEBUT PATCH 2 (Navigation Temporelle Sécurisée MOD_05) ---
 Public Sub MOIS_PRECEDENT_NW()
     Anim_Btn_Bleu Application.Caller
-    Modifier_Parametre "NW_FILTRE_MOIS", Format(DateAdd("m", -1, CDate(Obtenir_Parametre("NW_FILTRE_MOIS", Format(Date, "yyyy-mm")) & "-01")), "yyyy-mm")
+    Dim actuel As String: actuel = Obtenir_Parametre("NW_FILTRE_MOIS", Format(Date, "yyyy-mm"))
+    Dim arrM() As String: arrM = Split(actuel, "-")
+    Modifier_Parametre "NW_FILTRE_MOIS", Format(DateSerial(CInt(arrM(0)), CInt(arrM(1)) - 1, 1), "yyyy-mm")
     Rafraichir_NW_Dashboard
 End Sub
 
 Public Sub MOIS_SUIVANT_NW()
     Anim_Btn_Bleu Application.Caller
-    Modifier_Parametre "NW_FILTRE_MOIS", Format(DateAdd("m", 1, CDate(Obtenir_Parametre("NW_FILTRE_MOIS", Format(Date, "yyyy-mm")) & "-01")), "yyyy-mm")
+    Dim actuel As String: actuel = Obtenir_Parametre("NW_FILTRE_MOIS", Format(Date, "yyyy-mm"))
+    Dim arrM() As String: arrM = Split(actuel, "-")
+    Modifier_Parametre "NW_FILTRE_MOIS", Format(DateSerial(CInt(arrM(0)), CInt(arrM(1)) + 1, 1), "yyyy-mm")
     Rafraichir_NW_Dashboard
 End Sub
-
+' --- FIN PATCH 2 ---
 Public Sub CHANGER_DEVISE_NW()
     Dim btnName As String: On Error Resume Next: btnName = Application.Caller: On Error GoTo 0
     If btnName <> "" Then

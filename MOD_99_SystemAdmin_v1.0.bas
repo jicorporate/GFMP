@@ -159,3 +159,85 @@ Public Sub POWER_BI_SECURISER_BACKEND()
            "La forteresse est verrouillée. Les tables sont à nouveau 'VeryHidden'." & vbCrLf & _
            "Power BI continuera à se mettre à jour silencieusement en arrière-plan.", vbInformation, "ETL Bridge Fermé"
 End Sub
+' =========================================================================
+' MOTEUR API : MISE À JOUR DYNAMIQUE DES DEVISES (WEB SCRAPING JSON)
+' =========================================================================
+Public Sub ACTUALISER_DEVISES_WEB()
+    Application.ScreenUpdating = False
+    
+    ' 1. Connexion silencieuse à l'API publique (Base = MUR)
+    Dim url As String: url = "https://open.er-api.com/v6/latest/MUR"
+    Dim http As Object
+    On Error Resume Next
+    Set http = CreateObject("MSXML2.XMLHTTP")
+    http.Open "GET", url, False
+    http.send
+    
+    If http.Status <> 200 Then
+        MsgBox "Erreur de connexion au serveur de devises." & vbCrLf & "Vérifiez votre connexion internet.", vbCritical, "Échec API"
+        Exit Sub
+    End If
+    
+    Dim json As String: json = http.responseText
+    On Error GoTo 0
+    
+    ' 2. Déverrouillage autonome du Backend
+    Dim wsSys As Worksheet: Set wsSys = ThisWorkbook.Sheets("SYS_Config")
+    wsSys.Unprotect "SFP_ADMIN_2026"
+    
+    Dim tblDev As ListObject
+    On Error Resume Next: Set tblDev = wsSys.ListObjects("T_SYS_Devises"): On Error GoTo 0
+    
+    If Not tblDev Is Nothing Then
+        Dim i As Long
+        Dim devise As String, rateAPI As Double, sysRate As Double
+        
+        ' 3. Traitement O(n) et Injection
+        For i = 1 To tblDev.ListRows.Count
+            devise = UCase(Trim(CStr(tblDev.DataBodyRange(i, 1).Value)))
+            
+            If devise = "MUR" Then
+                tblDev.DataBodyRange(i, 2).Value = 1
+            Else
+                ' Extraction du taux depuis le JSON brut
+                rateAPI = Extraire_Taux_JSON(json, devise)
+                
+                If rateAPI > 0 Then
+                    ' Mathématique : L'API donne la valeur d'1 MUR dans la devise étrangère.
+                    ' Le système SFP a besoin de la valeur d'1 unité étrangère en MUR (ex: 1 EUR = 49.5 MUR).
+                    sysRate = 1 / rateAPI
+                    tblDev.DataBodyRange(i, 2).Value = Round(sysRate, 4)
+                End If
+            End If
+        Next i
+    Else
+        MsgBox "La table des devises n'est pas encore initialisée." & vbCrLf & "Ouvrez un Dashboard pour la créer automatiquement.", vbExclamation
+    End If
+    
+    ' 4. Reverrouillage absolu
+    wsSys.Protect "SFP_ADMIN_2026", UserInterfaceOnly:=True
+    Application.ScreenUpdating = True
+    
+    MsgBox "TAUX DE CHANGE SYNCHRONISÉS." & vbCrLf & vbCrLf & _
+           "Les devises ont été mises à jour avec succès depuis le marché en direct.", vbInformation, "Synchronisation FX"
+End Sub
+
+' --- Parseur JSON Ultra-Léger (Sans librairie externe) ---
+Private Function Extraire_Taux_JSON(ByVal json As String, ByVal devise As String) As Double
+    Dim searchStr As String: searchStr = """" & devise & """:"
+    Dim pos As Long: pos = InStr(1, json, searchStr, vbTextCompare)
+    
+    If pos > 0 Then
+        pos = pos + Len(searchStr)
+        Dim endPos As Long: endPos = InStr(pos, json, ",")
+        If endPos = 0 Then endPos = InStr(pos, json, "}")
+        
+        Dim valStr As String: valStr = Mid(json, pos, endPos - pos)
+        valStr = Trim(Replace(valStr, """", ""))
+        
+        ' La fonction Val() force la lecture du point décimal américain natif du JSON
+        Extraire_Taux_JSON = Val(valStr)
+    Else
+        Extraire_Taux_JSON = 0
+    End If
+End Function

@@ -1,3 +1,4 @@
+Attribute VB_Name = "MOD_03_Gatekeeper"
 Option Explicit
 
 ' =========================================================================
@@ -151,6 +152,12 @@ Public Sub Garantir_Lexique_Formulaire()
     Upsert_Dico tblDic, "OPT_DEP", "DÉPENSE", "EXPENSE", "GASTO", "DESPESA", "AUSGABE", "USCITA", "UITGAVE", "UTGIFT"
     Upsert_Dico tblDic, "OPT_REV", "REVENU", "INCOME", "INGRESO", "RENDA", "EINKOMMEN", "ENTRATA", "INKOMSTEN", "INKOMST"
     Upsert_Dico tblDic, "OPT_TRA", "TRANSFERT", "TRANSFER", "TRANSFERENCIA", "TRANSFERÊNCIA", "TRANSFER", "TRASFERIMENTO", "OVERDRACHT", "ÖVERFÖRING"
+<<<<<<< HEAD
+    ' --- DEBUT PATCH 1 (Lexique Complet Sans Abréviation) ---
+    Upsert_Dico tblDic, "FRM_DEST", "Compte Destination :", "Destination Account :", "Cuenta Destino :", "Conta Destino :", "Zielkonto :", "Conto Destinazione :", "Doelrekening :", "Målkonto :"
+    ' --- FIN PATCH 1 ---
+=======
+>>>>>>> bbc616625fa146e9711a89e8c558aeb3ef53391f
     ' --- FIN PATCH 1 ---
 End Sub
 
@@ -258,9 +265,39 @@ Private Function Code_VBA_Formulaire() As String
     L(i) = "    End If": i = i + 1
     L(i) = "End Sub": i = i + 1
     
+    'L(i) = "Private Sub cmb_Compte_Change(): Gerer_Visibilite_Double Me.cmb_Compte, Me.txt_New_Compte, Me.cmb_New_Cpt_Type, Me.lbl_txt_New_Compte: End Sub": i = i + 1
+    'L(i) = "Private Sub cmb_Categorie_Change(): Gerer_Visibilite_Double Me.cmb_Categorie, Me.txt_New_Categorie, Me.cmb_New_Cat_Type, Me.lbl_txt_New_Categorie: End Sub": i = i + 1
+    'L(i) = "Private Sub cmb_Tiers_Change(): Gerer_Visibilite_Simple Me.cmb_Tiers, Me.txt_New_Tiers, Me.lbl_txt_New_Tiers: End Sub": i = i + 1
+    
+    ' --- DEBUT PATCH 2 (Le Smart-Gatekeeper UI) ---
+    ' --- DEBUT PATCH (Restauration Écouteur Compte) ---
     L(i) = "Private Sub cmb_Compte_Change(): Gerer_Visibilite_Double Me.cmb_Compte, Me.txt_New_Compte, Me.cmb_New_Cpt_Type, Me.lbl_txt_New_Compte: End Sub": i = i + 1
-    L(i) = "Private Sub cmb_Categorie_Change(): Gerer_Visibilite_Double Me.cmb_Categorie, Me.txt_New_Categorie, Me.cmb_New_Cat_Type, Me.lbl_txt_New_Categorie: End Sub": i = i + 1
+    L(i) = "Private Sub cmb_Categorie_Change(): Gerer_Visibilite_Double Me.cmb_Categorie, Me.txt_New_Categorie, Me.cmb_New_Cat_Type, Me.lbl_txt_New_Categorie: Update_Tiers_Mode: End Sub": i = i + 1
+    L(i) = "Private Sub cmb_New_Cat_Type_Change(): Update_Tiers_Mode: End Sub": i = i + 1
     L(i) = "Private Sub cmb_Tiers_Change(): Gerer_Visibilite_Simple Me.cmb_Tiers, Me.txt_New_Tiers, Me.lbl_txt_New_Tiers: End Sub": i = i + 1
+    ' --- FIN PATCH ---
+    
+    L(i) = "Private Sub Update_Tiers_Mode()": i = i + 1
+    L(i) = "    Dim t As String: t = """"": i = i + 1
+    L(i) = "    If Me.txt_New_Categorie.Visible Then": i = i + 1
+    L(i) = "        Select Case Me.cmb_New_Cat_Type.ListIndex: Case 0: t = ""DEPENSE"": Case 1: t = ""REVENU"": Case 2: t = ""TRANSFERT"": End Select": i = i + 1
+    L(i) = "    ElseIf Me.cmb_Categorie.ListIndex <> -1 Then": i = i + 1
+    L(i) = "        Dim wsC As Worksheet: Set wsC = ThisWorkbook.Sheets(""DIM_Categorie"")": i = i + 1
+    L(i) = "        Dim r As Long: For r = 1 To wsC.ListObjects(""T_DIM_Categorie"").ListRows.Count": i = i + 1
+    L(i) = "            If CStr(wsC.ListObjects(""T_DIM_Categorie"").DataBodyRange(r, 1).Value) = CStr(Me.cmb_Categorie.List(Me.cmb_Categorie.ListIndex, 0)) Then t = UCase(Trim(wsC.ListObjects(""T_DIM_Categorie"").DataBodyRange(r, 3).Value)): Exit For": i = i + 1
+    L(i) = "        Next r": i = i + 1
+    L(i) = "    End If": i = i + 1
+    L(i) = "    If t = ""TRANSFERT"" Then": i = i + 1
+    L(i) = "        Me.lbl_cmb_Tiers.Caption = TR(""FRM_DEST"")": i = i + 1
+    L(i) = "        Charger_Combo Me.cmb_Tiers, ""T_DIM_Compte""": i = i + 1
+    L(i) = "        Me.lbl_txt_New_Tiers.Visible = False: Me.txt_New_Tiers.Visible = False: Me.txt_New_Tiers.Value = """"": i = i + 1
+    L(i) = "    Else": i = i + 1
+    L(i) = "        Me.lbl_cmb_Tiers.Caption = TR(""FRM_TIERS"")": i = i + 1
+    L(i) = "        Charger_Combo Me.cmb_Tiers, ""T_DIM_Tiers""": i = i + 1
+    L(i) = "        Gerer_Visibilite_Simple Me.cmb_Tiers, Me.txt_New_Tiers, Me.lbl_txt_New_Tiers": i = i + 1
+    L(i) = "    End If": i = i + 1
+    L(i) = "End Sub": i = i + 1
+    ' --- FIN PATCH 2 ---
     
     L(i) = "Private Sub Gerer_Visibilite_Double(cmb As MSForms.ComboBox, txt As MSForms.TextBox, cmbType As MSForms.ComboBox, lbl As MSForms.Label)": i = i + 1
     L(i) = "    Dim estAutre As Boolean: estAutre = (InStr(1, cmb.Text, ""Autre"", vbTextCompare) > 0 Or InStr(1, cmb.Text, ""Other"", vbTextCompare) > 0)": i = i + 1
@@ -358,6 +395,29 @@ Private Function Code_VBA_Formulaire() As String
     L(i) = "    nR.Range(1, 8).Value = MOD_01_CoreEngine.CLEAN_TEXT(Me.txt_Description.Value)": i = i + 1
     L(i) = "    nR.Range(1, 9).Value = Application.UserName: nR.Range(1, 10).Value = Now": i = i + 1
     
+<<<<<<< HEAD
+    ' --- DEBUT PATCH 3 (Double-Entrée Réelle & Atomique) ---
+    L(i) = "    If typeF = ""TRANSFERT"" Then": i = i + 1
+    L(i) = "        If idC = idT Then Err.Raise vbObjectError + 1, """", ""Le compte source et destination doivent être différents."": Exit Sub": i = i + 1
+    ' LIGNE 1 : DÉBIT DU COMPTE SOURCE
+    L(i) = "        nR.Range(1, 3).Value = idC: nR.Range(1, 4).Value = idCat: nR.Range(1, 5).Value = idT": i = i + 1
+    L(i) = "        nR.Range(1, 6).Value = -dblMontant": i = i + 1
+    L(i) = "        nR.Range(1, 7).Value = Me.cmb_Devise.Value: nR.Range(1, 8).Value = MOD_01_CoreEngine.CLEAN_TEXT(Me.txt_Description.Value): nR.Range(1, 9).Value = Application.UserName: nR.Range(1, 10).Value = Now": i = i + 1
+    ' LIGNE 2 : CRÉDIT DU COMPTE DESTINATION
+    L(i) = "        Dim nR2 As ListRow: Set nR2 = tblFact.ListRows.Add": i = i + 1
+    L(i) = "        nR2.Range(1, 1).Value = MOD_01_CoreEngine.GENERER_NOUVEL_ID(""T_FACT_Transaction"")": i = i + 1
+    L(i) = "        nR2.Range(1, 2).Value = DateSerial(CInt(dParts(2)), CInt(dParts(0)), CInt(dParts(1)))": i = i + 1
+    L(i) = "        nR2.Range(1, 3).Value = idT: nR2.Range(1, 4).Value = idCat: nR2.Range(1, 5).Value = idC": i = i + 1
+    L(i) = "        nR2.Range(1, 6).Value = dblMontant": i = i + 1
+    L(i) = "        nR2.Range(1, 7).Value = Me.cmb_Devise.Value: nR2.Range(1, 8).Value = MOD_01_CoreEngine.CLEAN_TEXT(Me.txt_Description.Value): nR2.Range(1, 9).Value = Application.UserName: nR2.Range(1, 10).Value = Now": i = i + 1
+    L(i) = "    Else": i = i + 1
+    ' TRANSACTION STANDARD (Dépense/Revenu)
+    L(i) = "        nR.Range(1, 3).Value = idC: nR.Range(1, 4).Value = idCat: nR.Range(1, 5).Value = idT": i = i + 1
+    L(i) = "        nR.Range(1, 6).Value = dblMontant": i = i + 1
+    L(i) = "        nR.Range(1, 7).Value = Me.cmb_Devise.Value: nR.Range(1, 8).Value = MOD_01_CoreEngine.CLEAN_TEXT(Me.txt_Description.Value): nR.Range(1, 9).Value = Application.UserName: nR.Range(1, 10).Value = Now": i = i + 1
+    L(i) = "    End If": i = i + 1
+    ' --- FIN PATCH 3 ---
+=======
     ' Double Entrée Atomique
     L(i) = "    If typeF = ""TRANSFERT"" Then": i = i + 1
     L(i) = "        Dim wCp As Worksheet: Set wCp = ThisWorkbook.Sheets(""DIM_Compte"")": i = i + 1
@@ -380,6 +440,7 @@ Private Function Code_VBA_Formulaire() As String
     L(i) = "        nR2.Range(1, 7).Value = Me.cmb_Devise.Value: nR2.Range(1, 8).Value = ""[AUTO-CREDIT] "" & MOD_01_CoreEngine.CLEAN_TEXT(Me.txt_Description.Value)": i = i + 1
     L(i) = "        nR2.Range(1, 9).Value = ""SYSTEM"": nR2.Range(1, 10).Value = Now": i = i + 1
     L(i) = "    End If": i = i + 1
+>>>>>>> bbc616625fa146e9711a89e8c558aeb3ef53391f
     
     ' --- COMMIT TRAN ---
     L(i) = "    wsFact.Protect ""SFP_ADMIN_2026"", UserInterfaceOnly:=True": i = i + 1
