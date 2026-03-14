@@ -17,12 +17,11 @@ Public Sub DEPLOIEMENT_ETAPE_5_DASHBOARD()
     Application.ScreenUpdating = True
 End Sub
 
-' -------------------------------------------------------------------------
-' 1. STATE MANAGEMENT (Mois et Devise Actifs)
-' -------------------------------------------------------------------------
+' --- DEBUT PATCH 3 (Anti-Crash MOD_04) ---
 Private Function Obtenir_Parametre(NomParam As String, ValeurDefaut As String) As String
+    Dim wsSys As Worksheet: Set wsSys = ThisWorkbook.Sheets("SYS_Config")
     Dim tblConf As ListObject, i As Long
-    On Error Resume Next: Set tblConf = ThisWorkbook.Sheets("SYS_Config").ListObjects("T_SYS_Config"): On Error GoTo 0
+    On Error Resume Next: Set tblConf = wsSys.ListObjects("T_SYS_Config"): On Error GoTo 0
     If tblConf Is Nothing Then Obtenir_Parametre = ValeurDefaut: Exit Function
     
     For i = 1 To tblConf.ListRows.Count
@@ -32,10 +31,13 @@ Private Function Obtenir_Parametre(NomParam As String, ValeurDefaut As String) A
         End If
     Next i
     
+    wsSys.Unprotect "SFP_ADMIN_2026"
     Dim nr As ListRow: Set nr = tblConf.ListRows.Add
     nr.Range(1, 1).Value = NomParam: nr.Range(1, 2).Value = ValeurDefaut: nr.Range(1, 3).Value = "Filtre Actif"
+    wsSys.Protect "SFP_ADMIN_2026", UserInterfaceOnly:=True
     Obtenir_Parametre = ValeurDefaut
 End Function
+' --- FIN PATCH 3 ---
 
 Private Sub Modifier_Parametre(NomParam As String, NouvelleValeur As String)
     Dim wsSys As Worksheet: Set wsSys = ThisWorkbook.Sheets("SYS_Config"): wsSys.Unprotect "SFP_ADMIN_2026"
@@ -91,7 +93,8 @@ Public Sub GENERER_DASHBOARD()
     ' --- DEBUT PATCH 1 (Filtres Séparés) ---
     Dim AnneeFiltre As String: AnneeFiltre = Obtenir_Parametre("DASH_FILTRE_ANNEE", CStr(Year(Date)))
     Dim MoisFiltreSeul As String: MoisFiltreSeul = Obtenir_Parametre("DASH_FILTRE_MOIS_SEUL", Format(Month(Date), "00"))
-    Dim DeviseFiltre As String: DeviseFiltre = Obtenir_Parametre("DASH_FILTRE_DEV", "MUR")
+    'Dim DeviseFiltre As String: DeviseFiltre = Obtenir_Parametre("DASH_FILTRE_DEV", "MUR")
+    Dim DeviseFiltre As String: DeviseFiltre = Obtenir_Parametre("DASH_FILTRE_DEV", Obtenir_Parametre("SYS_DEVISE_BASE", "MUR"))
     ' --- FIN PATCH 1 ---
 
     Dim wsDash As Worksheet
@@ -148,36 +151,32 @@ Public Sub GENERER_DASHBOARD()
     'Dessiner_Widget wsDash, "BTN_PREV_MONTH", "<", 440, 15, 20, 32, RGB(220, 220, 220), RGB(0, 0, 0), "MOD_04_Dashboard_ETL.MOIS_PRECEDENT"
     'Dessiner_Widget wsDash, "LBL_MONTH", LabelDate, 465, 15, 145, 32, RGB(220, 220, 220), RGB(0, 0, 0), ""
     'Dessiner_Widget wsDash, "BTN_NEXT_MONTH", ">", 615, 15, 25, 32, RGB(220, 220, 220), RGB(0, 0, 0), "MOD_04_Dashboard_ETL.MOIS_SUIVANT"
-    ' --- DEBUT PATCH 2 (Sliders Séparés) ---
+    ' --- DEBUT PATCH 2 (Grille UX Parfaite Cashflow) ---
     Dim LabelAnnee As String: LabelAnnee = AnneeFiltre
     Dim LabelMois As String
-    'If MoisFiltreSeul = "00" Then LabelMois = "ANNEE ENTIERE" Else LabelMois = UCase(Format(CDate("2020-" & MoisFiltreSeul & "-01"), "mmmm"))
-    ' --- PATCH ANTI-CRASH (DATE SERIAL) ---
-    If MoisFiltreSeul = "00" Then
-        LabelMois = "ANNEE ENTIERE"
-    Else
-        ' Utilisation de DateSerial pour forcer le typage Date sans passer par du texte (Zéro Erreur 13)
-        LabelMois = UCase(Format(DateSerial(2020, CInt(MoisFiltreSeul), 1), "mmmm"))
-    End If
-    ' --- FIN PATCH ---
-    
-    ' Slider Année
+    If MoisFiltreSeul = "00" Then LabelMois = "ANNEE ENTIERE" Else LabelMois = UCase(Format(DateSerial(2020, CInt(MoisFiltreSeul), 1), "mmmm"))
+
+    ' Slider Année (Ancré à 400)
     Dessiner_Widget wsDash, "BTN_PREV_YEAR", "<", 400, 15, 20, 32, RGB(220, 220, 220), RGB(0, 0, 0), "MOD_04_Dashboard_ETL.ANNEE_PRECEDENTE"
-    Dessiner_Widget wsDash, "LBL_YEAR", LabelAnnee, 425, 15, 30, 32, RGB(220, 220, 220), RGB(0, 0, 0), ""
-    Dessiner_Widget wsDash, "BTN_NEXT_YEAR", ">", 460, 15, 20, 32, RGB(220, 220, 220), RGB(0, 0, 0), "MOD_04_Dashboard_ETL.ANNEE_SUIVANTE"
-    
-    ' Slider Mois ("00" = Année Entière)
-    Dessiner_Widget wsDash, "BTN_PREV_MONTH", "<", 515, 15, 20, 32, RGB(220, 220, 220), RGB(0, 0, 0), "MOD_04_Dashboard_ETL.MOIS_PRECEDENT"
-    Dessiner_Widget wsDash, "LBL_MONTH", LabelMois, 540, 15, 110, 32, RGB(220, 220, 220), RGB(0, 0, 0), ""
-    Dessiner_Widget wsDash, "BTN_NEXT_MONTH", ">", 655, 15, 20, 32, RGB(220, 220, 220), RGB(0, 0, 0), "MOD_04_Dashboard_ETL.MOIS_SUIVANT"
+    Dessiner_Widget wsDash, "LBL_YEAR", LabelAnnee, 425, 15, 50, 32, RGB(220, 220, 220), RGB(0, 0, 0), ""
+    Dessiner_Widget wsDash, "BTN_NEXT_YEAR", ">", 480, 15, 20, 32, RGB(220, 220, 220), RGB(0, 0, 0), "MOD_04_Dashboard_ETL.ANNEE_SUIVANTE"
+
+    ' Slider Mois (Ancré à 510)
+    Dessiner_Widget wsDash, "BTN_PREV_MONTH", "<", 510, 15, 20, 32, RGB(220, 220, 220), RGB(0, 0, 0), "MOD_04_Dashboard_ETL.MOIS_PRECEDENT"
+    Dessiner_Widget wsDash, "LBL_MONTH", LabelMois, 535, 15, 110, 32, RGB(220, 220, 220), RGB(0, 0, 0), ""
+    Dessiner_Widget wsDash, "BTN_NEXT_MONTH", ">", 650, 15, 20, 32, RGB(220, 220, 220), RGB(0, 0, 0), "MOD_04_Dashboard_ETL.MOIS_SUIVANT"
+
+    ' Boutons Devises (Ancrés à 680, Espacement strict de 50px)
+    Dim devLeft As Integer: devLeft = 680
+    Dim arrDev As Variant: arrDev = MOD_01_CoreEngine.GET_TAUX_CHANGE().keys()
+    Dim limitD As Integer: limitD = UBound(arrDev): If limitD > 6 Then limitD = 6
+    Dim btnW As Integer: btnW = 45
+    Dim idxD As Integer
+    For idxD = 0 To limitD
+        Dim dName As String: dName = CStr(arrDev(idxD))
+        Dessiner_Widget wsDash, "BTN_DEV_" & dName, dName, devLeft + (idxD * 50), 15, btnW, 32, IIf(DeviseFiltre = dName, RGB(250, 218, 94), RGB(40, 70, 180)), IIf(DeviseFiltre = dName, RGB(40, 40, 40), vbWhite), "MOD_04_Dashboard_ETL.CHANGER_DEVISE"
+    Next idxD
     ' --- FIN PATCH 2 ---
-    
-    ' --- LE CONVERTISSEUR DE DEVISES (Les 3 boutons tactiles) ---
-    Dim devLeft As Integer: devLeft = 710
-    Dessiner_Widget wsDash, "BTN_DEV_MUR", "MUR", devLeft, 15, 50, 35, IIf(DeviseFiltre = "MUR", RGB(250, 218, 94), RGB(40, 70, 180)), IIf(DeviseFiltre = "MUR", RGB(40, 40, 40), vbWhite), "MOD_04_Dashboard_ETL.CHANGER_DEVISE"
-    Dessiner_Widget wsDash, "BTN_DEV_EUR", "EUR", devLeft + 55, 15, 50, 35, IIf(DeviseFiltre = "EUR", RGB(250, 218, 94), RGB(40, 70, 180)), IIf(DeviseFiltre = "EUR", RGB(40, 40, 40), vbWhite), "MOD_04_Dashboard_ETL.CHANGER_DEVISE"
-    Dessiner_Widget wsDash, "BTN_DEV_USD", "USD", devLeft + 110, 15, 50, 35, IIf(DeviseFiltre = "USD", RGB(250, 218, 94), RGB(40, 70, 180)), IIf(DeviseFiltre = "USD", RGB(40, 40, 40), vbWhite), "MOD_04_Dashboard_ETL.CHANGER_DEVISE"
-    Dessiner_Widget wsDash, "BTN_DEV_XOF", "XOF", devLeft + 165, 15, 50, 35, IIf(DeviseFiltre = "XOF", RGB(250, 218, 94), RGB(40, 70, 180)), IIf(DeviseFiltre = "XOF", RGB(40, 40, 40), vbWhite), "MOD_04_Dashboard_ETL.CHANGER_DEVISE"
     
     ' --- DEBUT PATCH 2 ---
     Dim dictTaux As Object: Set dictTaux = MOD_01_CoreEngine.GET_TAUX_CHANGE()
@@ -254,12 +253,26 @@ Public Sub GENERER_DASHBOARD()
                         
                         arrConsolide(Ligne, 1) = arrFact(i, 1): arrConsolide(Ligne, 2) = arrFact(i, 2)
                         arrConsolide(Ligne, 3) = Year(dTx): arrConsolide(Ligne, 4) = Month(dTx)
-                        arrConsolide(Ligne, 5) = IIf(dictCompte.exists(IDCompte), dictCompte(IDCompte), "-")
-                        arrConsolide(Ligne, 6) = IIf(dictCat.exists(idCat), dictCat(idCat), "-")
-                        arrConsolide(Ligne, 7) = IIf(dictTiers.exists(IDTiers), dictTiers(IDTiers), "-")
-                        arrConsolide(Ligne, 8) = MontantConverti
-                        arrConsolide(Ligne, 9) = DeviseFiltre ' Affiche la devise convertie
-                        arrConsolide(Ligne, 10) = TypeFlux: arrConsolide(Ligne, 11) = arrFact(i, 8)
+                        'arrConsolide(Ligne, 5) = IIf(dictCompte.exists(IDCompte), dictCompte(IDCompte), "-")
+                        'arrConsolide(Ligne, 6) = IIf(dictCat.exists(idCat), dictCat(idCat), "-")
+                        'arrConsolide(Ligne, 7) = IIf(dictTiers.exists(IDTiers), dictTiers(IDTiers), "-")
+                        ' --- DEBUT PATCH 3A (Data Proxy Cashflow) ---
+                        'arrConsolide(Ligne, 5) = TR(CStr(IIf(dictCompte.exists(IDCompte), dictCompte(IDCompte), "-")))
+                        'arrConsolide(Ligne, 6) = TR(CStr(IIf(dictCat.exists(idCat), dictCat(idCat), "-")))
+                        'arrConsolide(Ligne, 7) = TR(CStr(IIf(dictTiers.exists(IDTiers), dictTiers(IDTiers), "-")))
+                        ' --- FIN PATCH 3A ---
+                        'arrConsolide(Ligne, 8) = MontantConverti
+                        'arrConsolide(Ligne, 9) = DeviseFiltre ' Affiche la devise convertie
+                        'arrConsolide(Ligne, 10) = TypeFlux: arrConsolide(Ligne, 11) = arrFact(i, 8)
+                        ' --- DEBUT PATCH 2 (Proxy i18n Cashflow) ---
+                        ' On enveloppe la donnée brute dans le traducteur TR() avant de l'écrire dans la vue
+                        arrConsolide(Ligne, 5) = TR(CStr(IIf(dictCompte.exists(IDCompte), dictCompte(IDCompte), "-")))
+                        arrConsolide(Ligne, 6) = TR(CStr(IIf(dictCat.exists(idCat), dictCat(idCat), "-")))
+                        arrConsolide(Ligne, 7) = TR(CStr(IIf(dictTiers.exists(IDTiers), dictTiers(IDTiers), "-")))
+                        arrConsolide(Ligne, 8) = Montant
+                        arrConsolide(Ligne, 9) = DevOrigine
+                        arrConsolide(Ligne, 10) = TR(CStr(TypeFlux))
+                        ' --- FIN PATCH 2 ---
                     End If
                 End If
             Next i

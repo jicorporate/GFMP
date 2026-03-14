@@ -195,7 +195,11 @@ Public Function GET_TAUX_CHANGE() As Object
         tblDev.TableStyle = "TableStyleMedium15"
         
         ' Injection des Master Data (Valeurs par défaut)
-        tblDev.DataBodyRange(1, 1).Value = "MUR": tblDev.DataBodyRange(1, 2).Value = 1
+        'tblDev.DataBodyRange(1, 1).Value = "MUR": tblDev.DataBodyRange(1, 2).Value = 1.
+        ' --- DEBUT PATCH 1B (Core FX Dynamique) ---
+        Dim baseDev As String: baseDev = MOD_06_Budget_ZBB.Obtenir_Parametre("SYS_DEVISE_BASE", "MUR")
+        tblDev.DataBodyRange(1, 1).Value = baseDev: tblDev.DataBodyRange(1, 2).Value = 1
+        ' --- FIN PATCH 1B ---
         Dim nr As ListRow
         Set nr = tblDev.ListRows.Add: nr.Range(1, 1).Value = "EUR": nr.Range(1, 2).Value = 49.5
         Set nr = tblDev.ListRows.Add: nr.Range(1, 1).Value = "USD": nr.Range(1, 2).Value = 46.2

@@ -152,40 +152,31 @@ Public Sub Garantir_Lexique_Formulaire()
     Upsert_Dico tblDic, "OPT_DEP", "DÉPENSE", "EXPENSE", "GASTO", "DESPESA", "AUSGABE", "USCITA", "UITGAVE", "UTGIFT"
     Upsert_Dico tblDic, "OPT_REV", "REVENU", "INCOME", "INGRESO", "RENDA", "EINKOMMEN", "ENTRATA", "INKOMSTEN", "INKOMST"
     Upsert_Dico tblDic, "OPT_TRA", "TRANSFERT", "TRANSFER", "TRANSFERENCIA", "TRANSFERÊNCIA", "TRANSFER", "TRASFERIMENTO", "OVERDRACHT", "ÖVERFÖRING"
-<<<<<<< HEAD
     ' --- DEBUT PATCH 1 (Lexique Complet Sans Abréviation) ---
     Upsert_Dico tblDic, "FRM_DEST", "Compte Destination :", "Destination Account :", "Cuenta Destino :", "Conta Destino :", "Zielkonto :", "Conto Destinazione :", "Doelrekening :", "Målkonto :"
     ' --- FIN PATCH 1 ---
-=======
->>>>>>> bbc616625fa146e9711a89e8c558aeb3ef53391f
     ' --- FIN PATCH 1 ---
 End Sub
 
-'Private Sub Upsert_Dico(tbl As ListObject, k As String, fr As String, en As String, es As String, pt As String, de As String, it As String, nl As String, sv As String)
-    'Dim i As Long: For i = 1 To tbl.ListRows.Count
-        'If tbl.DataBodyRange(i, 1).Value = k Then Exit Sub
-    'Next i
-    'Dim nr As ListRow: Set nr = tbl.ListRows.Add
-    'nr.Range(1, 1).Value = k: nr.Range(1, 2).Value = fr: nr.Range(1, 3).Value = en: nr.Range(1, 4).Value = es
-    'nr.Range(1, 5).Value = pt: nr.Range(1, 6).Value = de: nr.Range(1, 7).Value = it: nr.Range(1, 8).Value = nl: nr.Range(1, 9).Value = sv
-'End Sub
-
-' --- DEBUT PATCH (Mise à jour Forcée du Lexique Formulaire) ---
+' --- DEBUT PATCH 2 (Anti-Crash Formulaire) ---
 Private Sub Upsert_Dico(tbl As ListObject, k As String, fr As String, en As String, es As String, pt As String, de As String, it As String, nl As String, sv As String)
     Dim i As Long: For i = 1 To tbl.ListRows.Count
         If tbl.DataBodyRange(i, 1).Value = k Then
-            ' CORRECTION : On écrase de force les traductions au lieu d'abandonner
             tbl.DataBodyRange(i, 2).Value = fr: tbl.DataBodyRange(i, 3).Value = en: tbl.DataBodyRange(i, 4).Value = es
             tbl.DataBodyRange(i, 5).Value = pt: tbl.DataBodyRange(i, 6).Value = de: tbl.DataBodyRange(i, 7).Value = it
             tbl.DataBodyRange(i, 8).Value = nl: tbl.DataBodyRange(i, 9).Value = sv
             Exit Sub
         End If
     Next i
-    Dim nR As ListRow: Set nR = tbl.ListRows.Add
-    nR.Range(1, 1).Value = k: nR.Range(1, 2).Value = fr: nR.Range(1, 3).Value = en: nR.Range(1, 4).Value = es
-    nR.Range(1, 5).Value = pt: nR.Range(1, 6).Value = de: nR.Range(1, 7).Value = it: nR.Range(1, 8).Value = nl: nR.Range(1, 9).Value = sv
+    
+    ' Déverrouillage strict pour éviter l'erreur Microsoft ListRows.Add
+    tbl.Parent.Unprotect "SFP_ADMIN_2026"
+    Dim nr As ListRow: Set nr = tbl.ListRows.Add
+    nr.Range(1, 1).Value = k: nr.Range(1, 2).Value = fr: nr.Range(1, 3).Value = en: nr.Range(1, 4).Value = es
+    nr.Range(1, 5).Value = pt: nr.Range(1, 6).Value = de: nr.Range(1, 7).Value = it: nr.Range(1, 8).Value = nl: nr.Range(1, 9).Value = sv
+    tbl.Parent.Protect "SFP_ADMIN_2026", UserInterfaceOnly:=True
 End Sub
-' --- FIN PATCH ---
+' --- FIN PATCH 2 ---
 
 ' -------------------------------------------------------------------------
 ' LE CERVEAU INJECTÉ (LE STRING BUILDER EST TOTALEMENT FIXÉ)
@@ -231,8 +222,14 @@ Private Function Code_VBA_Formulaire() As String
     L(i) = "    Me.txt_Date.Value = Format(Date, ""mm/dd/yyyy"")": i = i + 1
     ' --- FIN PATCH 2 ---
     ' AJOUT DE XOF DANS LE GATEKEEPER
-    L(i) = "    Me.cmb_Devise.List = Array(""MUR"", ""EUR"", ""USD"", ""GBP"", ""ZAR"", ""XOF"")": i = i + 1
-    L(i) = "    Me.cmb_Devise.ListIndex = 0": i = i + 1
+    'L(i) = "    Me.cmb_Devise.List = Array(""MUR"", ""EUR"", ""USD"", ""GBP"", ""ZAR"", ""XOF"")": i = i + 1
+    ' --- DEBUT PATCH 1 (Liste des devises injectée depuis l'API) ---
+    L(i) = "    Me.cmb_Devise.List = MOD_01_CoreEngine.GET_TAUX_CHANGE().keys()": i = i + 1
+    ' --- FIN PATCH 1 ---
+    'L(i) = "    Me.cmb_Devise.ListIndex = 0": i = i + 1
+    ' --- DEBUT PATCH 2D ---
+    L(i) = "    Me.cmb_Devise.Value = MOD_06_Budget_ZBB.Obtenir_Parametre(""SYS_DEVISE_BASE"", ""MUR"")": i = i + 1
+    ' --- FIN PATCH 2D ---
     
     'L(i) = "    Me.cmb_New_Cpt_Type.List = Array(""LIQUIDITE"", ""INVESTISSEMENT"", ""DETTE"")": i = i + 1
     'L(i) = "    Me.cmb_New_Cpt_Type.ListIndex = 0": i = i + 1
@@ -259,7 +256,10 @@ Private Function Code_VBA_Formulaire() As String
     L(i) = "        For k = 1 To tbl.ListRows.Count": i = i + 1
     L(i) = "            If Trim(tbl.ListRows(k).Range(1, 2).Value) <> """" Then": i = i + 1
     L(i) = "                cmb.AddItem tbl.ListRows(k).Range(1, 1).Value": i = i + 1
-    L(i) = "                cmb.List(cmb.ListCount - 1, 1) = tbl.ListRows(k).Range(1, 2).Value": i = i + 1
+    'L(i) = "                cmb.List(cmb.ListCount - 1, 1) = tbl.ListRows(k).Range(1, 2).Value": i = i + 1
+    ' --- DEBUT PATCH 2A (Traduction Dynamique) ---
+    L(i) = "                cmb.List(cmb.ListCount - 1, 1) = TR(CStr(tbl.ListRows(k).Range(1, 2).Value))": i = i + 1
+    ' --- FIN PATCH 2A ---
     L(i) = "            End If": i = i + 1
     L(i) = "        Next k": i = i + 1
     L(i) = "    End If": i = i + 1
@@ -300,13 +300,19 @@ Private Function Code_VBA_Formulaire() As String
     ' --- FIN PATCH 2 ---
     
     L(i) = "Private Sub Gerer_Visibilite_Double(cmb As MSForms.ComboBox, txt As MSForms.TextBox, cmbType As MSForms.ComboBox, lbl As MSForms.Label)": i = i + 1
-    L(i) = "    Dim estAutre As Boolean: estAutre = (InStr(1, cmb.Text, ""Autre"", vbTextCompare) > 0 Or InStr(1, cmb.Text, ""Other"", vbTextCompare) > 0)": i = i + 1
+    'L(i) = "    Dim estAutre As Boolean: estAutre = (InStr(1, cmb.Text, ""Autre"", vbTextCompare) > 0 Or InStr(1, cmb.Text, ""Other"", vbTextCompare) > 0)": i = i + 1
+    ' --- DEBUT PATCH 2B (Écouteur Multilingue) ---
+    L(i) = "    Dim estAutre As Boolean: estAutre = (cmb.Text = TR(""Autre (Préciser...)"") Or InStr(1, cmb.Text, ""Autre"", vbTextCompare) > 0 Or InStr(1, cmb.Text, ""Other"", vbTextCompare) > 0)": i = i + 1
+    ' --- FIN PATCH 2B ---
     L(i) = "    txt.Visible = estAutre: lbl.Visible = estAutre: cmbType.Visible = estAutre": i = i + 1
     L(i) = "    If Not estAutre Then txt.Value = """"": i = i + 1
     L(i) = "End Sub": i = i + 1
     
     L(i) = "Private Sub Gerer_Visibilite_Simple(cmb As MSForms.ComboBox, txt As MSForms.TextBox, lbl As MSForms.Label)": i = i + 1
-    L(i) = "    Dim estAutre As Boolean: estAutre = (InStr(1, cmb.Text, ""Autre"", vbTextCompare) > 0 Or InStr(1, cmb.Text, ""Other"", vbTextCompare) > 0)": i = i + 1
+    'L(i) = "    Dim estAutre As Boolean: estAutre = (InStr(1, cmb.Text, ""Autre"", vbTextCompare) > 0 Or InStr(1, cmb.Text, ""Other"", vbTextCompare) > 0)": i = i + 1
+    ' --- DEBUT PATCH 2B (Écouteur Multilingue) ---
+    L(i) = "    Dim estAutre As Boolean: estAutre = (cmb.Text = TR(""Autre (Préciser...)"") Or InStr(1, cmb.Text, ""Autre"", vbTextCompare) > 0 Or InStr(1, cmb.Text, ""Other"", vbTextCompare) > 0)": i = i + 1
+    ' --- FIN PATCH 2B ---
     L(i) = "    txt.Visible = estAutre: lbl.Visible = estAutre": i = i + 1
     L(i) = "    If Not estAutre Then txt.Value = """"": i = i + 1
     L(i) = "End Sub": i = i + 1
@@ -395,7 +401,6 @@ Private Function Code_VBA_Formulaire() As String
     L(i) = "    nR.Range(1, 8).Value = MOD_01_CoreEngine.CLEAN_TEXT(Me.txt_Description.Value)": i = i + 1
     L(i) = "    nR.Range(1, 9).Value = Application.UserName: nR.Range(1, 10).Value = Now": i = i + 1
     
-<<<<<<< HEAD
     ' --- DEBUT PATCH 3 (Double-Entrée Réelle & Atomique) ---
     L(i) = "    If typeF = ""TRANSFERT"" Then": i = i + 1
     L(i) = "        If idC = idT Then Err.Raise vbObjectError + 1, """", ""Le compte source et destination doivent être différents."": Exit Sub": i = i + 1
@@ -417,30 +422,6 @@ Private Function Code_VBA_Formulaire() As String
     L(i) = "        nR.Range(1, 7).Value = Me.cmb_Devise.Value: nR.Range(1, 8).Value = MOD_01_CoreEngine.CLEAN_TEXT(Me.txt_Description.Value): nR.Range(1, 9).Value = Application.UserName: nR.Range(1, 10).Value = Now": i = i + 1
     L(i) = "    End If": i = i + 1
     ' --- FIN PATCH 3 ---
-=======
-    ' Double Entrée Atomique
-    L(i) = "    If typeF = ""TRANSFERT"" Then": i = i + 1
-    L(i) = "        Dim wCp As Worksheet: Set wCp = ThisWorkbook.Sheets(""DIM_Compte"")": i = i + 1
-    L(i) = "        Dim idComp As Long: idComp = 0": i = i + 1
-    L(i) = "        For rC = 1 To wCp.ListObjects(""T_DIM_Compte"").ListRows.Count": i = i + 1
-    L(i) = "            If UCase(Trim(wCp.ListObjects(""T_DIM_Compte"").DataBodyRange(rC, 2).Value)) = ""COMPENSATION (SYSTEM)"" Then idComp = wCp.ListObjects(""T_DIM_Compte"").DataBodyRange(rC, 1).Value: Exit For": i = i + 1
-    L(i) = "        Next rC": i = i + 1
-    L(i) = "        If idComp = 0 Then": i = i + 1
-    L(i) = "            wCp.Unprotect ""SFP_ADMIN_2026""": i = i + 1
-    L(i) = "            Dim nCp As ListRow: Set nCp = wCp.ListObjects(""T_DIM_Compte"").ListRows.Add": i = i + 1
-    L(i) = "            idComp = MOD_01_CoreEngine.GENERER_NOUVEL_ID(""T_DIM_Compte"")": i = i + 1
-    L(i) = "            nCp.Range(1, 1).Value = idComp: nCp.Range(1, 2).Value = ""Compensation (System)"": nCp.Range(1, 3).Value = ""LIQUIDITE"": nCp.Range(1, 4).Value = Me.cmb_Devise.Value: nCp.Range(1, 5).Value = ""OUI""": i = i + 1
-    L(i) = "            wCp.Protect ""SFP_ADMIN_2026"", UserInterfaceOnly:=True": i = i + 1
-    L(i) = "        End If": i = i + 1
-    L(i) = "        Dim nR2 As ListRow: Set nR2 = tblFact.ListRows.Add": i = i + 1
-    L(i) = "        nR2.Range(1, 1).Value = MOD_01_CoreEngine.GENERER_NOUVEL_ID(""T_FACT_Transaction"")": i = i + 1
-    L(i) = "        nR2.Range(1, 2).Value = DateSerial(CInt(dParts(2)), CInt(dParts(0)), CInt(dParts(1)))": i = i + 1
-    L(i) = "        nR2.Range(1, 3).Value = idComp: nR2.Range(1, 4).Value = idCat: nR2.Range(1, 5).Value = idT": i = i + 1
-    L(i) = "        nR2.Range(1, 6).Value = -dblMontant": i = i + 1
-    L(i) = "        nR2.Range(1, 7).Value = Me.cmb_Devise.Value: nR2.Range(1, 8).Value = ""[AUTO-CREDIT] "" & MOD_01_CoreEngine.CLEAN_TEXT(Me.txt_Description.Value)": i = i + 1
-    L(i) = "        nR2.Range(1, 9).Value = ""SYSTEM"": nR2.Range(1, 10).Value = Now": i = i + 1
-    L(i) = "    End If": i = i + 1
->>>>>>> bbc616625fa146e9711a89e8c558aeb3ef53391f
     
     ' --- COMMIT TRAN ---
     L(i) = "    wsFact.Protect ""SFP_ADMIN_2026"", UserInterfaceOnly:=True": i = i + 1

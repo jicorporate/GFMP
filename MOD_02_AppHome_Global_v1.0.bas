@@ -1,3 +1,4 @@
+Attribute VB_Name = "MOD_02_AppHome_Global"
 Option Explicit
 
 ' =========================================================================
@@ -66,6 +67,73 @@ Private Sub Preparer_Dictionnaire_Global()
     ' --- DEBUT PATCH 1 (Lexique Bouton Sync FX) ---
     Upsert_Trad tblDic, "BTN_SYNC", "ACTUALISER TAUX FX", "UPDATE FX RATES", "ACTUALIZAR TIPOS FX", "ATUALIZAR TAXAS FX", "FX-KURSE AKTUALISIEREN", "AGGIORNA TASSI FX", "FX-TARIEVEN BIJWERKEN", "UPPDATERA FX-KURSER"
     ' --- FIN PATCH 1 ---
+    ' --- DEBUT PATCH 4 (Lexique des Données d'Usine) ---
+    Upsert_Trad tblDic, "Salaire / Revenus Pro", "Salaire / Revenus Pro", "Salary / Pro Income", "Salario / Ingresos Pro", "Salário / Renda Pro", "Gehalt / Einkommen", "Stipendio / Reddito", "Salaris / Inkomen", "Lön / Inkomst"
+    Upsert_Trad tblDic, "Intérêts / Dividendes", "Intérêts / Dividendes", "Interests / Dividends", "Intereses / Dividendos", "Juros / Dividendos", "Zinsen / Dividenden", "Interessi / Dividendi", "Rente / Dividenden", "Ränta / Utdelning"
+    Upsert_Trad tblDic, "Logement (Loyer/Prêt/Charges)", "Logement (Loyer/Prêt)", "Housing (Rent/Loan)", "Vivienda (Alquiler)", "Moradia (Aluguel)", "Wohnen (Miete/Kredit)", "Abitazione (Affitto)", "Huisvesting", "Bostad (Hyra/Lån)"
+    Upsert_Trad tblDic, "Alimentation & Supermarché", "Alimentation", "Groceries & Food", "Alimentación", "Alimentação", "Lebensmittel", "Alimentari", "Boodschappen", "Mat & Livsmedel"
+    Upsert_Trad tblDic, "Transports (Essence/Assurance)", "Transports", "Transport (Gas/Ins.)", "Transporte", "Transporte", "Transport", "Trasporti", "Vervoer", "Transport"
+    Upsert_Trad tblDic, "Santé & Mutuelle", "Santé & Mutuelle", "Health & Insurance", "Salud y Seguros", "Saúde e Seguros", "Gesundheit", "Salute e Assicurazione", "Gezondheid", "Hälsa & Försäkring"
+    Upsert_Trad tblDic, "Loisirs, Sorties & Vacances", "Loisirs & Vacances", "Leisure & Holidays", "Ocio y Vacaciones", "Lazer e Férias", "Freizeit & Urlaub", "Tempo Libero", "Vrije Tijd", "Fritid & Semester"
+    Upsert_Trad tblDic, "Virement Interne (Épargne)", "Virement Interne", "Internal Transfer", "Transferencia Interna", "Transferência Interna", "Interner Transfer", "Bonifico Interno", "Interne Overboeking", "Intern Överföring"
+    Upsert_Trad tblDic, "Compte Courant Principal", "Compte Courant", "Checking Account", "Cuenta Corriente", "Conta Corrente", "Girokonto", "Conto Corrente", "Betaalrekening", "Lönekonto"
+    Upsert_Trad tblDic, "Livret d'Épargne", "Livret d'Épargne", "Savings Account", "Cuenta de Ahorros", "Conta Poupança", "Sparkonto", "Conto Risparmio", "Spaarrekening", "Sparkonto"
+    Upsert_Trad tblDic, "Carte de Crédit (Différé)", "Carte de Crédit", "Credit Card", "Tarjeta de Crédito", "Cartão de Crédito", "Kreditkarte", "Carta di Credito", "Creditcard", "Kreditkort"
+    ' --- FIN PATCH 4 ---
+    ' --- DEBUT PATCH 1 (Lexique UI Paramètres) ---
+    Upsert_Trad tblDic, "BTN_SETTING", "PARAMÈTRES (DEVISE)", "SETTINGS (CURRENCY)", "AJUSTES (DIVISA)", "CONFIG. (MOEDA)", "EINSTELLUNGEN", "IMPOSTAZIONI", "INSTELLINGEN", "INSTÄLLNINGAR"
+    Upsert_Trad tblDic, "MSG_ASK_BASE", "Saisissez votre Devise Principale (ex: XOF, EUR, USD, CAD) :", "Enter your Base Currency (e.g. USD, EUR) :", "Ingrese su divisa base :", "Insira sua moeda base :", "Basiswährung eingeben :", "Inserisci valuta base :", "Voer basisvaluta in :", "Ange basvaluta :"
+    ' --- FIN PATCH 1 ---
+    ' --- DEBUT PATCH 1 (Lexique Proxy des Master Data & Types) ---
+    Upsert_Trad tblDic, "Salaire / Revenus Pro", "Salaire / Revenus Pro", "Salary / Pro Income", "Salario / Ingresos", "Salário / Renda", "Gehalt / Einkommen", "Stipendio / Reddito", "Salaris / Inkomen", "Lön / Inkomst"
+    Upsert_Trad tblDic, "Intérêts / Dividendes", "Intérêts / Dividendes", "Interests / Dividends", "Intereses / Dividendos", "Juros / Dividendos", "Zinsen / Dividenden", "Interessi / Dividendi", "Rente / Dividenden", "Ränta / Utdelning"
+    Upsert_Trad tblDic, "Logement (Loyer/Prêt/Charges)", "Logement", "Housing (Rent/Loan)", "Vivienda", "Moradia", "Wohnen", "Abitazione", "Huisvesting", "Bostad"
+    Upsert_Trad tblDic, "Alimentation & Supermarché", "Alimentation", "Groceries", "Alimentación", "Alimentação", "Lebensmittel", "Alimentari", "Boodschappen", "Mat"
+    Upsert_Trad tblDic, "Transports (Essence/Assurance)", "Transports", "Transport", "Transporte", "Transporte", "Transport", "Trasporti", "Vervoer", "Transport"
+    Upsert_Trad tblDic, "Santé & Mutuelle", "Santé & Mutuelle", "Health & Insurance", "Salud", "Saúde", "Gesundheit", "Salute", "Gezondheid", "Hälsa"
+    Upsert_Trad tblDic, "Loisirs, Sorties & Vacances", "Loisirs & Vacances", "Leisure & Holidays", "Ocio", "Lazer", "Freizeit", "Tempo Libero", "Vrije Tijd", "Fritid"
+    Upsert_Trad tblDic, "Virement Interne (Épargne)", "Virement Interne", "Internal Transfer", "Transferencia Interna", "Transferência Interna", "Interner Transfer", "Bonifico Interno", "Interne Overboeking", "Intern Överföring"
+    Upsert_Trad tblDic, "Compte Courant Principal", "Compte Courant", "Checking Account", "Cuenta Corriente", "Conta Corrente", "Girokonto", "Conto Corrente", "Betaalrekening", "Lönekonto"
+    Upsert_Trad tblDic, "Livret d'Épargne", "Livret d'Épargne", "Savings Account", "Cuenta de Ahorros", "Conta Poupança", "Sparkonto", "Conto Risparmio", "Spaarrekening", "Sparkonto"
+    Upsert_Trad tblDic, "Carte de Crédit (Différé)", "Carte de Crédit", "Credit Card", "Tarjeta de Crédito", "Cartão de Crédito", "Kreditkarte", "Carta di Credito", "Creditcard", "Kreditkort"
+    
+    ' Traduction des balises Système Backend
+    Upsert_Trad tblDic, "LIQUIDITE", "LIQUIDITÉ", "LIQUIDITY", "LIQUIDEZ", "LIQUIDEZ", "LIQUIDITÄT", "LIQUIDITÀ", "LIQUIDITEIT", "LIKVIDITET"
+    Upsert_Trad tblDic, "INVESTISSEMENT", "INVESTISSEMENT", "INVESTMENT", "INVERSIÓN", "INVESTIMENTO", "INVESTITION", "INVESTIMENTO", "INVESTERING", "INVESTERING"
+    Upsert_Trad tblDic, "DETTE", "DETTE", "DEBT", "DEUDA", "DÍVIDA", "SCHULD", "DEBITO", "SCHULD", "SKULD"
+    Upsert_Trad tblDic, "DEPENSE", "DÉPENSE", "EXPENSE", "GASTO", "DESPESA", "AUSGABE", "USCITA", "UITGAVE", "UTGIFT"
+    Upsert_Trad tblDic, "REVENU", "REVENU", "INCOME", "INGRESO", "RENDA", "EINKOMMEN", "ENTRATA", "INKOMSTEN", "INKOMST"
+    Upsert_Trad tblDic, "TRANSFERT", "TRANSFERT", "TRANSFER", "TRANSFERENCIA", "TRANSFERÊNCIA", "TRANSFER", "TRASFERIMENTO", "OVERDRACHT", "ÖVERFÖRING"
+    Upsert_Trad tblDic, "AUTRE", "AUTRE", "OTHER", "OTRO", "OUTRO", "ANDERE", "ALTRO", "ANDERS", "ANNAT"
+    ' --- FIN PATCH 1 ---
+    ' --- DEBUT PATCH 1 (Lexique Tiers et Autre) ---
+    Upsert_Trad tblDic, "Autre (Préciser...)", "Autre (Préciser...)", "Other (Specify...)", "Otro (Especificar...)", "Outro (Especificar...)", "Andere (Angeben...)", "Altro (Specificare...)", "Anders (Specificeren...)", "Annat (Ange...)"
+    Upsert_Trad tblDic, "Employeur principal", "Employeur", "Main Employer", "Empleador", "Empregador", "Arbeitgeber", "Datore di Lavoro", "Werkgever", "Arbetsgivare"
+    Upsert_Trad tblDic, "Banque / Courtier", "Banque / Courtier", "Bank / Broker", "Banco / Bróker", "Banco / Corretor", "Bank / Makler", "Banca / Broker", "Bank / Makelaar", "Bank / Mäklare"
+    Upsert_Trad tblDic, "État / Impôts", "État / Impôts", "State / Taxes", "Estado / Impuestos", "Estado / Impostos", "Staat / Steuern", "Stato / Tasse", "Staat / Belastingen", "Stat / Skatt"
+    Upsert_Trad tblDic, "Supermarché / Alimentaire", "Supermarché", "Supermarket", "Supermercado", "Supermercado", "Supermarkt", "Supermercato", "Supermarkt", "Stormarknad"
+    Upsert_Trad tblDic, "Propriétaire / Syndic", "Propriétaire", "Landlord / HOA", "Propietario", "Senhorio", "Vermieter", "Proprietario", "Verhuurder", "Hyresvärd"
+    Upsert_Trad tblDic, "Station Service", "Station Service", "Gas Station", "Gasolinera", "Posto de Gasolina", "Tankstelle", "Stazione di Servizio", "Benzinestation", "Bensinstation"
+    ' --- FIN PATCH 1 ---
+    ' --- DEBUT PATCH 1 (Lexique de l'API) ---
+    Upsert_Trad tblDic, "MSG_FX_OK", "TAUX DE CHANGE SYNCHRONISÉS." & vbCrLf & "Mise à jour réussie.", "EXCHANGE RATES SYNCHRONIZED." & vbCrLf & "Update successful.", "TIPOS DE CAMBIO SINCRONIZADOS." & vbCrLf & "Actualización exitosa.", "TAXAS DE CÂMBIO SINCRONIZADAS." & vbCrLf & "Atualização bem-sucedida.", "WECHSELKURSE SYNCHRONISIERT." & vbCrLf & "Erfolgreich aktualisiert.", "TASSI DI CAMBIO SINCRONIZZATI." & vbCrLf & "Aggiornamento riuscito.", "WISSELKOERSEN GESYNCHRONISEERD." & vbCrLf & "Succesvol bijgewerkt.", "VÄXELKURSER SYNKRONISERADE." & vbCrLf & "Uppdatering lyckades."
+    Upsert_Trad tblDic, "MSG_FX_ERR", "Erreur de connexion au serveur de devises.", "Connection error to currency server.", "Error de conexión al servidor de divisas.", "Erro de conexão ao servidor de moedas.", "Verbindungsfehler zum Währungsserver.", "Errore di connessione al server delle valute.", "Verbindingsfout met valutaserver.", "Anslutningsfel till valutaserver."
+    Upsert_Trad tblDic, "MSG_FX_TITLE", "Synchronisation FX", "FX Synchronization", "Sincronización FX", "Sincronização FX", "FX-Synchronisation", "Sincronizzazione FX", "FX-synchronisatie", "FX-synkronisering"
+    ' --- FIN PATCH 1 ---
+    ' --- DEBUT PATCH 1 (Lexique Erreur API Devise) ---
+    Upsert_Trad tblDic, "MSG_ERR_DEV_API", "Devise invalide ou non reconnue par le marché boursier.", "Invalid currency or unrecognized by the market.", "Divisa inválida o no reconocida.", "Moeda inválida ou não reconhecida.", "Ungültige oder nicht erkannte Währung.", "Valuta non valida o non riconosciuta.", "Ongeldige valuta of niet herkend.", "Ogiltig valuta eller okänd."
+    ' --- FIN PATCH 1 ---
+    ' --- DEBUT PATCH (Traduction exhaustive des Master Data) ---
+    Upsert_Trad tblDic, "Prêt Immobilier", "Prêt Immobilier", "Mortgage Loan", "Préstamo Hipotecario", "Empréstimo Imobiliário", "Immobilienkredit", "Mutuo Immobiliare", "Hypothecaire Lening", "Bolån"
+    Upsert_Trad tblDic, "Impôts & Taxes", "Impôts & Taxes", "Taxes", "Impuestos", "Impostos", "Steuern", "Tasse", "Belastingen", "Skatter"
+    Upsert_Trad tblDic, "Compte Courant Principal", "Compte Courant", "Checking Account", "Cuenta Corriente", "Conta Corrente", "Girokonto", "Conto Corrente", "Betaalrekening", "Lönekonto"
+    Upsert_Trad tblDic, "Livret d'Épargne", "Livret d'Épargne", "Savings Account", "Cuenta de Ahorros", "Conta Poupança", "Sparkonto", "Conto Risparmio", "Spaarrekening", "Sparkonto"
+    Upsert_Trad tblDic, "Portefeuille Espèces", "Portefeuille Espèces", "Cash Wallet", "Cartera de Efectivo", "Carteira de Dinheiro", "Bargeldbörse", "Portafoglio Contanti", "Portemonnee", "Kontanter"
+    Upsert_Trad tblDic, "Assurance Vie", "Assurance Vie", "Life Insurance", "Seguro de Vida", "Seguro de Vida", "Lebensversicherung", "Assicurazione Vita", "Levensverzekering", "Livförsäkring"
+    Upsert_Trad tblDic, "PEA / Actions", "PEA / Actions", "Stock Portfolio", "Cartera de Acciones", "Carteira de Ações", "Aktienportfolio", "Portafoglio Azioni", "Aandelenportefeuille", "Aktieportfölj"
+    Upsert_Trad tblDic, "Portefeuille Crypto", "Portefeuille Crypto", "Crypto Wallet", "Cartera Crypto", "Carteira Crypto", "Krypto-Wallet", "Portafoglio Crypto", "Cryptoportemonnee", "Kryptoplånbok"
+    Upsert_Trad tblDic, "Carte de Crédit (Différé)", "Carte de Crédit", "Credit Card", "Tarjeta de Crédito", "Cartão de Crédito", "Kreditkarte", "Carta di Credito", "Creditcard", "Kreditkort"
+    ' --- FIN PATCH ---
 End Sub
 
 Private Sub Upsert_Trad(tbl As ListObject, k As String, fr As String, en As String, es As String, pt As String, de As String, it As String, nl As String, sv As String)
@@ -150,12 +218,25 @@ Private Sub Preparer_Hub_Central()
     
     ' --- LES 8 LANGUES (Cercles parfaits) ---
     ' --- DEBUT PATCH 2 (Bouton Sync FX Tactile) ---
+    ' --- DEBUT PATCH 2 (Bouton Paramètres MVP) ---
+    Dim btnSet As Shape
+    Set btnSet = wsHome.Shapes.AddShape(msoShapeRoundedRectangle, 440, 30, 150, 35)
+    btnSet.Fill.ForeColor.RGB = RGB(128, 128, 128) ' Gris Pro Neutre
+    btnSet.Line.Visible = msoFalse
+    btnSet.TextFrame2.TextRange.Text = TR("BTN_SETTING")
+    btnSet.TextFrame2.TextRange.Font.Name = "ADLaM Display": btnSet.TextFrame2.TextRange.Font.Bold = True: btnSet.TextFrame2.TextRange.Font.Size = 9: btnSet.TextFrame2.TextRange.Font.Fill.ForeColor.RGB = vbWhite
+    btnSet.TextFrame2.VerticalAnchor = msoAnchorMiddle: btnSet.TextFrame2.TextRange.ParagraphFormat.Alignment = msoAlignCenter
+    With btnSet.Shadow
+        .Type = msoShadow21: .Visible = msoTrue: .Style = msoShadowStyleOuterShadow: .Blur = 4: .OffsetX = 0: .OffsetY = 2: .Transparency = 0.5: .ForeColor.RGB = RGB(0, 0, 0)
+    End With
+    wsHome.Hyperlinks.Add Anchor:=btnSet, Address:="", SubAddress:="'" & wsHome.Name & "'!A26", ScreenTip:=TR("BTN_SETTING")
+    ' --- FIN PATCH 2 ---
     Dim btnSync As Shape
     Set btnSync = wsHome.Shapes.AddShape(msoShapeRoundedRectangle, 600, 30, 150, 35)
-    btnSync.Fill.ForeColor.RGB = RGB(250, 218, 94) 'RGB(46, 204, 113) ' Vert Émeraude
+    btnSync.Fill.ForeColor.RGB = RGB(128, 128, 128) 'RGB(250, 218, 94) JAUNE 'RGB(46, 204, 113) ' Vert Émeraude
     btnSync.Line.Visible = msoFalse
     btnSync.TextFrame2.TextRange.Text = TR("BTN_SYNC")
-    btnSync.TextFrame2.TextRange.Font.Name = "ADLaM Display": btnSync.TextFrame2.TextRange.Font.Bold = True: btnSync.TextFrame2.TextRange.Font.Size = 9: btnSync.TextFrame2.TextRange.Font.Fill.ForeColor.RGB = RGB(0, 0, 0) ' vbWhite
+    btnSync.TextFrame2.TextRange.Font.Name = "ADLaM Display": btnSync.TextFrame2.TextRange.Font.Bold = True: btnSync.TextFrame2.TextRange.Font.Size = 9: btnSync.TextFrame2.TextRange.Font.Fill.ForeColor.RGB = vbWhite 'RGB(0, 0, 0)
     btnSync.TextFrame2.VerticalAnchor = msoAnchorMiddle: btnSync.TextFrame2.TextRange.ParagraphFormat.Alignment = msoAlignCenter
     With btnSync.Shadow
         .Type = msoShadow21: .Visible = msoTrue: .Style = msoShadowStyleOuterShadow: .Blur = 4: .OffsetX = 0: .OffsetY = 2: .Transparency = 0.5: .ForeColor.RGB = RGB(0, 0, 0)
@@ -279,17 +360,10 @@ Public Sub EXECUTER_CHANGER_LANGUE(LangueCible As String)
     End If
     
     If Not trouve Then
-<<<<<<< HEAD
         Dim nr As ListRow: Set nr = tblConf.ListRows.Add
         nr.Range(1, 1).Value = "LANGUE_UI"
         nr.Range(1, 2).Value = LangueCible
         nr.Range(1, 3).Value = "Langue UI Globale"
-=======
-        Dim nR As ListRow: Set nR = tblConf.ListRows.Add
-        nR.Range(1, 1).Value = "LANGUE_UI"
-        nR.Range(1, 2).Value = LangueCible
-        nR.Range(1, 3).Value = "Langue UI Globale"
->>>>>>> bbc616625fa146e9711a89e8c558aeb3ef53391f
     End If
     
     wsSys.Protect "SFP_ADMIN_2026", UserInterfaceOnly:=True
@@ -335,3 +409,96 @@ Public Sub EXECUTER_ROUTER_NETWORTH()
     Application.ScreenUpdating = True
 End Sub
 
+' --- DEBUT PATCH 2 (Validation API Préventive) ---
+Public Sub EXECUTER_CONFIG_SYSTEME()
+    Application.EnableEvents = True
+    
+    Dim wsSys As Worksheet: Set wsSys = ThisWorkbook.Sheets("SYS_Config")
+    Dim tblConf As ListObject: Set tblConf = wsSys.ListObjects("T_SYS_Config")
+    Dim currentBase As String: currentBase = "MUR"
+    Dim i As Long
+    For i = 1 To tblConf.ListRows.Count
+        If tblConf.DataBodyRange(i, 1).Value = "SYS_DEVISE_BASE" Then currentBase = tblConf.DataBodyRange(i, 2).Value: Exit For
+    Next i
+    
+    Dim rep As String
+    rep = InputBox(TR("MSG_ASK_BASE"), TR("BTN_SETTING"), currentBase)
+    If rep = "" Or UCase(Trim(rep)) = currentBase Then Exit Sub
+    rep = UCase(Trim(rep))
+    
+    ' 1. SÉCURITÉ ABSOLUE : On interroge l'API pour valider l'existence réelle de la devise
+    If Len(rep) <> 3 Then
+        MsgBox TR("MSG_ERR_DEV_API"), vbCritical, TR("BTN_SETTING")
+        Exit Sub
+    End If
+    Dim http As Object
+    On Error Resume Next
+    Set http = CreateObject("MSXML2.XMLHTTP")
+    http.Open "GET", "https://open.er-api.com/v6/latest/" & rep, False
+    http.send
+    If http.Status <> 200 Or InStr(1, http.responseText, """result"":""success""") = 0 Then
+        MsgBox TR("MSG_ERR_DEV_API") & vbCrLf & "-> " & rep, vbCritical, TR("BTN_SETTING")
+        Exit Sub
+    End If
+    On Error GoTo 0
+    
+    Application.ScreenUpdating = False
+    
+    ' 2. Mise à jour de SYS_Config (Verrouillée)
+    wsSys.Unprotect "SFP_ADMIN_2026"
+    Dim found As Boolean: found = False
+    For i = 1 To tblConf.ListRows.Count
+        If tblConf.DataBodyRange(i, 1).Value = "SYS_DEVISE_BASE" Then
+            tblConf.DataBodyRange(i, 2).Value = rep
+            found = True: Exit For
+        End If
+    Next i
+    If Not found Then
+        Dim rC As ListRow: Set rC = tblConf.ListRows.Add
+        rC.Range(1, 1).Value = "SYS_DEVISE_BASE": rC.Range(1, 2).Value = rep: rC.Range(1, 3).Value = "Devise Globale"
+    End If
+    
+    ' 3. Swap Dynamique SANS Doublon dans T_SYS_Devises
+    Dim tblDev As ListObject
+    On Error Resume Next: Set tblDev = wsSys.ListObjects("T_SYS_Devises"): On Error GoTo 0
+    If Not tblDev Is Nothing Then
+        Dim rDel As Long
+        For rDel = tblDev.ListRows.Count To 1 Step -1
+            If UCase(Trim(CStr(tblDev.DataBodyRange(rDel, 1).Value))) = rep Then tblDev.ListRows(rDel).Delete
+        Next rDel
+        Dim devFound As Boolean: devFound = False
+        Dim k As Long
+        For k = 1 To tblDev.ListRows.Count
+            If UCase(Trim(CStr(tblDev.DataBodyRange(k, 1).Value))) = currentBase Then
+                tblDev.DataBodyRange(k, 1).Value = rep
+                tblDev.DataBodyRange(k, 2).Value = 1
+                devFound = True: Exit For
+            End If
+        Next k
+        If Not devFound Then
+            Dim nD As ListRow: Set nD = tblDev.ListRows.Add
+            nD.Range(1, 1).Value = rep: nD.Range(1, 2).Value = 1
+        End If
+    End If
+    wsSys.Protect "SFP_ADMIN_2026", UserInterfaceOnly:=True
+    
+    ' 4. Migration de la table DIM_Compte
+    Dim wsCpt As Worksheet: Set wsCpt = ThisWorkbook.Sheets("DIM_Compte")
+    wsCpt.Unprotect "SFP_ADMIN_2026"
+    Dim tblCpt As ListObject
+    On Error Resume Next: Set tblCpt = wsCpt.ListObjects("T_DIM_Compte"): On Error GoTo 0
+    If Not tblCpt Is Nothing Then
+        If tblCpt.ListRows.Count > 0 Then
+            For i = 1 To tblCpt.ListRows.Count
+                If UCase(Trim(CStr(tblCpt.DataBodyRange(i, 4).Value))) = currentBase Then tblCpt.DataBodyRange(i, 4).Value = rep
+            Next i
+        End If
+    End If
+    wsCpt.Protect "SFP_ADMIN_2026", UserInterfaceOnly:=True
+    
+    ' 5. Téléchargement instantané des nouveaux taux via l'API
+    MOD_99_SystemAdmin.ACTUALISER_DEVISES_WEB
+    
+    Application.ScreenUpdating = True
+End Sub
+' --- FIN PATCH 2 ---

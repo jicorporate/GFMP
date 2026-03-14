@@ -22,7 +22,7 @@ Private Sub Workbook_SheetSelectionChange(ByVal Sh As Object, ByVal Target As Ra
     If Sh.Name <> "APP_HOME" Then Exit Sub
     If Target.Count > 1 Then Exit Sub
     
-    If Target.Column = 1 And Target.Row >= 11 And Target.Row <= 25 Then
+    If Target.Column = 1 And Target.Row >= 11 And Target.Row <= 26 Then
         Dim TargetRow As Integer
         TargetRow = Target.Row
         
@@ -54,6 +54,7 @@ Private Sub Workbook_SheetSelectionChange(ByVal Sh As Object, ByVal Target As Ra
             ' --- DEBUT PATCH 3 (Routage UCR du Bouton FX) ---
             Case 25: MOD_99_SystemAdmin.ACTUALISER_DEVISES_WEB
             ' --- FIN PATCH 3 ---
+            Case 26: MOD_02_AppHome_Global.EXECUTER_CONFIG_SYSTEME
         End Select
         Exit Sub
         
