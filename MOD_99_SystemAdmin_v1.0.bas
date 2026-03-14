@@ -162,11 +162,12 @@ End Sub
 ' =========================================================================
 ' MOTEUR API : MISE À JOUR DYNAMIQUE DES DEVISES (WEB SCRAPING JSON)
 ' =========================================================================
+' --- DEBUT PATCH 1 (API Auto-Cicatrisante et 100% Dynamique) ---
 Public Sub ACTUALISER_DEVISES_WEB()
     Application.ScreenUpdating = False
     
-    ' 1. Connexion silencieuse à l'API publique (Base = MUR)
-    Dim url As String: url = "https://open.er-api.com/v6/latest/MUR"
+    Dim baseDev As String: baseDev = MOD_06_Budget_ZBB.Obtenir_Parametre("SYS_DEVISE_BASE", "MUR")
+    Dim url As String: url = "https://open.er-api.com/v6/latest/" & baseDev
     Dim http As Object
     On Error Resume Next
     Set http = CreateObject("MSXML2.XMLHTTP")
@@ -174,53 +175,43 @@ Public Sub ACTUALISER_DEVISES_WEB()
     http.send
     
     If http.Status <> 200 Then
-        MsgBox "Erreur de connexion au serveur de devises." & vbCrLf & "Vérifiez votre connexion internet.", vbCritical, "Échec API"
+        MsgBox MOD_02_AppHome_Global.TR("MSG_FX_ERR"), vbCritical, MOD_02_AppHome_Global.TR("MSG_FX_TITLE")
         Exit Sub
     End If
-    
     Dim json As String: json = http.responseText
     On Error GoTo 0
+    
+    ' 1. SÉCURITÉ : Force la création de la table en arrière-plan si elle est absente (Au lieu d'afficher une erreur)
+    Dim dummy As Object: Set dummy = MOD_01_CoreEngine.GET_TAUX_CHANGE()
     
     ' 2. Déverrouillage autonome du Backend
     Dim wsSys As Worksheet: Set wsSys = ThisWorkbook.Sheets("SYS_Config")
     wsSys.Unprotect "SFP_ADMIN_2026"
+    Dim tblDev As ListObject: Set tblDev = wsSys.ListObjects("T_SYS_Devises")
     
-    Dim tblDev As ListObject
-    On Error Resume Next: Set tblDev = wsSys.ListObjects("T_SYS_Devises"): On Error GoTo 0
+    Dim i As Long, devise As String, rateAPI As Double, sysRate As Double
     
-    If Not tblDev Is Nothing Then
-        Dim i As Long
-        Dim devise As String, rateAPI As Double, sysRate As Double
-        
-        ' 3. Traitement O(n) et Injection
-        For i = 1 To tblDev.ListRows.Count
-            devise = UCase(Trim(CStr(tblDev.DataBodyRange(i, 1).Value)))
-            
-            If devise = "MUR" Then
-                tblDev.DataBodyRange(i, 2).Value = 1
-            Else
-                ' Extraction du taux depuis le JSON brut
-                rateAPI = Extraire_Taux_JSON(json, devise)
-                
-                If rateAPI > 0 Then
-                    ' Mathématique : L'API donne la valeur d'1 MUR dans la devise étrangère.
-                    ' Le système SFP a besoin de la valeur d'1 unité étrangère en MUR (ex: 1 EUR = 49.5 MUR).
-                    sysRate = 1 / rateAPI
-                    tblDev.DataBodyRange(i, 2).Value = Round(sysRate, 4)
-                End If
+    ' 3. Traitement O(n) et Injection
+    For i = 1 To tblDev.ListRows.Count
+        devise = UCase(Trim(CStr(tblDev.DataBodyRange(i, 1).Value)))
+        If devise = baseDev Then
+            tblDev.DataBodyRange(i, 2).Value = 1
+        Else
+            rateAPI = Extraire_Taux_JSON(json, devise)
+            If rateAPI > 0 Then
+                sysRate = 1 / rateAPI
+                tblDev.DataBodyRange(i, 2).Value = Round(sysRate, 4)
             End If
-        Next i
-    Else
-        MsgBox "La table des devises n'est pas encore initialisée." & vbCrLf & "Ouvrez un Dashboard pour la créer automatiquement.", vbExclamation
-    End If
+        End If
+    Next i
     
     ' 4. Reverrouillage absolu
     wsSys.Protect "SFP_ADMIN_2026", UserInterfaceOnly:=True
     Application.ScreenUpdating = True
     
-    MsgBox "TAUX DE CHANGE SYNCHRONISÉS." & vbCrLf & vbCrLf & _
-           "Les devises ont été mises à jour avec succès depuis le marché en direct.", vbInformation, "Synchronisation FX"
+    MsgBox MOD_02_AppHome_Global.TR("MSG_FX_OK"), vbInformation, MOD_02_AppHome_Global.TR("MSG_FX_TITLE")
 End Sub
+' --- FIN PATCH 1 ---
 
 ' --- Parseur JSON Ultra-Léger (Sans librairie externe) ---
 Private Function Extraire_Taux_JSON(ByVal json As String, ByVal devise As String) As Double

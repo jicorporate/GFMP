@@ -25,9 +25,11 @@ End Sub
 ' -------------------------------------------------------------------------
 ' 1. STATE MANAGEMENT (Devise & Mois Actifs)
 ' -------------------------------------------------------------------------
+' --- DEBUT PATCH 4 (Anti-Crash MOD_05) ---
 Private Function Obtenir_Parametre(NomParam As String, ValeurDefaut As String) As String
+    Dim wsSys As Worksheet: Set wsSys = ThisWorkbook.Sheets("SYS_Config")
     Dim tblConf As ListObject, i As Long
-    On Error Resume Next: Set tblConf = ThisWorkbook.Sheets("SYS_Config").ListObjects("T_SYS_Config"): On Error GoTo 0
+    On Error Resume Next: Set tblConf = wsSys.ListObjects("T_SYS_Config"): On Error GoTo 0
     If tblConf Is Nothing Then Obtenir_Parametre = ValeurDefaut: Exit Function
     
     For i = 1 To tblConf.ListRows.Count
@@ -37,10 +39,13 @@ Private Function Obtenir_Parametre(NomParam As String, ValeurDefaut As String) A
         End If
     Next i
     
+    wsSys.Unprotect "SFP_ADMIN_2026"
     Dim nr As ListRow: Set nr = tblConf.ListRows.Add
     nr.Range(1, 1).Value = NomParam: nr.Range(1, 2).Value = ValeurDefaut: nr.Range(1, 3).Value = "Filtre Actif"
+    wsSys.Protect "SFP_ADMIN_2026", UserInterfaceOnly:=True
     Obtenir_Parametre = ValeurDefaut
 End Function
+' --- FIN PATCH 4 ---
 
 Private Sub Modifier_Parametre(NomParam As String, NouvelleValeur As String)
     Dim wsSys As Worksheet: Set wsSys = ThisWorkbook.Sheets("SYS_Config"): wsSys.Unprotect "SFP_ADMIN_2026"
@@ -99,7 +104,8 @@ End Function
 Public Sub GENERER_NET_WORTH_DASHBOARD()
     Garantir_Lexique_NetWorth
     
-    Dim DeviseFiltre As String: DeviseFiltre = Obtenir_Parametre("NW_FILTRE_DEV", "MUR")
+    'Dim DeviseFiltre As String: DeviseFiltre = Obtenir_Parametre("NW_FILTRE_DEV", "MUR")
+    Dim DeviseFiltre As String: DeviseFiltre = Obtenir_Parametre("NW_FILTRE_DEV", Obtenir_Parametre("SYS_DEVISE_BASE", "MUR"))
     Dim MoisFiltre As String: MoisFiltre = Obtenir_Parametre("NW_FILTRE_MOIS", Format(Date, "yyyy-mm"))
 
     Dim wsNW As Worksheet
@@ -144,18 +150,26 @@ Public Sub GENERER_NET_WORTH_DASHBOARD()
     shpTitle.TextFrame2.TextRange.Lines(1).Font.Name = "ADLaM Display": shpTitle.TextFrame2.TextRange.Lines(1).Font.Size = 18: shpTitle.TextFrame2.TextRange.Lines(1).Font.Bold = True: shpTitle.TextFrame2.TextRange.Lines(1).Font.Fill.ForeColor.RGB = vbWhite
     shpTitle.TextFrame2.TextRange.Lines(2).Font.Name = "ADLaM Display": shpTitle.TextFrame2.TextRange.Lines(2).Font.Size = 10: shpTitle.TextFrame2.TextRange.Lines(2).Font.Fill.ForeColor.RGB = RGB(220, 220, 255)
     
-    ' --- 5. LE TIME SLIDER (Machine à remonter le temps) ---
-    Dim LabelDate As String: LabelDate = UCase(Format(CDate(MoisFiltre & "-01"), "mmmm yyyy"))
-    Dessiner_Widget wsNW, "BTN_NW_PREV_MONTH", "<", 290, 15, 25, 32, RGB(220, 220, 220), RGB(0, 0, 0), "MOD_05_Advanced_Modules.MOIS_PRECEDENT_NW"
-    Dessiner_Widget wsNW, "LBL_NW_MONTH", LabelDate, 320, 15, 160, 32, RGB(220, 220, 220), RGB(0, 0, 0), ""
-    Dessiner_Widget wsNW, "BTN_NW_NEXT_MONTH", ">", 485, 15, 25, 32, RGB(220, 220, 220), RGB(0, 0, 0), "MOD_05_Advanced_Modules.MOIS_SUIVANT_NW"
-    
-    ' --- 6. LE CONVERTISSEUR DE DEVISES ---
-    Dim devLeft As Integer: devLeft = 540
-    Dessiner_Widget wsNW, "BTN_NW_DEV_MUR", "MUR", devLeft, 15, 50, 32, IIf(DeviseFiltre = "MUR", RGB(250, 218, 94), RGB(40, 70, 180)), IIf(DeviseFiltre = "MUR", RGB(40, 40, 40), vbWhite), "MOD_05_Advanced_Modules.CHANGER_DEVISE_NW"
-    Dessiner_Widget wsNW, "BTN_NW_DEV_EUR", "EUR", devLeft + 55, 15, 50, 32, IIf(DeviseFiltre = "EUR", RGB(250, 218, 94), RGB(40, 70, 180)), IIf(DeviseFiltre = "EUR", RGB(40, 40, 40), vbWhite), "MOD_05_Advanced_Modules.CHANGER_DEVISE_NW"
-    Dessiner_Widget wsNW, "BTN_NW_DEV_USD", "USD", devLeft + 110, 15, 50, 32, IIf(DeviseFiltre = "USD", RGB(250, 218, 94), RGB(40, 70, 180)), IIf(DeviseFiltre = "USD", RGB(40, 40, 40), vbWhite), "MOD_05_Advanced_Modules.CHANGER_DEVISE_NW"
-    Dessiner_Widget wsNW, "BTN_NW_DEV_XOF", "XOF", devLeft + 165, 15, 50, 32, IIf(DeviseFiltre = "XOF", RGB(250, 218, 94), RGB(40, 70, 180)), IIf(DeviseFiltre = "XOF", RGB(40, 40, 40), vbWhite), "MOD_05_Advanced_Modules.CHANGER_DEVISE_NW"
+    ' --- DEBUT PATCH 3 (Grille UX Parfaite Net Worth) ---
+    Dim arrD() As String: arrD = Split(MoisFiltre, "-")
+    Dim LabelDate As String: LabelDate = UCase(Format(DateSerial(CInt(arrD(0)), CInt(arrD(1)), 1), "mmmm yyyy"))
+
+    ' Time Slider (Ancré à 450)
+    Dessiner_Widget wsNW, "BTN_NW_PREV_MONTH", "<", 450, 15, 25, 32, RGB(220, 220, 220), RGB(0, 0, 0), "MOD_05_Advanced_Modules.MOIS_PRECEDENT_NW"
+    Dessiner_Widget wsNW, "LBL_NW_MONTH", LabelDate, 480, 15, 130, 32, RGB(220, 220, 220), RGB(0, 0, 0), ""
+    Dessiner_Widget wsNW, "BTN_NW_NEXT_MONTH", ">", 615, 15, 25, 32, RGB(220, 220, 220), RGB(0, 0, 0), "MOD_05_Advanced_Modules.MOIS_SUIVANT_NW"
+
+    ' Boutons Devises (Ancrés à 670, Espacement strict de 50px)
+    Dim devLeft As Integer: devLeft = 670
+    Dim arrDev As Variant: arrDev = MOD_01_CoreEngine.GET_TAUX_CHANGE().keys()
+    Dim limitD As Integer: limitD = UBound(arrDev): If limitD > 6 Then limitD = 6
+    Dim btnW As Integer: btnW = 45
+    Dim idxD As Integer
+    For idxD = 0 To limitD
+        Dim dName As String: dName = CStr(arrDev(idxD))
+        Dessiner_Widget wsNW, "BTN_NW_DEV_" & dName, dName, devLeft + (idxD * 50), 15, btnW, 32, IIf(DeviseFiltre = dName, RGB(250, 218, 94), RGB(40, 70, 180)), IIf(DeviseFiltre = dName, RGB(40, 40, 40), vbWhite), "MOD_05_Advanced_Modules.CHANGER_DEVISE_NW"
+    Next idxD
+    ' --- FIN PATCH 3 ---
     
     ' --- DEBUT PATCH 3 ---
     Dim dictTaux As Object: Set dictTaux = MOD_01_CoreEngine.GET_TAUX_CHANGE()
@@ -276,8 +290,16 @@ Public Sub GENERER_NET_WORTH_DASHBOARD()
                         End If
                         
                         Ligne = Ligne + 1
-                        arrConsolide(Ligne, 1) = arrCpt(i, 2)
-                        arrConsolide(Ligne, 2) = TypeCpt
+                        'arrConsolide(Ligne, 1) = arrCpt(i, 2)
+                        'arrConsolide(Ligne, 2) = TypeCpt
+                        ' --- DEBUT PATCH 3B (Data Proxy Net Worth) ---
+                        'arrConsolide(Ligne, 1) = TR(CStr(arrCpt(i, 2)))
+                        'arrConsolide(Ligne, 2) = TR(CStr(TypeCpt))
+                        ' --- FIN PATCH 3B ---
+                        ' --- DEBUT PATCH 3 (Proxy i18n Bilan) ---
+                        arrConsolide(Ligne, 1) = TR(CStr(arrCpt(i, 2))) ' Nom du compte traduit
+                        arrConsolide(Ligne, 2) = TR(CStr(TypeCpt))      ' Classe d'actif traduite
+                        ' --- FIN PATCH 3 ---
                         arrConsolide(Ligne, 3) = CptDevise ' La table affiche la devise NATIVE (ex: XOF)
                         arrConsolide(Ligne, 4) = SoldeNatif ' La table affiche le montant NATIF (ex: 20000)
                     End If
