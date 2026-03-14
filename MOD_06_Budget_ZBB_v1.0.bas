@@ -219,12 +219,14 @@ Private Function Code_VBA_USF_Budget() As String
     c = c & "    On Error Resume Next: Set tbl = ThisWorkbook.Sheets(""DIM_Categorie"").ListObjects(""T_DIM_Categorie""): On Error GoTo 0" & vbCrLf
     c = c & "    If Not tbl Is Nothing Then" & vbCrLf
     c = c & "        Me.cmb_Cat.ColumnCount = 2: Me.cmb_Cat.ColumnWidths = ""0 pt;150 pt""" & vbCrLf
+    ' --- DEBUT PATCH (Proxy i18n Liste Budget) ---
     c = c & "        For i = 1 To tbl.ListRows.Count" & vbCrLf
     c = c & "            If UCase(Trim(tbl.DataBodyRange(i, 3).Value)) = ""DEPENSE"" Then" & vbCrLf
     c = c & "                Me.cmb_Cat.AddItem tbl.DataBodyRange(i, 1).Value" & vbCrLf
-    c = c & "                Me.cmb_Cat.List(Me.cmb_Cat.ListCount - 1, 1) = tbl.DataBodyRange(i, 2).Value" & vbCrLf
+    c = c & "                Me.cmb_Cat.List(Me.cmb_Cat.ListCount - 1, 1) = MOD_02_AppHome_Global.TR(CStr(tbl.DataBodyRange(i, 2).Value))" & vbCrLf
     c = c & "            End If" & vbCrLf
     c = c & "        Next i" & vbCrLf
+    ' --- FIN PATCH ---
     c = c & "    End If" & vbCrLf
     c = c & "End Sub" & vbCrLf
     ' --- FIN PATCH 2 ---

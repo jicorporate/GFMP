@@ -37,10 +37,15 @@ Private Sub Preparer_Dictionnaire_Global()
     Dim i As Long: For i = 1 To tblConf.ListRows.Count
         If tblConf.DataBodyRange(i, 1).Value = "LANGUE_UI" Then langExist = True: Exit For
     Next i
+    
+    ' --- DEBUT PATCH 2 (Injection de la langue détectée) ---
     If Not langExist Then
+        wsSys.Unprotect "SFP_ADMIN_2026" ' Sécurité supplémentaire
         Dim nrConf As ListRow: Set nrConf = tblConf.ListRows.Add
-        nrConf.Range(1, 1).Value = "LANGUE_UI": nrConf.Range(1, 2).Value = "FR": nrConf.Range(1, 3).Value = "Langue UI Globale"
+        nrConf.Range(1, 1).Value = "LANGUE_UI": nrConf.Range(1, 2).Value = GET_SYSTEM_LANGUAGE(): nrConf.Range(1, 3).Value = "Langue UI Globale"
+        wsSys.Protect "SFP_ADMIN_2026", UserInterfaceOnly:=True
     End If
+    ' --- FIN PATCH 2 ---
 
     On Error Resume Next: Set tblDic = wsSys.ListObjects("T_SYS_Dictionary"): On Error GoTo 0
     If tblDic Is Nothing Then
@@ -134,6 +139,16 @@ Private Sub Preparer_Dictionnaire_Global()
     Upsert_Trad tblDic, "Portefeuille Crypto", "Portefeuille Crypto", "Crypto Wallet", "Cartera Crypto", "Carteira Crypto", "Krypto-Wallet", "Portafoglio Crypto", "Cryptoportemonnee", "Kryptoplånbok"
     Upsert_Trad tblDic, "Carte de Crédit (Différé)", "Carte de Crédit", "Credit Card", "Tarjeta de Crédito", "Cartão de Crédito", "Kreditkarte", "Carta di Credito", "Creditcard", "Kreditkort"
     ' --- FIN PATCH ---
+    ' --- DEBUT PATCH 1 (Lexique Onboarding & Security Lock) ---
+    Upsert_Trad tblDic, "MSG_WELCOME_CUR", "BIENVENUE ! VEUILLEZ CONFIGURER VOTRE SYSTÈME." & vbCrLf & vbCrLf & "Saisissez votre Devise Principale (ex: XOF, EUR, USD)." & vbCrLf & "ATTENTION : Ce choix sera définitif pour garantir l'intégrité comptable.", "WELCOME! PLEASE CONFIGURE YOUR SYSTEM." & vbCrLf & vbCrLf & "Enter your Base Currency (e.g., USD, EUR)." & vbCrLf & "WARNING: This choice is permanent to ensure accounting integrity.", "¡BIENVENIDO! CONFIGURE SU SISTEMA.", "BEM-VINDO! CONFIGURE SEU SISTEMA.", "WILLKOMMEN! BITTE KONFIGURIEREN SIE IHR SYSTEM.", "BENVENUTO! CONFIGURA IL TUO SISTEMA.", "WELKOM! CONFIGUREER UW SYSTEEM.", "VÄLKOMMEN! KONFIGURERA DITT SYSTEM."
+    Upsert_Trad tblDic, "MSG_LOCKED_CUR", "SÉCURITÉ COMPTABLE ACTIVÉE" & vbCrLf & vbCrLf & "Votre devise principale est verrouillée sur : ", "ACCOUNTING SECURITY ENABLED" & vbCrLf & vbCrLf & "Your base currency is locked to : ", "SEGURIDAD CONTABLE ACTIVADA", "SEGURANÇA CONTÁBIL ATIVADA", "BUCHHALTUNGSSICHERHEIT AKTIVIERT", "SICUREZZA CONTABILE ATTIVATA", "ACCOUNTING BEVEILIGING INGESCHAKELD", "BOKFÖRINGSSÄKERHET AKTIVERAD"
+    Upsert_Trad tblDic, "MSG_LOCKED_DESC", "Il est impossible de modifier la devise mère après l'initialisation afin de préserver votre bilan. (Un Factory Reset est requis pour changer).", "It is impossible to change the base currency after initialization to protect your ledger. (A Factory Reset is required).", "Imposible cambiar la divisa base.", "Impossível mudar a moeda base.", "Basiswährung kann nicht geändert werden.", "Impossibile cambiare la valuta base.", "Basisvaluta kan niet worden gewijzigd.", "Basvalutan kan inte ändras."
+    ' --- FIN PATCH 1 ---
+    ' --- DEBUT PATCH 1 (Lexique Onboarding Intelligent) ---
+    Upsert_Trad tblDic, "MSG_ONB_EMPTY", "La configuration initiale est obligatoire pour démarrer.", "Initial configuration is mandatory to start.", "La configuración inicial es obligatoria.", "A configuração inicial é obrigatória.", "Die Erstkonfiguration ist obligatorisch.", "La configurazione iniziale è obbligatoria.", "Initiële configuratie is verplicht.", "Inledande konfiguration är obligatorisk."
+    Upsert_Trad tblDic, "MSG_ONB_GUIDE", "Veuillez saisir un code ISO de 3 lettres (ex: USD, EUR, MUR)." & vbCrLf & "INFO SYSTÈME : Votre symbole monétaire local est[ ", "Please enter a 3-letter ISO code (e.g., USD, EUR, GBP)." & vbCrLf & "SYSTEM INFO: Your local currency symbol is[ ", "Ingrese un código ISO de 3 letras." & vbCrLf & "INFO SISTEMA: Su símbolo local es[ ", "Insira um código ISO de 3 letras." & vbCrLf & "INFO SISTEMA: Seu símbolo local é[ ", "Geben Sie einen 3-stelligen ISO-Code ein." & vbCrLf & "SYSTEM-INFO: Ihr lokales Symbol ist[ ", "Inserisci un codice ISO di 3 lettere." & vbCrLf & "INFO SISTEMA: Il tuo simbolo locale è[ ", "Voer een 3-letterige ISO-code in." & vbCrLf & "SYSTEEMINFO: Uw lokale symbool is[ ", "Ange en 3-bokstavs ISO-kod." & vbCrLf & "SYSTEMINFO: Din lokala symbol är[ "
+    Upsert_Trad tblDic, "MSG_ONB_REJECT", "Devise non reconnue par le marché boursier mondial.", "Currency not recognized by the global stock market.", "Divisa no reconocida por el mercado mundial.", "Moeda não reconhecida pelo mercado mundial.", "Währung vom Weltmarkt nicht erkannt.", "Valuta non riconosciuta dal mercato mondiale.", "Valuta niet herkend door de wereldmarkt.", "Valutan känns inte igen av världsmarknaden."
+    ' --- FIN PATCH 1 ---
 End Sub
 
 Private Sub Upsert_Trad(tbl As ListObject, k As String, fr As String, en As String, es As String, pt As String, de As String, it As String, nl As String, sv As String)
@@ -409,96 +424,117 @@ Public Sub EXECUTER_ROUTER_NETWORTH()
     Application.ScreenUpdating = True
 End Sub
 
-' --- DEBUT PATCH 2 (Validation API Préventive) ---
+' --- DEBUT PATCH 2 (Onboarding Immuable & Verrou) ---
+' 1. LE VERROU : Action déclenchée par le bouton "Paramètres"
 Public Sub EXECUTER_CONFIG_SYSTEME()
     Application.EnableEvents = True
-    
     Dim wsSys As Worksheet: Set wsSys = ThisWorkbook.Sheets("SYS_Config")
-    Dim tblConf As ListObject: Set tblConf = wsSys.ListObjects("T_SYS_Config")
+    Dim tblConf As ListObject
+    On Error Resume Next: Set tblConf = wsSys.ListObjects("T_SYS_Config"): On Error GoTo 0
+    If tblConf Is Nothing Then Exit Sub
+    
     Dim currentBase As String: currentBase = "MUR"
     Dim i As Long
     For i = 1 To tblConf.ListRows.Count
         If tblConf.DataBodyRange(i, 1).Value = "SYS_DEVISE_BASE" Then currentBase = tblConf.DataBodyRange(i, 2).Value: Exit For
     Next i
     
-    Dim rep As String
-    rep = InputBox(TR("MSG_ASK_BASE"), TR("BTN_SETTING"), currentBase)
-    If rep = "" Or UCase(Trim(rep)) = currentBase Then Exit Sub
-    rep = UCase(Trim(rep))
+    ' Affichage du Verrou de Sécurité
+    MsgBox TR("MSG_LOCKED_CUR") & currentBase & vbCrLf & vbCrLf & TR("MSG_LOCKED_DESC"), vbInformation, TR("BTN_SETTING")
+End Sub
+
+' 2. L'ONBOARDING : Déclenché silencieusement au démarrage
+Public Sub VERIFIER_PREMIER_LANCEMENT()
+    Dim wsSys As Worksheet: Set wsSys = ThisWorkbook.Sheets("SYS_Config")
+    Dim tblConf As ListObject
+    On Error Resume Next: Set tblConf = wsSys.ListObjects("T_SYS_Config"): On Error GoTo 0
+    If tblConf Is Nothing Then Exit Sub
     
-    ' 1. SÉCURITÉ ABSOLUE : On interroge l'API pour valider l'existence réelle de la devise
-    If Len(rep) <> 3 Then
-        MsgBox TR("MSG_ERR_DEV_API"), vbCritical, TR("BTN_SETTING")
-        Exit Sub
-    End If
-    Dim http As Object
-    On Error Resume Next
-    Set http = CreateObject("MSXML2.XMLHTTP")
-    http.Open "GET", "https://open.er-api.com/v6/latest/" & rep, False
-    http.send
-    If http.Status <> 200 Or InStr(1, http.responseText, """result"":""success""") = 0 Then
-        MsgBox TR("MSG_ERR_DEV_API") & vbCrLf & "-> " & rep, vbCritical, TR("BTN_SETTING")
-        Exit Sub
-    End If
-    On Error GoTo 0
-    
-    Application.ScreenUpdating = False
-    
-    ' 2. Mise à jour de SYS_Config (Verrouillée)
-    wsSys.Unprotect "SFP_ADMIN_2026"
-    Dim found As Boolean: found = False
+    Dim baseExists As Boolean: baseExists = False
+    Dim i As Long
     For i = 1 To tblConf.ListRows.Count
-        If tblConf.DataBodyRange(i, 1).Value = "SYS_DEVISE_BASE" Then
-            tblConf.DataBodyRange(i, 2).Value = rep
-            found = True: Exit For
-        End If
+        If tblConf.DataBodyRange(i, 1).Value = "SYS_DEVISE_BASE" Then baseExists = True: Exit For
     Next i
-    If Not found Then
+    
+    ' --- DEBUT PATCH 3 (Préchargement Dictionnaire Onboarding) ---
+    If Not baseExists Then
+        Application.EnableEvents = True
+        
+        ' CRITIQUE : On force la création du dictionnaire et la détection de la langue AVANT d'afficher la fenêtre !
+        Preparer_Dictionnaire_Global
+        
+        ' --- DEBUT PATCH 2 (Guidage Onboarding via Système OS) ---
+        Dim sysCurr As String: sysCurr = Application.International(xlCurrencyCode) ' Lecture du Symbole Windows de l'utilisateur
+        Dim rep As String
+        Dim isValid As Boolean: isValid = False
+        
+        ' BOUCLE STRICTE : Guidage Actif
+        Do While Not isValid
+            rep = InputBox(TR("MSG_WELCOME_CUR"), TR("APP_TITLE"), "XOF")
+            
+            If rep = "" Then
+                ' Bloque l'annulation (Bouton Cancel) de manière traduite
+                MsgBox TR("MSG_ONB_EMPTY"), vbExclamation, TR("APP_TITLE")
+            ElseIf Len(Trim(rep)) <> 3 Then
+                ' Guide l'utilisateur si la taille est mauvaise en lui montrant sa propre monnaie système
+                MsgBox TR("MSG_ONB_GUIDE") & sysCurr & " ]", vbExclamation, TR("APP_TITLE")
+            Else
+                rep = UCase(Trim(rep))
+                ' Vérification API en direct
+                Dim http As Object: Set http = CreateObject("MSXML2.XMLHTTP")
+                On Error Resume Next
+                http.Open "GET", "https://open.er-api.com/v6/latest/" & rep, False
+                http.send
+                
+                If http.Status = 200 And InStr(1, http.responseText, """result"":""success""") > 0 Then
+                    isValid = True
+                Else
+                    ' Rejette les fausses devises (ex: CADRTP) avec guidage complet
+                    MsgBox TR("MSG_ONB_REJECT") & vbCrLf & vbCrLf & TR("MSG_ONB_GUIDE") & sysCurr & " ]", vbCritical, TR("APP_TITLE")
+                End If
+                On Error GoTo 0
+            End If
+        Loop
+        ' --- FIN PATCH 2 ---
+        
+        ' INJECTION FINALE (Scellée dans le marbre)
+        Application.ScreenUpdating = False
+        wsSys.Unprotect "SFP_ADMIN_2026"
         Dim rC As ListRow: Set rC = tblConf.ListRows.Add
         rC.Range(1, 1).Value = "SYS_DEVISE_BASE": rC.Range(1, 2).Value = rep: rC.Range(1, 3).Value = "Devise Globale"
+        wsSys.Protect "SFP_ADMIN_2026", UserInterfaceOnly:=True
+        
+        ' Migration d'usine de DIM_Compte et sync API
+        Dim wsCpt As Worksheet: Set wsCpt = ThisWorkbook.Sheets("DIM_Compte"): wsCpt.Unprotect "SFP_ADMIN_2026"
+        Dim tblCpt As ListObject: Set tblCpt = wsCpt.ListObjects("T_DIM_Compte")
+        For i = 1 To tblCpt.ListRows.Count
+            tblCpt.DataBodyRange(i, 4).Value = rep ' Convertit les comptes d'usine dans la devise choisie
+        Next i
+        wsCpt.Protect "SFP_ADMIN_2026", UserInterfaceOnly:=True
+        
+        MOD_99_SystemAdmin.ACTUALISER_DEVISES_WEB
+        Preparer_Hub_Central
+        Application.ScreenUpdating = True
     End If
-    
-    ' 3. Swap Dynamique SANS Doublon dans T_SYS_Devises
-    Dim tblDev As ListObject
-    On Error Resume Next: Set tblDev = wsSys.ListObjects("T_SYS_Devises"): On Error GoTo 0
-    If Not tblDev Is Nothing Then
-        Dim rDel As Long
-        For rDel = tblDev.ListRows.Count To 1 Step -1
-            If UCase(Trim(CStr(tblDev.DataBodyRange(rDel, 1).Value))) = rep Then tblDev.ListRows(rDel).Delete
-        Next rDel
-        Dim devFound As Boolean: devFound = False
-        Dim k As Long
-        For k = 1 To tblDev.ListRows.Count
-            If UCase(Trim(CStr(tblDev.DataBodyRange(k, 1).Value))) = currentBase Then
-                tblDev.DataBodyRange(k, 1).Value = rep
-                tblDev.DataBodyRange(k, 2).Value = 1
-                devFound = True: Exit For
-            End If
-        Next k
-        If Not devFound Then
-            Dim nD As ListRow: Set nD = tblDev.ListRows.Add
-            nD.Range(1, 1).Value = rep: nD.Range(1, 2).Value = 1
-        End If
-    End If
-    wsSys.Protect "SFP_ADMIN_2026", UserInterfaceOnly:=True
-    
-    ' 4. Migration de la table DIM_Compte
-    Dim wsCpt As Worksheet: Set wsCpt = ThisWorkbook.Sheets("DIM_Compte")
-    wsCpt.Unprotect "SFP_ADMIN_2026"
-    Dim tblCpt As ListObject
-    On Error Resume Next: Set tblCpt = wsCpt.ListObjects("T_DIM_Compte"): On Error GoTo 0
-    If Not tblCpt Is Nothing Then
-        If tblCpt.ListRows.Count > 0 Then
-            For i = 1 To tblCpt.ListRows.Count
-                If UCase(Trim(CStr(tblCpt.DataBodyRange(i, 4).Value))) = currentBase Then tblCpt.DataBodyRange(i, 4).Value = rep
-            Next i
-        End If
-    End If
-    wsCpt.Protect "SFP_ADMIN_2026", UserInterfaceOnly:=True
-    
-    ' 5. Téléchargement instantané des nouveaux taux via l'API
-    MOD_99_SystemAdmin.ACTUALISER_DEVISES_WEB
-    
-    Application.ScreenUpdating = True
 End Sub
 ' --- FIN PATCH 2 ---
+' --- DEBUT PATCH 1 (Auto-Détection Langue OS / LCID) ---
+Private Function GET_SYSTEM_LANGUAGE() As String
+    Dim lcid As Long
+    On Error Resume Next
+    ' msoLanguageIDUI = 2 (Utilisation du chiffre 2 pour éviter les erreurs de référence librairie)
+    lcid = Application.LanguageSettings.LanguageID(2)
+    On Error GoTo 0
+    
+    Select Case lcid
+        Case 1036, 2060, 3084, 4108, 5132, 6156: GET_SYSTEM_LANGUAGE = "FR"
+        Case 1034, 2058, 3082, 4106, 5130: GET_SYSTEM_LANGUAGE = "ES"
+        Case 1046, 2070: GET_SYSTEM_LANGUAGE = "PT"
+        Case 1031, 2055, 3079, 4103, 5127: GET_SYSTEM_LANGUAGE = "DE"
+        Case 1040, 2064: GET_SYSTEM_LANGUAGE = "IT"
+        Case 1043, 2067: GET_SYSTEM_LANGUAGE = "NL"
+        Case 1053, 2077: GET_SYSTEM_LANGUAGE = "SV"
+        Case Else: GET_SYSTEM_LANGUAGE = "EN" ' FALLBACK MVP INTERNATIONAL (Anglais)
+    End Select
+End Function
+' --- FIN PATCH 1 ---

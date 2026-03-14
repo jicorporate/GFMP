@@ -9,11 +9,16 @@ Attribute VB_PredeclaredId = True
 Attribute VB_Exposed = True
 Option Explicit
 
+' --- DEBUT PATCH 3 (Hook de Démarrage) ---
 Private Sub Workbook_Open()
     On Error Resume Next
     MOD_00_Architecture.Apply_RBAC_Security
+    
+    ' Le système vérifie s'il doit déclencher l'Onboarding
+    MOD_02_AppHome_Global.VERIFIER_PREMIER_LANCEMENT
     On Error GoTo 0
 End Sub
+' --- FIN PATCH 3 ---
 
 ' =========================================================================
 ' MOTEUR U.C.R : Routeur d'Événements avec Architecture "Anti-Freeze"
@@ -62,3 +67,4 @@ CrashRouteur:
         MsgBox "Erreur d'exécution : " & Err.Description, vbCritical, "Alerte Routeur"
     End If
 End Sub
+
