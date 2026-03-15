@@ -9,16 +9,20 @@ Attribute VB_PredeclaredId = True
 Attribute VB_Exposed = True
 Option Explicit
 
-' --- DEBUT PATCH 3 (Hook de Démarrage) ---
+' --- DEBUT PATCH 2 (Hook de Démarrage Strict) ---
 Private Sub Workbook_Open()
     On Error Resume Next
+    ' 1. Verrouillage du Backend
     MOD_00_Architecture.Apply_RBAC_Security
     
-    ' Le système vérifie s'il doit déclencher l'Onboarding
+    ' 2. VÉRIFICATION DE LA LICENCE (PRIORITÉ ABSOLUE)
+    MOD_02_AppHome_Global.VERIFIER_LICENCE
+    
+    ' 3. Si la licence est valide, on passe à l'Onboarding de la Devise
     MOD_02_AppHome_Global.VERIFIER_PREMIER_LANCEMENT
     On Error GoTo 0
 End Sub
-' --- FIN PATCH 3 ---
+' --- FIN PATCH 2 ---
 
 ' =========================================================================
 ' MOTEUR U.C.R : Routeur d'Événements avec Architecture "Anti-Freeze"
