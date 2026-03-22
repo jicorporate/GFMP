@@ -216,8 +216,14 @@ Private Sub Preparer_Hub_Central()
     wsHome.Range("A1:Z5").Interior.Color = RGB(65, 105, 225) ' Bleu Royal
     
     ' --- TITRE VECTORIEL ---
+    'Dim shpTitle As Shape
+    'Set shpTitle = wsHome.Shapes.AddTextbox(msoTextOrientationHorizontal, 30, 15, 500, 50)
+    ' --- DEBUT PATCH 2 (Logo Accueil) ---
+    MOD_01_CoreEngine.INJECTER_LOGO wsHome, 20, 5, 80, 45 ' Logo JIC
+    
     Dim shpTitle As Shape
-    Set shpTitle = wsHome.Shapes.AddTextbox(msoTextOrientationHorizontal, 30, 15, 500, 50)
+    Set shpTitle = wsHome.Shapes.AddTextbox(msoTextOrientationHorizontal, 120, 15, 500, 50) ' Titre décalé à 120
+    ' --- FIN PATCH 2 ---
     shpTitle.Fill.Visible = msoFalse: shpTitle.Line.Visible = msoFalse
     shpTitle.TextFrame2.TextRange.Text = UCase(TR("APP_TITLE")) & vbCrLf & TR("HUB_LOC") & " | " & Format(Date, "dd mmmm yyyy")
     shpTitle.TextFrame2.TextRange.Lines(1).Font.Name = "ADLaM Display": shpTitle.TextFrame2.TextRange.Lines(1).Font.Size = 22: shpTitle.TextFrame2.TextRange.Lines(1).Font.Bold = True: shpTitle.TextFrame2.TextRange.Lines(1).Font.Fill.ForeColor.RGB = vbWhite

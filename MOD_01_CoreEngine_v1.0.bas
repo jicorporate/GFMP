@@ -220,3 +220,29 @@ Public Function GET_TAUX_CHANGE() As Object
     Set GET_TAUX_CHANGE = dict
 End Function
 ' --- FIN PATCH 1 ---
+' --- DEBUT PATCH (Moteur de Clonage Logo Anti-Crash 1004) ---
+Public Sub INJECTER_LOGO(wsCible As Worksheet, L As Double, t As Double, W As Double, H As Double)
+    Dim wsSys As Worksheet
+    On Error Resume Next: Set wsSys = ThisWorkbook.Sheets("SYS_Config"): On Error GoTo 0
+    If wsSys Is Nothing Then Exit Sub
+    
+    Dim shpLogo As Shape
+    On Error Resume Next: Set shpLogo = wsSys.Shapes("LOGO_MASTER"): On Error GoTo 0
+    
+    If Not shpLogo Is Nothing Then
+        shpLogo.Copy
+        wsCible.Paste
+        ' Récupère la forme fraîchement collée
+        Dim pastedShape As Shape: Set pastedShape = wsCible.Shapes(wsCible.Shapes.Count)
+        pastedShape.Name = "LOGO_APP_" & wsCible.Shapes.Count ' Nom unique anti-collision
+        pastedShape.Left = L
+        pastedShape.Top = t
+        pastedShape.Width = W
+        pastedShape.Height = H
+        pastedShape.Placement = xlFreeFloating ' Rend l'image insensible à la grille
+        
+        ' CORRECTION CRITIQUE 1004 : On ne sélectionne plus rien, on vide juste le presse-papier
+        Application.CutCopyMode = False
+    End If
+End Sub
+' --- FIN PATCH ---
