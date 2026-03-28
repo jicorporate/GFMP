@@ -26,14 +26,27 @@ Public Sub DEPLOYER_WMS_ETAPE_1()
     ' 4. INJECTION DES DONNÉES D'AMORÇAGE
     Bootstrapper_WMS
 
-    ' 5. VERROUILLAGE ET MASQUAGE
+   ' --- DEBUT PATCH (Masquage Ciblé et Sécurisé) ---
+    ' 5. VERROUILLAGE ET MASQUAGE CIBLÉ
     Dim ws As Worksheet
+    Dim OngletsDB As Variant
+    OngletsDB = Array("SYS_Config", "DIM_Portfolio", "DIM_Asset", "FACT_Trade")
+    
+    ' SÉCURITÉ ABSOLUE : On garantit qu'au moins la première feuille reste visible pour éviter le crash Excel
+    ThisWorkbook.Sheets(1).Visible = xlSheetVisible
+    
+    Dim element As Variant
     For Each ws In ThisWorkbook.Worksheets
-        If ws.Name <> "Feuil1" And ws.Name <> "Sheet1" Then
-            ws.Visible = xlSheetVeryHidden
-            ws.Protect Password:="WMS_ADMIN_2026", UserInterfaceOnly:=True
-        End If
+        For Each element In OngletsDB
+            If ws.Name = CStr(element) Then
+                ' On masque et protège UNIQUEMENT nos tables de base de données
+                ws.Visible = xlSheetVeryHidden
+                ws.Protect Password:="WMS_ADMIN_2026", UserInterfaceOnly:=True
+                Exit For
+            End If
+        Next element
     Next ws
+    ' --- FIN PATCH ---
 
     Application.Calculation = xlCalculationAutomatic
     Application.DisplayAlerts = True
@@ -84,16 +97,28 @@ Private Sub Bootstrapper_WMS()
         Array(2, "Hardware Wallet", "Ledger Nano", "USD", "OUI"))
 End Sub
 
+' --- DEBUT PATCH (Déverrouillage autonome des Bootstrappers) ---
 Private Sub Alimenter_Config(Param As String, Valeur As String, Desc As String)
     Dim ws As Worksheet: Set ws = ThisWorkbook.Sheets("SYS_Config")
     Dim tbl As ListObject: Set tbl = ws.ListObjects("T_SYS_Config")
+    
+    ' DÉVERROUILLAGE OBLIGATOIRE POUR CONTOURNER LE BUG MICROSOFT
+    ws.Unprotect "WMS_ADMIN_2026"
+    
     Dim nr As ListRow: Set nr = tbl.ListRows.Add
     nr.Range(1, 1).Value = Param: nr.Range(1, 2).Value = Valeur: nr.Range(1, 3).Value = Desc
+    
+    ' REVERROUILLAGE IMMÉDIAT
+    ws.Protect "WMS_ADMIN_2026", UserInterfaceOnly:=True
 End Sub
 
 Private Sub Alimenter_Table(NomTable As String, Lignes As Variant)
     Dim ws As Worksheet: Set ws = ThisWorkbook.Sheets(Split(NomTable, "_", 2)(1))
     Dim tbl As ListObject: Set tbl = ws.ListObjects(NomTable)
+    
+    ' DÉVERROUILLAGE OBLIGATOIRE
+    ws.Unprotect "WMS_ADMIN_2026"
+    
     Dim item As Variant, nr As ListRow, i As Integer
     For Each item In Lignes
         Set nr = tbl.ListRows.Add
@@ -101,7 +126,11 @@ Private Sub Alimenter_Table(NomTable As String, Lignes As Variant)
             nr.Range(1, i + 1).Value = item(i)
         Next i
     Next item
+    
+    ' REVERROUILLAGE IMMÉDIAT
+    ws.Protect "WMS_ADMIN_2026", UserInterfaceOnly:=True
 End Sub
+' --- FIN PATCH ---
 
 ' --- Fonction Système Centrale : Générateur d'ID ---
 Public Function GENERER_ID(ByVal NomTable As String) As Long
@@ -130,4 +159,36 @@ Public Function GENERER_ID(ByVal NomTable As String) As Long
     wsSys.Protect "WMS_ADMIN_2026", UserInterfaceOnly:=True
     GENERER_ID = newID
 End Function
-
+' --- DEBUT PATCH (Le Cerveau des Paramètres WMS) ---
+' =========================================================================
+' FONCTION CENTRALE : Lecture/Écriture des Paramètres Globaux
+' =========================================================================
+Public Function Obtenir_Parametre(NomParam As String, ValeurDefaut As String) As String
+    Dim wsSys As Worksheet: Set wsSys = ThisWorkbook.Sheets("SYS_Config")
+    Dim tblConf As ListObject, i As Long
+    On Error Resume Next: Set tblConf = wsSys.ListObjects("T_SYS_Config"): On Error GoTo 0
+    
+    If tblConf Is Nothing Then
+        Obtenir_Parametre = ValeurDefaut
+        Exit Function
+    End If
+    
+    ' Lecture
+    For i = 1 To tblConf.ListRows.Count
+        If tblConf.DataBodyRange(i, 1).Value = NomParam Then
+            Obtenir_Parametre = tblConf.DataBodyRange(i, 2).Value
+            Exit Function
+        End If
+    Next i
+    
+    ' Écriture (Si le paramètre n'existe pas, on le crée avec la valeur par défaut)
+    wsSys.Unprotect "WMS_ADMIN_2026"
+    Dim nr As ListRow: Set nr = tblConf.ListRows.Add
+    nr.Range(1, 1).Value = NomParam
+    nr.Range(1, 2).Value = ValeurDefaut
+    nr.Range(1, 3).Value = "Filtre Actif"
+    wsSys.Protect "WMS_ADMIN_2026", UserInterfaceOnly:=True
+    
+    Obtenir_Parametre = ValeurDefaut
+End Function
+' --- FIN PATCH ---
