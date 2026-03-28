@@ -9,11 +9,16 @@ Attribute VB_PredeclaredId = True
 Attribute VB_Exposed = True
 Option Explicit
 
+' --- DEBUT PATCH 3 (Hook de Démarrage) ---
 Private Sub Workbook_Open()
     On Error Resume Next
     MOD_00_Architecture.Apply_RBAC_Security
+    
+    ' Le système vérifie s'il doit déclencher l'Onboarding
+    MOD_02_AppHome_Global.VERIFIER_PREMIER_LANCEMENT
     On Error GoTo 0
 End Sub
+' --- FIN PATCH 3 ---
 
 ' =========================================================================
 ' MOTEUR U.C.R : Routeur d'Événements avec Architecture "Anti-Freeze"
@@ -22,7 +27,7 @@ Private Sub Workbook_SheetSelectionChange(ByVal Sh As Object, ByVal Target As Ra
     If Sh.Name <> "APP_HOME" Then Exit Sub
     If Target.Count > 1 Then Exit Sub
     
-    If Target.Column = 1 And Target.Row >= 11 And Target.Row <= 24 Then
+    If Target.Column = 1 And Target.Row >= 11 And Target.Row <= 26 Then
         Dim TargetRow As Integer
         TargetRow = Target.Row
         
@@ -51,6 +56,10 @@ Private Sub Workbook_SheetSelectionChange(ByVal Sh As Object, ByVal Target As Ra
             ' CORRECTION : Séparation des modules futurs
             Case 23: MOD_02_AppHome_Global.EXECUTER_ROUTER_BUDGET
             Case 24: MOD_02_AppHome_Global.EXECUTER_ROUTER_NETWORTH
+            ' --- DEBUT PATCH 3 (Routage UCR du Bouton FX) ---
+            Case 25: MOD_99_SystemAdmin.ACTUALISER_DEVISES_WEB
+            ' --- FIN PATCH 3 ---
+            Case 26: MOD_02_AppHome_Global.EXECUTER_CONFIG_SYSTEME
         End Select
         Exit Sub
         
@@ -58,3 +67,4 @@ CrashRouteur:
         MsgBox "Erreur d'exécution : " & Err.Description, vbCritical, "Alerte Routeur"
     End If
 End Sub
+

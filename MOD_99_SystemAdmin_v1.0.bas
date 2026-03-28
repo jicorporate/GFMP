@@ -159,3 +159,76 @@ Public Sub POWER_BI_SECURISER_BACKEND()
            "La forteresse est verrouillée. Les tables sont à nouveau 'VeryHidden'." & vbCrLf & _
            "Power BI continuera à se mettre à jour silencieusement en arrière-plan.", vbInformation, "ETL Bridge Fermé"
 End Sub
+' =========================================================================
+' MOTEUR API : MISE À JOUR DYNAMIQUE DES DEVISES (WEB SCRAPING JSON)
+' =========================================================================
+' --- DEBUT PATCH 1 (API Auto-Cicatrisante et 100% Dynamique) ---
+Public Sub ACTUALISER_DEVISES_WEB()
+    Application.ScreenUpdating = False
+    
+    Dim baseDev As String: baseDev = MOD_06_Budget_ZBB.Obtenir_Parametre("SYS_DEVISE_BASE", "MUR")
+    Dim url As String: url = "https://open.er-api.com/v6/latest/" & baseDev
+    Dim http As Object
+    On Error Resume Next
+    Set http = CreateObject("MSXML2.XMLHTTP")
+    http.Open "GET", url, False
+    http.send
+    
+    If http.Status <> 200 Then
+        MsgBox MOD_02_AppHome_Global.TR("MSG_FX_ERR"), vbCritical, MOD_02_AppHome_Global.TR("MSG_FX_TITLE")
+        Exit Sub
+    End If
+    Dim json As String: json = http.responseText
+    On Error GoTo 0
+    
+    ' 1. SÉCURITÉ : Force la création de la table en arrière-plan si elle est absente (Au lieu d'afficher une erreur)
+    Dim dummy As Object: Set dummy = MOD_01_CoreEngine.GET_TAUX_CHANGE()
+    
+    ' 2. Déverrouillage autonome du Backend
+    Dim wsSys As Worksheet: Set wsSys = ThisWorkbook.Sheets("SYS_Config")
+    wsSys.Unprotect "SFP_ADMIN_2026"
+    Dim tblDev As ListObject: Set tblDev = wsSys.ListObjects("T_SYS_Devises")
+    
+    Dim i As Long, devise As String, rateAPI As Double, sysRate As Double
+    
+    ' 3. Traitement O(n) et Injection
+    For i = 1 To tblDev.ListRows.Count
+        devise = UCase(Trim(CStr(tblDev.DataBodyRange(i, 1).Value)))
+        If devise = baseDev Then
+            tblDev.DataBodyRange(i, 2).Value = 1
+        Else
+            rateAPI = Extraire_Taux_JSON(json, devise)
+            If rateAPI > 0 Then
+                sysRate = 1 / rateAPI
+                tblDev.DataBodyRange(i, 2).Value = Round(sysRate, 4)
+            End If
+        End If
+    Next i
+    
+    ' 4. Reverrouillage absolu
+    wsSys.Protect "SFP_ADMIN_2026", UserInterfaceOnly:=True
+    Application.ScreenUpdating = True
+    
+    MsgBox MOD_02_AppHome_Global.TR("MSG_FX_OK"), vbInformation, MOD_02_AppHome_Global.TR("MSG_FX_TITLE")
+End Sub
+' --- FIN PATCH 1 ---
+
+' --- Parseur JSON Ultra-Léger (Sans librairie externe) ---
+Private Function Extraire_Taux_JSON(ByVal json As String, ByVal devise As String) As Double
+    Dim searchStr As String: searchStr = """" & devise & """:"
+    Dim pos As Long: pos = InStr(1, json, searchStr, vbTextCompare)
+    
+    If pos > 0 Then
+        pos = pos + Len(searchStr)
+        Dim endPos As Long: endPos = InStr(pos, json, ",")
+        If endPos = 0 Then endPos = InStr(pos, json, "}")
+        
+        Dim valStr As String: valStr = Mid(json, pos, endPos - pos)
+        valStr = Trim(Replace(valStr, """", ""))
+        
+        ' La fonction Val() force la lecture du point décimal américain natif du JSON
+        Extraire_Taux_JSON = Val(valStr)
+    Else
+        Extraire_Taux_JSON = 0
+    End If
+End Function

@@ -178,3 +178,71 @@ End Sub
 Private Sub Protect_All()
     Dim ws As Worksheet: For Each ws In ThisWorkbook.Worksheets: ws.Protect "SFP_ADMIN_2026", UserInterfaceOnly:=True: Next ws
 End Sub
+
+' --- DEBUT PATCH 1 (Moteur FX Centralisé O(1)) ---
+Public Function GET_TAUX_CHANGE() As Object
+    Dim wsSys As Worksheet, tblDev As ListObject
+    Set wsSys = ThisWorkbook.Sheets("SYS_Config")
+    On Error Resume Next: Set tblDev = wsSys.ListObjects("T_SYS_Devises"): On Error GoTo 0
+    
+    ' Auto-Création de la table si elle a été purgée ou n'existe pas (Colonnes O:P)
+    If tblDev Is Nothing Then
+        wsSys.Unprotect "SFP_ADMIN_2026"
+        wsSys.Columns("O:P").Clear
+        wsSys.Range("O1:P1").Value = Array("DEVISE", "TAUX_VS_BASE")
+        Set tblDev = wsSys.ListObjects.Add(xlSrcRange, wsSys.Range("O1:P2"), , xlYes)
+        tblDev.Name = "T_SYS_Devises"
+        tblDev.TableStyle = "TableStyleMedium15"
+        
+        ' Injection des Master Data (Valeurs par défaut)
+        'tblDev.DataBodyRange(1, 1).Value = "MUR": tblDev.DataBodyRange(1, 2).Value = 1.
+        ' --- DEBUT PATCH 1B (Core FX Dynamique) ---
+        Dim baseDev As String: baseDev = MOD_06_Budget_ZBB.Obtenir_Parametre("SYS_DEVISE_BASE", "MUR")
+        tblDev.DataBodyRange(1, 1).Value = baseDev: tblDev.DataBodyRange(1, 2).Value = 1
+        ' --- FIN PATCH 1B ---
+        Dim nr As ListRow
+        Set nr = tblDev.ListRows.Add: nr.Range(1, 1).Value = "EUR": nr.Range(1, 2).Value = 49.5
+        Set nr = tblDev.ListRows.Add: nr.Range(1, 1).Value = "USD": nr.Range(1, 2).Value = 46.2
+        Set nr = tblDev.ListRows.Add: nr.Range(1, 1).Value = "GBP": nr.Range(1, 2).Value = 58.1
+        Set nr = tblDev.ListRows.Add: nr.Range(1, 1).Value = "ZAR": nr.Range(1, 2).Value = 2.4
+        Set nr = tblDev.ListRows.Add: nr.Range(1, 1).Value = "XOF": nr.Range(1, 2).Value = 0.083
+        wsSys.Protect "SFP_ADMIN_2026", UserInterfaceOnly:=True
+    End If
+    
+    ' Chargement en RAM (Dictionary)
+    Dim dict As Object: Set dict = CreateObject("Scripting.Dictionary")
+    Dim i As Long
+    For i = 1 To tblDev.ListRows.Count
+        If Trim(CStr(tblDev.DataBodyRange(i, 1).Value)) <> "" Then
+            dict(UCase(Trim(tblDev.DataBodyRange(i, 1).Value))) = CDbl(tblDev.DataBodyRange(i, 2).Value)
+        End If
+    Next i
+    Set GET_TAUX_CHANGE = dict
+End Function
+' --- FIN PATCH 1 ---
+' --- DEBUT PATCH (Moteur de Clonage Logo Anti-Crash 1004) ---
+Public Sub INJECTER_LOGO(wsCible As Worksheet, L As Double, t As Double, W As Double, H As Double)
+    Dim wsSys As Worksheet
+    On Error Resume Next: Set wsSys = ThisWorkbook.Sheets("SYS_Config"): On Error GoTo 0
+    If wsSys Is Nothing Then Exit Sub
+    
+    Dim shpLogo As Shape
+    On Error Resume Next: Set shpLogo = wsSys.Shapes("LOGO_MASTER"): On Error GoTo 0
+    
+    If Not shpLogo Is Nothing Then
+        shpLogo.Copy
+        wsCible.Paste
+        ' Récupère la forme fraîchement collée
+        Dim pastedShape As Shape: Set pastedShape = wsCible.Shapes(wsCible.Shapes.Count)
+        pastedShape.Name = "LOGO_APP_" & wsCible.Shapes.Count ' Nom unique anti-collision
+        pastedShape.Left = L
+        pastedShape.Top = t
+        pastedShape.Width = W
+        pastedShape.Height = H
+        pastedShape.Placement = xlFreeFloating ' Rend l'image insensible à la grille
+        
+        ' CORRECTION CRITIQUE 1004 : On ne sélectionne plus rien, on vide juste le presse-papier
+        Application.CutCopyMode = False
+    End If
+End Sub
+' --- FIN PATCH ---

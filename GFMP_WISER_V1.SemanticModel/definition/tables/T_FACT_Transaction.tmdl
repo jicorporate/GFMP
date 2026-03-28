@@ -1,0 +1,114 @@
+table T_FACT_Transaction
+	lineageTag: 33c9873a-aaca-40fc-9dfe-00e0e13e047c
+
+	column ID_Trans
+		dataType: int64
+		formatString: 0
+		lineageTag: 41f12016-2ec4-4646-8eee-1ea7d55f80b0
+		summarizeBy: sum
+		sourceColumn: ID_Trans
+
+		annotation SummarizationSetBy = Automatic
+
+	column Date_Trans
+		dataType: dateTime
+		formatString: Long Date
+		lineageTag: 5b3cf880-0cdd-4873-b511-a3fe35b2598c
+		summarizeBy: none
+		sourceColumn: Date_Trans
+
+		variation Variation
+			isDefault
+			relationship: 69f4e96a-250a-4ce3-a801-8cd4ee5b615d
+			defaultHierarchy: LocalDateTable_8809113e-4581-4455-82f3-9bb188093be8.'Hiérarchie de dates'
+
+		annotation SummarizationSetBy = Automatic
+
+		annotation UnderlyingDateTimeDataType = Date
+
+	column ID_Compte
+		dataType: int64
+		formatString: 0
+		lineageTag: c888243e-227d-4144-9492-e01fedc656a6
+		summarizeBy: none
+		sourceColumn: ID_Compte
+
+		annotation SummarizationSetBy = Automatic
+
+	column ID_Categorie
+		dataType: int64
+		formatString: 0
+		lineageTag: 852381ca-5ed1-42a3-89df-ed6914e75cd1
+		summarizeBy: none
+		sourceColumn: ID_Categorie
+
+		annotation SummarizationSetBy = Automatic
+
+	column ID_Tiers
+		dataType: int64
+		formatString: 0
+		lineageTag: 7e39c283-0e3c-4730-8551-85dad65b786f
+		summarizeBy: none
+		sourceColumn: ID_Tiers
+
+		annotation SummarizationSetBy = Automatic
+
+	column Montant
+		dataType: int64
+		formatString: 0
+		lineageTag: c3c89844-6eb8-44e2-8445-35905c9400d3
+		summarizeBy: sum
+		sourceColumn: Montant
+
+		annotation SummarizationSetBy = Automatic
+
+	column Devise
+		dataType: string
+		lineageTag: 2af330e9-284f-4679-83bb-8c587e3ec810
+		summarizeBy: none
+		sourceColumn: Devise
+
+		annotation SummarizationSetBy = Automatic
+
+	column Notes
+		dataType: string
+		lineageTag: e4d0712f-c733-4edb-868a-8170ec81dc23
+		summarizeBy: none
+		sourceColumn: Notes
+
+		annotation SummarizationSetBy = Automatic
+
+	column SYS_User
+		dataType: string
+		lineageTag: 7b6baa91-1eb4-4399-a81f-6c6557ba02e4
+		summarizeBy: none
+		sourceColumn: SYS_User
+
+		annotation SummarizationSetBy = Automatic
+
+	column SYS_Date
+		dataType: dateTime
+		formatString: General Date
+		lineageTag: 10b0ca49-39c5-4aeb-81c8-cf08468ca4ed
+		summarizeBy: none
+		sourceColumn: SYS_Date
+
+		variation Variation
+			isDefault
+			relationship: 50f03355-a9cc-4bb1-89af-9909e173f80c
+			defaultHierarchy: LocalDateTable_9c005866-ed79-467a-9a1d-2696ff70cda0.'Hiérarchie de dates'
+
+		annotation SummarizationSetBy = Automatic
+
+	partition T_FACT_Transaction = m
+		mode: import
+		source =
+				let
+				    Source = Excel.Workbook(File.Contents("C:\Users\KIMYAÉDITION\source\repos\KimyaEditionGAP\GFMP_V1.xlsm"), null, true),
+				    T_FACT_Transaction_Table = Source{[Item="T_FACT_Transaction",Kind="Table"]}[Data],
+				    #"Changed Type" = Table.TransformColumnTypes(T_FACT_Transaction_Table,{{"ID_Trans", Int64.Type}, {"Date_Trans", type date}, {"ID_Compte", Int64.Type}, {"ID_Categorie", Int64.Type}, {"ID_Tiers", Int64.Type}, {"Montant", Int64.Type}, {"Devise", type text}, {"Notes", type any}, {"SYS_User", type text}, {"SYS_Date", type datetime}})
+				in
+				    #"Changed Type"
+
+	annotation PBI_ResultType = Table
+
