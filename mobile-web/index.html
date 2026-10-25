@@ -1,0 +1,513 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+  <title>GFMP — Global Finance Management Platform</title>
+  <meta name="description" content="Plateforme Financière & Décisionnelle Entreprise-Grade SFP v1.0. 100% Hors-Ligne, Zéro Réseau.">
+  <meta name="theme-color" content="#4169E1">
+  <link rel="manifest" href="manifest.json">
+  <link rel="icon" type="image/png" href="assets/favicon_jic.png">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=ADLaM+Display&family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+
+  <!-- =========================================================================
+       BANDEAU SUPÉRIEUR BLEU ROYAL & OR (SFP SPEC)
+       ========================================================================= -->
+  <header class="gfmp-header">
+    <div class="header-top">
+      <div class="brand-wrapper">
+        <img src="assets/favicon_jic.png" alt="Logo GFMP" class="brand-logo-img">
+        <div class="brand-text">
+          <h1 id="app-title-display">GFMP • SFP v1.0</h1>
+          <div class="sub-title" id="date-display">25 Février 2026</div>
+        </div>
+      </div>
+      <div class="header-actions">
+        <span class="offline-badge"><span class="pulse-dot"></span>100% LOCAL</span>
+        <div class="lang-selector">
+          <button class="lang-btn active" data-lang="FR">FR</button>
+          <button class="lang-btn" data-lang="EN">EN</button>
+          <button class="lang-btn" data-lang="ES">ES</button>
+          <button class="lang-btn" data-lang="PT">PT</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Multi-Devises & Time Slider Toolbar -->
+    <div class="header-toolbar">
+      <div class="time-slider-bar">
+        <!-- Year Stepper -->
+        <div class="time-stepper">
+          <button class="stepper-btn" id="btn-prev-year" aria-label="Année précédente">&lt;</button>
+          <span class="stepper-label" id="lbl-year">2026</span>
+          <button class="stepper-btn" id="btn-next-year" aria-label="Année suivante">&gt;</button>
+        </div>
+        <!-- Month Stepper -->
+        <div class="time-stepper">
+          <button class="stepper-btn" id="btn-prev-month" aria-label="Mois précédent">&lt;</button>
+          <span class="stepper-label" id="lbl-month" style="min-width: 90px;">FÉVRIER</span>
+          <button class="stepper-btn" id="btn-next-month" aria-label="Mois suivant">&gt;</button>
+        </div>
+      </div>
+
+      <!-- Currency Switcher O(1) -->
+      <div class="currency-bar" id="currency-bar">
+        <button class="curr-btn active" data-curr="MUR">MUR (Rs)</button>
+        <button class="curr-btn" data-curr="EUR">EUR (€)</button>
+        <button class="curr-btn" data-curr="USD">USD ($)</button>
+        <button class="curr-btn" data-curr="GBP">GBP (£)</button>
+        <button class="curr-btn" data-curr="ZAR">ZAR (R)</button>
+        <button class="curr-btn" data-curr="XOF">XOF (CFA)</button>
+      </div>
+    </div>
+  </header>
+
+  <main class="main-content">
+
+    <!-- =========================================================================
+         VUE 1 : APP_HOME (HUB CENTRAL & 4 SOLID CARDS)
+         ========================================================================= -->
+    <section id="view-home" class="view-panel active">
+      <div style="margin-bottom: 14px; text-align: center;">
+        <p style="font-size: 0.85rem; color: var(--text-secondary);" id="txt-welcome">
+          Sélectionnez un module d'application ci-dessous pour démarrer.
+        </p>
+      </div>
+
+      <div class="home-grid">
+        <!-- Card 1: Saisie Transaction -->
+        <div class="solid-card card-saisie" id="card-nav-saisie">
+          <div class="card-header-inner">
+            <h2 class="card-title" id="lbl-card-saisie">SAISIE TRANSACTION</h2>
+            <div class="card-icon">💳</div>
+          </div>
+          <p class="card-desc" id="desc-card-saisie">Ajouter un revenu, dépense ou virement interne avec validation d'intégrité.</p>
+          <div class="card-kpi-preview">
+            <span>+ Saisie Express</span>
+            <span class="card-kpi-sub">Gatekeeper USF</span>
+          </div>
+        </div>
+
+        <!-- Card 2: Dashboard Cashflow -->
+        <div class="solid-card card-cashflow" id="card-nav-cashflow">
+          <div class="card-header-inner">
+            <h2 class="card-title" id="lbl-card-cashflow">DASHBOARD CASHFLOW</h2>
+            <div class="card-icon">📊</div>
+          </div>
+          <p class="card-desc" id="desc-card-cashflow">Analyser les flux mensuels consolidés et le net de trésorerie.</p>
+          <div class="card-kpi-preview">
+            <span id="preview-cashflow-net">0.00 Rs</span>
+            <span class="card-kpi-sub">Flux Net</span>
+          </div>
+        </div>
+
+        <!-- Card 3: Bilan Patrimonial -->
+        <div class="solid-card card-networth" id="card-nav-networth">
+          <div class="card-header-inner">
+            <h2 class="card-title" id="lbl-card-networth">BILAN PATRIMONIAL</h2>
+            <div class="card-icon">🏛️</div>
+          </div>
+          <p class="card-desc" id="desc-card-networth">Calcul de la Valeur Nette et photographie patrimoniale à date.</p>
+          <div class="card-kpi-preview">
+            <span id="preview-networth-val">0.00 Rs</span>
+            <span class="card-kpi-sub">Actifs & Dettes</span>
+          </div>
+        </div>
+
+        <!-- Card 4: Pilotage Budgétaire ZBB -->
+        <div class="solid-card card-budget" id="card-nav-budget">
+          <div class="card-header-inner">
+            <h2 class="card-title" id="lbl-card-budget">PILOTAGE BUDGÉTAIRE</h2>
+            <div class="card-icon">🎯</div>
+          </div>
+          <p class="card-desc" id="desc-card-budget">Suivi des enveloppes (ZBB) avec jauges de consommation dorées.</p>
+          <div class="card-kpi-preview">
+            <span id="preview-budget-pct">0%</span>
+            <span class="card-kpi-sub">Consommé</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Quick Action Utilities -->
+      <div style="margin-top: 22px; display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 8px;">
+        <button id="btn-open-report" class="btn-back-tactile" style="justify-content:center; background:linear-gradient(135deg, #1E3A8A 0%, #4169E1 100%); color:#FFF;">
+          📑 Rapport
+        </button>
+        <button id="btn-export-backup" class="btn-back-tactile" style="justify-content:center; background:#1E293B; color:#FFF;">
+          💾 Exporter
+        </button>
+        <button id="btn-import-backup" class="btn-back-tactile" style="justify-content:center; background:#1E293B; color:#FFF;">
+          📂 Importer
+        </button>
+        <input type="file" id="file-import-input" accept=".json,.csv,.xlsx" style="display:none;">
+      </div>
+    </section>
+
+    <!-- =========================================================================
+         VUE 2 : GATEKEEPER SAISIE TRANSACTION (USF_Transaction)
+         ========================================================================= -->
+    <section id="view-transaction" class="view-panel" style="display:none;">
+      <button class="btn-back-tactile btn-nav-home">&lt; Hub Central</button>
+      
+      <div class="form-card">
+        <h2 style="font-family: var(--font-display); color: var(--c-yellow-royal); font-size: 1.2rem; margin-bottom: 14px;">
+          SAISIE TRANSACTION (Gatekeeper)
+        </h2>
+
+        <form id="form-transaction">
+          <div class="form-group">
+            <label class="form-label">Date de l'opération</label>
+            <input type="date" id="tx-date" class="form-input" required>
+          </div>
+
+          <div class="form-group">
+            <label class="form-label">Compte Bancaire</label>
+            <select id="tx-compte" class="form-select" required></select>
+            <input type="text" id="tx-new-compte" class="form-input" placeholder="Nouveau compte..." style="display:none; margin-top:6px;">
+          </div>
+
+          <div class="form-group">
+            <label class="form-label">Catégorie Budgétaire</label>
+            <select id="tx-categorie" class="form-select" required></select>
+            <input type="text" id="tx-new-categorie" class="form-input" placeholder="Nouvelle catégorie..." style="display:none; margin-top:6px;">
+          </div>
+
+          <div class="form-group">
+            <label class="form-label">Tiers (Bénéficiaire / Émetteur)</label>
+            <select id="tx-tiers" class="form-select" required></select>
+            <input type="text" id="tx-new-tiers" class="form-input" placeholder="Nouveau tiers..." style="display:none; margin-top:6px;">
+          </div>
+
+          <div style="display:grid; grid-template-columns: 2fr 1fr; gap:10px;">
+            <div class="form-group">
+              <label class="form-label">Montant</label>
+              <input type="number" step="0.01" id="tx-montant" class="form-input" placeholder="0.00" required>
+            </div>
+            <div class="form-group">
+              <label class="form-label">Devise</label>
+              <select id="tx-devise" class="form-select"></select>
+            </div>
+          </div>
+
+          <div class="form-group">
+            <label class="form-label">Description / Notes</label>
+            <input type="text" id="tx-notes" class="form-input" placeholder="Notes (ex: Facture KIMYA ÉDITION)">
+          </div>
+
+          <button type="submit" class="btn-submit-tx">VALIDER L'OPÉRATION</button>
+        </form>
+      </div>
+    </section>
+
+    <!-- =========================================================================
+         VUE 3 : DASHBOARD CASHFLOW (MOD_04)
+         ========================================================================= -->
+    <section id="view-cashflow" class="view-panel" style="display:none;">
+      <button class="btn-back-tactile btn-nav-home">&lt; Hub Central</button>
+
+      <!-- 3 Solid Mini-Cards -->
+      <div class="kpi-row">
+        <div class="kpi-mini-card kpi-rev">
+          <div class="kpi-mini-label">REVENUS</div>
+          <div class="kpi-mini-value" id="kpi-cashflow-rev">0.00 Rs</div>
+        </div>
+        <div class="kpi-mini-card kpi-dep">
+          <div class="kpi-mini-label">DÉPENSES</div>
+          <div class="kpi-mini-value" id="kpi-cashflow-dep">0.00 Rs</div>
+        </div>
+        <div class="kpi-mini-card kpi-net" id="card-kpi-net">
+          <div class="kpi-mini-label">CASHFLOW NET</div>
+          <div class="kpi-mini-value" id="kpi-cashflow-net">0.00 Rs</div>
+        </div>
+      </div>
+
+      <!-- Graphique 1: Tendance Multi-Mois (SVG Interactif) -->
+      <div class="chart-card">
+        <div class="chart-header">
+          <h3>TENDANCE MULTI-MOIS (Revenus vs Dépenses)</h3>
+          <span style="font-size:0.7rem; color:var(--text-muted);">6 Derniers Mois</span>
+        </div>
+        <div class="svg-chart-container" id="svg-trend-chart-box">
+          <!-- Dynamically rendered via app.js -->
+        </div>
+      </div>
+
+      <!-- Graphique 2: Donut Répartition des Dépenses (SVG Interactif) -->
+      <div class="chart-card">
+        <div class="chart-header">
+          <h3>RÉPARTITION PAR CATÉGORIE</h3>
+          <span style="font-size:0.7rem; color:var(--c-yellow-royal);" id="donut-period-label">Période Active</span>
+        </div>
+        <div class="svg-donut-container" id="svg-donut-chart-box">
+          <!-- Dynamically rendered via app.js -->
+        </div>
+      </div>
+
+      <!-- Recherche & Filtres Rapides -->
+      <div class="search-filter-box">
+        <div class="search-input-wrapper">
+          <span class="search-icon-lens">🔍</span>
+          <input type="text" id="input-tx-search" class="search-input" placeholder="Rechercher catégorie, tiers, compte ou note...">
+        </div>
+        <div class="filter-chips-row">
+          <button class="filter-chip active" data-filter="ALL">Tous</button>
+          <button class="filter-chip" data-filter="REVENU">Revenus</button>
+          <button class="filter-chip" data-filter="DEPENSE">Dépenses</button>
+          <button class="filter-chip" data-filter="TRANSFERT">Virements</button>
+        </div>
+      </div>
+
+      <!-- Tableau Violet Zebra -->
+      <div class="table-card">
+        <div class="table-header-title">
+          <h3>TRANSACTIONS CONSOLIDÉES (Violet Zebra)</h3>
+          <span style="font-size:0.75rem; color:var(--text-muted);" id="cashflow-count-label">0 flux</span>
+        </div>
+        <table class="violet-zebra-table">
+          <thead>
+            <tr>
+              <th>Date</th>
+              <th>Catégorie / Compte</th>
+              <th>Tiers</th>
+              <th style="text-align:right;">Montant</th>
+              <th style="width:30px; text-align:center;"></th>
+            </tr>
+          </thead>
+          <tbody id="cashflow-table-body">
+            <tr><td colspan="5" class="empty-state">Aucune transaction pour cette période</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+    <!-- =========================================================================
+         VUE 4 : BILAN PATRIMONIAL / NET WORTH (MOD_05)
+         ========================================================================= -->
+    <section id="view-networth" class="view-panel" style="display:none;">
+      <button class="btn-back-tactile btn-nav-home">&lt; Hub Central</button>
+
+      <div class="networth-hero" id="networth-hero-card">
+        <div class="networth-label">VALEUR NETTE PATRIMONIALE (SNAPSHOT)</div>
+        <div class="networth-val" id="nw-hero-val">0.00 Rs</div>
+        <div class="networth-breakdown">
+          <div class="nw-sub-col">
+            <div class="nw-sub-label">Total Actifs</div>
+            <div class="nw-sub-val assets" id="nw-hero-assets">0.00 Rs</div>
+          </div>
+          <div class="nw-sub-col">
+            <div class="nw-sub-label">Total Dettes</div>
+            <div class="nw-sub-val liabilities" id="nw-hero-liabilities">0.00 Rs</div>
+          </div>
+        </div>
+
+        <!-- Barre Empilée Proportionnelle des Actifs -->
+        <div class="asset-stack-bar" id="nw-asset-stack-bar">
+          <!-- Injected via app.js -->
+        </div>
+        <div id="nw-asset-legend" style="display:flex; justify-content:space-between; font-size:0.7rem; color:var(--text-muted); margin-top:4px;">
+          <!-- Injected via app.js -->
+        </div>
+      </div>
+
+      <!-- Tableau des Comptes Violet Zebra -->
+      <div class="table-card">
+        <div class="table-header-title">
+          <h3>INVENTAIRE DES COMPTES ET DETTES</h3>
+          <span style="font-size:0.75rem; color:var(--c-yellow-royal);">As of Date</span>
+        </div>
+        <table class="violet-zebra-table">
+          <thead>
+            <tr>
+              <th>Compte</th>
+              <th>Classe</th>
+              <th>Solde Natif</th>
+              <th style="text-align:right;">Solde Converti</th>
+            </tr>
+          </thead>
+          <tbody id="networth-table-body">
+            <tr><td colspan="4" class="empty-state">Aucun compte actif</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+    <!-- =========================================================================
+         VUE 5 : PILOTAGE BUDGÉTAIRE ZBB (MOD_06)
+         ========================================================================= -->
+    <section id="view-budget" class="view-panel" style="display:none;">
+      <button class="btn-back-tactile btn-nav-home">&lt; Hub Central</button>
+
+      <div class="budget-hero-card">
+        <div>
+          <div style="font-size:0.72rem; color:var(--text-muted); text-transform:uppercase;">Enveloppe Globale ZBB</div>
+          <div style="font-size:1.4rem; font-weight:800;" id="budget-hero-total">0.00 Rs</div>
+          <div style="font-size:0.75rem; color:var(--text-secondary);" id="budget-hero-sub">Consommé : 0.00 Rs</div>
+        </div>
+        <button class="btn-allouer" id="btn-open-alloc-modal">+ ALLOUER</button>
+      </div>
+
+      <!-- Tableau Budgets Violet Zebra avec DataBars -->
+      <div class="table-card">
+        <div class="table-header-title">
+          <h3>SUIVI DES ENVELOPPES (DataBars Jaunes)</h3>
+          <span style="font-size:0.75rem; color:var(--c-yellow-royal);" id="budget-month-label">2026-02</span>
+        </div>
+        <table class="violet-zebra-table">
+          <thead>
+            <tr>
+              <th>Catégorie</th>
+              <th>Alloué</th>
+              <th>Réalisé</th>
+              <th style="text-align:right;">Consommation</th>
+            </tr>
+          </thead>
+          <tbody id="budget-table-body">
+            <tr><td colspan="4" class="empty-state">Aucune enveloppe allouée</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+  </main>
+
+  <!-- =========================================================================
+       FLOATING ACTION BUTTON (FAB) — ACCÈS RAPIDE PARTOUT
+       ========================================================================= -->
+  <button class="fab-quick-add" id="btn-fab-add" aria-label="Saisie Express" title="Saisie Rapide">+</button>
+
+  <!-- =========================================================================
+       MODAL BOTTOM SHEET : SAISIE EXPRESS PARTOUT (VIA FAB)
+       ========================================================================= -->
+  <div class="modal-overlay" id="modal-bottom-sheet-tx">
+    <div class="bottom-sheet">
+      <div class="sheet-handle"></div>
+      <h3 class="modal-title">SAISIE EXPRESS TRANSACTION</h3>
+      <form id="form-express-tx">
+        <div class="form-group">
+          <label class="form-label">Date</label>
+          <input type="date" id="exp-tx-date" class="form-input" required>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Compte</label>
+          <select id="exp-tx-compte" class="form-select" required></select>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Catégorie</label>
+          <select id="exp-tx-categorie" class="form-select" required></select>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Tiers (Bénéficiaire/Émetteur)</label>
+          <select id="exp-tx-tiers" class="form-select" required></select>
+        </div>
+        <div style="display:grid; grid-template-columns: 2fr 1fr; gap:10px;">
+          <div class="form-group">
+            <label class="form-label">Montant</label>
+            <input type="number" step="0.01" id="exp-tx-montant" class="form-input" placeholder="0.00" required>
+          </div>
+          <div class="form-group">
+            <label class="form-label">Devise</label>
+            <select id="exp-tx-devise" class="form-select"></select>
+          </div>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Notes / Description</label>
+          <input type="text" id="exp-tx-notes" class="form-input" placeholder="Notes...">
+        </div>
+        <div style="display:flex; gap:10px; margin-top:16px;">
+          <button type="button" class="btn-back-tactile" id="btn-close-express-tx" style="flex:1; justify-content:center; background:#334155; color:#FFF;">Annuler</button>
+          <button type="submit" class="btn-submit-tx" style="flex:2;">Enregistrer</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- =========================================================================
+       MODAL ALLOCATION BUDGÉTAIRE (USF_Budget)
+       ========================================================================= -->
+  <div class="modal-overlay" id="modal-budget-alloc">
+    <div class="bottom-sheet">
+      <div class="sheet-handle"></div>
+      <h3 class="modal-title">ALLOCATION BUDGÉTAIRE ZBB</h3>
+      <form id="form-budget-alloc">
+        <div class="form-group">
+          <label class="form-label">Mois Budgétaire (AAAA-MM)</label>
+          <input type="text" id="alloc-mois" class="form-input" value="2026-02" required>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Catégorie de Dépense</label>
+          <select id="alloc-categorie" class="form-select" required></select>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Montant Alloué (Devise de Base)</label>
+          <input type="number" step="0.01" id="alloc-montant" class="form-input" placeholder="0.00" required>
+        </div>
+        <div style="display:flex; gap:10px; margin-top:16px;">
+          <button type="button" class="btn-back-tactile" id="btn-close-alloc" style="flex:1; justify-content:center; background:#334155; color:#FFF;">Annuler</button>
+          <button type="submit" class="btn-allouer" style="flex:1;">Enregistrer</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- =========================================================================
+       MODAL RAPPORT FINANCIER EXÉCUTIF
+       ========================================================================= -->
+  <div class="modal-overlay" id="modal-financial-report">
+    <div class="bottom-sheet">
+      <div class="sheet-handle"></div>
+      <h3 class="modal-title">RAPPORT FINANCIER EXÉCUTIF</h3>
+      <div id="report-modal-body" style="font-size:0.85rem; color:var(--text-secondary); line-height:1.5;">
+        <!-- Injected via app.js -->
+      </div>
+      <div style="display:flex; gap:10px; margin-top:16px;">
+        <button type="button" class="btn-back-tactile" id="btn-close-report" style="flex:1; justify-content:center; background:#334155; color:#FFF;">Fermer</button>
+        <button type="button" class="btn-submit-tx" id="btn-copy-report" style="flex:1; background:var(--c-blue-royal);">📋 Copier</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- =========================================================================
+       NAVIGATION TACTILE INFÉRIEURE AU POUCE (THUMB-ZONE)
+       ========================================================================= -->
+  <nav class="bottom-nav">
+    <button class="nav-tab active" data-view="home">
+      <span class="tab-icon">🏛️</span>
+      <span>Hub</span>
+    </button>
+    <button class="nav-tab" data-view="transaction">
+      <span class="tab-icon">💳</span>
+      <span>Saisie</span>
+    </button>
+    <button class="nav-tab" data-view="cashflow">
+      <span class="tab-icon">📊</span>
+      <span>Cashflow</span>
+    </button>
+    <button class="nav-tab" data-view="networth">
+      <span class="tab-icon">💰</span>
+      <span>Patrimoine</span>
+    </button>
+    <button class="nav-tab" data-view="budget">
+      <span class="tab-icon">🎯</span>
+      <span>Budget</span>
+    </button>
+  </nav>
+
+  <!-- Scripts -->
+  <script src="analytics-engine.js"></script>
+  <script src="app.js"></script>
+  <script>
+    if ('serviceWorker' in navigator) {
+      window.addEventListener('load', () => {
+        navigator.serviceWorker.register('./sw.js')
+          .then(() => console.log('[PWA] Service Worker active'))
+          .catch(e => console.warn('[PWA] SW registration failed:', e));
+      });
+    }
+  </script>
+</body>
+</html>

@@ -1,2 +1,45 @@
+# =============================================================================
+# GFMP — Global Finance Management Platform (SFP v1.0)
+# Comprehensive Git Ignore Configuration
+# =============================================================================
+
+# --- Android & Gradle Builds ---
+.gradle/
+build/
+android/.gradle/
+android/build/
+android/app/build/
+android/local.properties
+android/captures/
+*.hprof
+*.dex
+android/.idea/
+android/*.iml
+android/app/*.iml
+
+# --- Power BI ---
 **/.pbi/localSettings.json
 **/.pbi/cache.abf
+
+# --- Microsoft Office Temporary Files ---
+~$*.xlsx
+~$*.xlsm
+~$*.docx
+~$*.pptx
+
+# --- OS & Environment ---
+Thumbs.db
+desktop.ini
+.DS_Store
+
+# --- IDEs & Editors ---
+.idea/
+.vscode/
+*.swp
+*.bak
+*~
+
+# --- Python ---
+__pycache__/
+*.py[cod]
+*$py.class

@@ -1,0 +1,83 @@
+<?xml version="1.0" encoding="utf-8"?>
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="108dp"
+    android:height="108dp"
+    android:viewportWidth="108"
+    android:viewportHeight="108">
+    
+    <!-- Outer Gold Ring -->
+    <path
+        android:pathData="M54,54m-36,0a36,36 0,1,1 72,0a36,36 0,1,1 -72,0"
+        android:strokeWidth="2.5"
+        android:strokeColor="#FADA5E" />
+
+    <!-- Classical Pediment (Temple Triangle) -->
+    <path
+        android:pathData="M54,28 L30,41 L78,41 Z"
+        android:fillColor="#FADA5E" />
+    <path
+        android:pathData="M30,41 L78,41"
+        android:strokeWidth="1.5"
+        android:strokeColor="#FFF2A3" />
+
+    <!-- Architrave Beam -->
+    <path
+        android:pathData="M28,42 L80,42 L80,46 L28,46 Z"
+        android:fillColor="#D4AF37" />
+    <path
+        android:pathData="M30,43 L78,43 L78,45 L30,45 Z"
+        android:fillColor="#FADA5E" />
+
+    <!-- 4 Temple Columns -->
+    <!-- Column 1 -->
+    <path
+        android:pathData="M33,47 L39,47 L39,68 L33,68 Z"
+        android:fillColor="#FADA5E" />
+    <path
+        android:pathData="M32,46 L40,46 M32,69 L40,69"
+        android:strokeWidth="1"
+        android:strokeColor="#FFF2A3" />
+
+    <!-- Column 2 -->
+    <path
+        android:pathData="M45,47 L51,47 L51,68 L45,68 Z"
+        android:fillColor="#FADA5E" />
+    <path
+        android:pathData="M44,46 L52,46 M44,69 L52,69"
+        android:strokeWidth="1"
+        android:strokeColor="#FFF2A3" />
+
+    <!-- Column 3 -->
+    <path
+        android:pathData="M57,47 L63,47 L63,68 L57,68 Z"
+        android:fillColor="#FADA5E" />
+    <path
+        android:pathData="M56,46 L64,46 M56,69 L64,69"
+        android:strokeWidth="1"
+        android:strokeColor="#FFF2A3" />
+
+    <!-- Column 4 -->
+    <path
+        android:pathData="M69,47 L75,47 L75,68 L69,68 Z"
+        android:fillColor="#FADA5E" />
+    <path
+        android:pathData="M68,46 L76,46 M68,69 L76,69"
+        android:strokeWidth="1"
+        android:strokeColor="#FFF2A3" />
+
+    <!-- Base Foundation Steps -->
+    <path
+        android:pathData="M27,69 L81,69 L81,73 L27,73 Z"
+        android:fillColor="#D4AF37" />
+    <path
+        android:pathData="M25,74 L83,74 L83,78 L25,78 Z"
+        android:fillColor="#FADA5E" />
+
+    <!-- Monogram Pill Base 'GFMP' -->
+    <path
+        android:pathData="M36,80 L72,80 A3,3 0 0,1 75,83 L75,85 A3,3 0 0,1 72,88 L36,88 A3,3 0 0,1 33,85 L33,83 A3,3 0 0,1 36,80 Z"
+        android:fillColor="#1A2D6D"
+        android:strokeWidth="1"
+        android:strokeColor="#FADA5E" />
+
+</vector>
