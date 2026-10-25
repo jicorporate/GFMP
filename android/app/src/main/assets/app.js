@@ -4,9 +4,9 @@
  * Cutting-Edge Display, Interactivity, Real-Time Calculations & Offline Storage
  */
 
-document.addEventListener('DOMContentLoaded', async () => {
+document.addEventListener('DOMContentLoaded', () => {
   const engine = window.gfmpEngine;
-  await engine.init();
+  engine.init();
 
   // --- 1. TACTILE HAPTIC FEEDBACK ---
   function triggerHaptic(duration = 15) {
@@ -19,7 +19,43 @@ document.addEventListener('DOMContentLoaded', async () => {
     }
   }
 
-  // --- 2. VIEW ROUTING SYSTEM ---
+  // --- 2. FLOATING TOAST NOTIFICATION ---
+  function showToast(message, type = 'success') {
+    let toast = document.getElementById('gfmp-toast');
+    if (!toast) {
+      toast = document.createElement('div');
+      toast.id = 'gfmp-toast';
+      toast.style.cssText = `
+        position: fixed;
+        top: 20px;
+        left: 50%;
+        transform: translateX(-50%);
+        background: #10B981;
+        color: #FFFFFF;
+        padding: 10px 20px;
+        border-radius: 20px;
+        font-size: 0.82rem;
+        font-weight: 700;
+        box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+        z-index: 9999;
+        transition: opacity 0.3s ease, transform 0.3s ease;
+        pointer-events: none;
+        opacity: 0;
+      `;
+      document.body.appendChild(toast);
+    }
+    toast.style.background = (type === 'error') ? '#EF4444' : (type === 'info') ? '#4169E1' : '#10B981';
+    toast.textContent = message;
+    toast.style.opacity = '1';
+    toast.style.transform = 'translateX(-50%) translateY(0)';
+
+    setTimeout(() => {
+      toast.style.opacity = '0';
+      toast.style.transform = 'translateX(-50%) translateY(-10px)';
+    }, 2500);
+  }
+
+  // --- 3. VIEW ROUTING SYSTEM ---
   function navigateTo(viewName) {
     document.querySelectorAll('.view-panel').forEach(p => p.style.display = 'none');
     const target = document.getElementById(`view-${viewName}`);
@@ -63,29 +99,31 @@ document.addEventListener('DOMContentLoaded', async () => {
     });
   });
 
-  // --- 3. TIME SLIDER CONTROLS ---
+  // --- 4. TIME SLIDER CONTROLS ---
   document.getElementById('btn-prev-year')?.addEventListener('click', () => { triggerHaptic(15); engine.prevYear(); });
   document.getElementById('btn-next-year')?.addEventListener('click', () => { triggerHaptic(15); engine.nextYear(); });
   document.getElementById('btn-prev-month')?.addEventListener('click', () => { triggerHaptic(15); engine.prevMonth(); });
   document.getElementById('btn-next-month')?.addEventListener('click', () => { triggerHaptic(15); engine.nextMonth(); });
 
-  // --- 4. MULTI-CURRENCY O(1) CONTROLS ---
+  // --- 5. MULTI-CURRENCY O(1) CONTROLS ---
   document.querySelectorAll('.curr-btn').forEach(btn => {
     btn.addEventListener('click', () => {
       triggerHaptic(20);
       engine.setCurrency(btn.dataset.curr);
+      showToast(`Devise active : ${btn.dataset.curr}`, 'info');
     });
   });
 
-  // --- 5. LANGUAGE CONTROLS ---
+  // --- 6. LANGUAGE CONTROLS ---
   document.querySelectorAll('.lang-btn').forEach(btn => {
     btn.addEventListener('click', () => {
       triggerHaptic(15);
       engine.setLanguage(btn.dataset.lang);
+      showToast(`Langue : ${btn.dataset.lang}`, 'info');
     });
   });
 
-  // --- 6. POPULATE FORM DROPDOWNS ---
+  // --- 7. POPULATE FORM DROPDOWNS ---
   function populateSelects() {
     if (!engine.data) return;
 
@@ -155,7 +193,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     if (expDate && !expDate.value) expDate.value = todayStr;
   }
 
-  // --- 7. FLOATING ACTION BUTTON (FAB) & EXPRESS BOTTOM SHEET ---
+  // --- 8. FLOATING ACTION BUTTON (FAB) & EXPRESS BOTTOM SHEET ---
   const fabBtn = document.getElementById('btn-fab-add');
   const modalExpress = document.getElementById('modal-bottom-sheet-tx');
   const btnCloseExpress = document.getElementById('btn-close-express-tx');
@@ -189,6 +227,11 @@ document.addEventListener('DOMContentLoaded', async () => {
     const devVal = document.getElementById('exp-tx-devise').value;
     const notesVal = document.getElementById('exp-tx-notes').value;
 
+    if (!montantVal || parseFloat(montantVal) <= 0) {
+      showToast('Veuillez saisir un montant valide', 'error');
+      return;
+    }
+
     engine.addTransaction({
       date: dateVal,
       id_compte: cptVal,
@@ -203,7 +246,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     document.getElementById('exp-tx-notes').value = '';
     modalExpress?.classList.remove('open');
 
-    // Notify user with brief visual feedback
+    showToast('Transaction express enregistrée !', 'success');
     navigateTo('cashflow');
   });
 
@@ -219,6 +262,11 @@ document.addEventListener('DOMContentLoaded', async () => {
     const montantVal = document.getElementById('tx-montant').value;
     const devVal = document.getElementById('tx-devise').value;
     const notesVal = document.getElementById('tx-notes').value;
+
+    if (!montantVal || parseFloat(montantVal) <= 0) {
+      showToast('Veuillez saisir un montant valide', 'error');
+      return;
+    }
 
     // Self-learning fields
     const newCpt = document.getElementById('tx-new-compte')?.value?.trim();
@@ -240,10 +288,11 @@ document.addEventListener('DOMContentLoaded', async () => {
 
     document.getElementById('tx-montant').value = '';
     document.getElementById('tx-notes').value = '';
+    showToast('Transaction enregistrée avec succès !', 'success');
     navigateTo('cashflow');
   });
 
-  // --- 8. BUDGET ALLOCATION MODAL (USF_Budget) ---
+  // --- 9. BUDGET ALLOCATION MODAL (USF_Budget) ---
   const modalAlloc = document.getElementById('modal-budget-alloc');
   document.getElementById('btn-open-alloc-modal')?.addEventListener('click', () => {
     triggerHaptic(15);
@@ -270,10 +319,11 @@ document.addEventListener('DOMContentLoaded', async () => {
 
     engine.allocateBudget(cat, amt, mois);
     modalAlloc?.classList.remove('open');
+    showToast('Allocation budgétaire enregistrée !', 'success');
     renderBudgetView();
   });
 
-  // --- 9. FINANCIAL EXECUTIVE REPORT MODAL ---
+  // --- 10. FINANCIAL EXECUTIVE REPORT MODAL ---
   const modalReport = document.getElementById('modal-financial-report');
   document.getElementById('btn-open-report')?.addEventListener('click', () => {
     triggerHaptic(20);
@@ -332,14 +382,18 @@ document.addEventListener('DOMContentLoaded', async () => {
     triggerHaptic(15);
     const rep = engine.generateFinancialReport();
     const text = `=== GFMP RAPPORT FINANCIER (${rep.period}) ===\nDevise : ${rep.currency}\nRevenus : ${rep.revenus}\nDépenses : ${rep.depenses}\nCashflow Net : ${rep.netCashflow}\nTaux d'Épargne : ${rep.savingsRate}\nValeur Nette : ${rep.netWorth}\nActifs : ${rep.totalAssets} | Dettes : ${rep.totalLiabilities}\nConsommation Budget : ${rep.budgetConsumption}\n========================================`;
-    navigator.clipboard?.writeText(text).then(() => {
-      alert('Rapport copié dans le presse-papier !');
-    }).catch(() => {
-      alert('Rapport généré avec succès.');
-    });
+    if (navigator.clipboard) {
+      navigator.clipboard.writeText(text).then(() => {
+        showToast('Rapport copié dans le presse-papier !', 'success');
+      }).catch(() => {
+        showToast('Rapport généré avec succès', 'info');
+      });
+    } else {
+      showToast('Rapport généré avec succès', 'info');
+    }
   });
 
-  // --- 10. SEARCH & FILTER INTERACTIVITY ---
+  // --- 11. SEARCH & FILTER INTERACTIVITY ---
   const searchInput = document.getElementById('input-tx-search');
   searchInput?.addEventListener('input', (e) => {
     engine.searchTerm = e.target.value;
@@ -356,7 +410,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     });
   });
 
-  // --- 11. INTERACTIVE SVG CHART GENERATORS ---
+  // --- 12. INTERACTIVE SVG CHART GENERATORS ---
 
   // A. Cashflow Multi-Month Trend Chart (6 Months SVG)
   function renderTrendChart(containerId) {
@@ -401,7 +455,7 @@ document.addEventListener('DOMContentLoaded', async () => {
 
       barsHtml += `
         <!-- Month ${t.label} Group -->
-        <g class="chart-bar-group" data-label="${t.label}" data-rev="${engine.formatMoney(t.revenus)}" data-dep="${engine.formatMoney(t.depenses)}" style="cursor:pointer;">
+        <g class="chart-bar-group" data-label="${t.label}" style="cursor:pointer;">
           ${isCurrentMonth ? `<rect x="${centerX - step / 2 + 2}" y="${padTop - 8}" width="${step - 4}" height="${chartHeight + 14}" rx="6" fill="rgba(250,218,94,0.08)" stroke="rgba(250,218,94,0.3)" stroke-width="1" />` : ''}
           <!-- Revenus (Vert) -->
           <rect x="${xRev}" y="${yRev}" width="${barW}" height="${hRev}" rx="3" fill="#10B981" filter="drop-shadow(0 2px 4px rgba(16,185,129,0.3))">
@@ -419,12 +473,6 @@ document.addEventListener('DOMContentLoaded', async () => {
 
     container.innerHTML = `
       <svg viewBox="0 0 ${width} ${height}" style="width:100%; height:100%; overflow:visible;">
-        <defs>
-          <linearGradient id="grid-grad" x1="0" y1="0" x2="0" y2="1">
-            <stop offset="0%" stop-color="rgba(255,255,255,0.08)" />
-            <stop offset="100%" stop-color="rgba(255,255,255,0.01)" />
-          </linearGradient>
-        </defs>
         <!-- Horizontal grid lines -->
         <line x1="${padX}" y1="${padTop}" x2="${width - padX}" y2="${padTop}" stroke="rgba(255,255,255,0.08)" stroke-dasharray="3 3" />
         <line x1="${padX}" y1="${padTop + chartHeight / 2}" x2="${width - padX}" y2="${padTop + chartHeight / 2}" stroke="rgba(255,255,255,0.08)" stroke-dasharray="3 3" />
@@ -513,7 +561,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     `;
   }
 
-  // --- 12. RENDER ACTIVE VIEWS ---
+  // --- 13. RENDER ACTIVE VIEWS ---
   function renderCurrentView() {
     // Header labels
     document.getElementById('lbl-year').textContent = engine.year;
@@ -531,7 +579,7 @@ document.addEventListener('DOMContentLoaded', async () => {
       else btn.classList.remove('active');
     });
 
-    // Translate dynamic headers
+    // Translate dynamic headers with robust fallbacks
     document.getElementById('app-title-display').textContent = engine.tr('APP_TITLE') || 'GFMP • SFP v1.0';
     document.getElementById('txt-welcome').textContent = engine.tr('WELCOME') || 'Sélectionnez un module d\'application ci-dessous pour démarrer.';
     document.getElementById('lbl-card-saisie').textContent = engine.tr('SAISIE_T') || 'SAISIE TRANSACTION';
@@ -626,7 +674,12 @@ document.addEventListener('DOMContentLoaded', async () => {
           ${tx.devise !== engine.currency ? `<div style="font-size:0.68rem; opacity:0.75;">(${tx.montant} ${tx.devise})</div>` : ''}
         </td>
         <td style="text-align:center;">
-          <button class="btn-del-tx" data-id="${tx.id}" aria-label="Supprimer">🗑️</button>
+          <button class="btn-del-tx" data-id="${tx.id}" aria-label="Supprimer" title="Supprimer">
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <polyline points="3 6 5 6 21 6"/>
+              <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/>
+            </svg>
+          </button>
         </td>
       </tr>
     `).join('');
@@ -638,6 +691,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         const id = btn.dataset.id;
         if (confirm(`Confirmez-vous la suppression de l'opération #${id} ?`)) {
           engine.deleteTransaction(id);
+          showToast(`Opération #${id} supprimée`, 'info');
         }
       });
     });
@@ -741,7 +795,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     `).join('');
   }
 
-  // --- 13. BACKUP IMPORT & EXPORT ---
+  // --- 14. BACKUP IMPORT & EXPORT ---
   document.getElementById('btn-export-backup')?.addEventListener('click', () => {
     triggerHaptic(20);
     const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(engine.exportBackupJSON());
@@ -751,6 +805,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     document.body.appendChild(dlAnchor);
     dlAnchor.click();
     dlAnchor.remove();
+    showToast('Sauvegarde exportée avec succès !', 'success');
   });
 
   document.getElementById('btn-import-backup')?.addEventListener('click', () => {
@@ -765,13 +820,33 @@ document.addEventListener('DOMContentLoaded', async () => {
     reader.onload = (event) => {
       const res = engine.importBackupJSON(event.target.result);
       if (res.success) {
-        alert(`Restauration réussie ! ${res.count} transactions restaurées.`);
+        showToast(`Restauration réussie (${res.count} flux) !`, 'success');
         renderCurrentView();
       } else {
-        alert(`Erreur d'importation : ${res.error}`);
+        showToast(`Erreur d'importation : ${res.error}`, 'error');
       }
     };
     reader.readAsText(file);
+  });
+
+  // --- 15. PWA BEFOREINSTALLPROMPT HANDLER ---
+  let deferredPrompt = null;
+  window.addEventListener('beforeinstallprompt', (e) => {
+    e.preventDefault();
+    deferredPrompt = e;
+    const banner = document.getElementById('pwa-install-banner');
+    if (banner) banner.style.display = 'flex';
+  });
+
+  document.getElementById('btn-pwa-install')?.addEventListener('click', () => {
+    if (deferredPrompt) {
+      deferredPrompt.prompt();
+      deferredPrompt.userChoice.then(() => {
+        deferredPrompt = null;
+        const banner = document.getElementById('pwa-install-banner');
+        if (banner) banner.style.display = 'none';
+      });
+    }
   });
 
   // Subscribe engine notifications (Time slider, Currency switch, Language switch, Add/Delete mutations)

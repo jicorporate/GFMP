@@ -1,13 +1,14 @@
 {
-  "name": "GFMP — Global Finance Management Platform (SFP v1.0)",
+  "name": "GFMP — Global Finance Management Platform",
   "short_name": "GFMP",
+  "id": "com.jicorporate.gfmp",
   "description": "Système Financier Personnel & Entreprise-Grade SFP v1.0 — 100% Autonome et Hors-Ligne",
   "start_url": "./index.html",
   "scope": "./",
   "display": "standalone",
-  "background_color": "#090D16",
+  "background_color": "#0A1329",
   "theme_color": "#4169E1",
-  "orientation": "any",
+  "orientation": "portrait-primary",
   "categories": ["finance", "business", "productivity"],
   "icons": [
     {
@@ -17,10 +18,16 @@
       "purpose": "any"
     },
     {
-      "src": "assets/logo_jic_transparent.png",
+      "src": "assets/icon_512.png",
       "sizes": "512x512",
       "type": "image/png",
-      "purpose": "any maskable"
+      "purpose": "any"
+    },
+    {
+      "src": "assets/icon_512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "maskable"
     }
   ]
 }

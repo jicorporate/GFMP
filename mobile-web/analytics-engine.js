@@ -26,33 +26,74 @@ class GFMPEngine {
     this.listeners = [];
   }
 
-  async init() {
+  init() {
     try {
-      const stored = localStorage.getItem('gfmp_dataset_v2');
+      // 1. Try reading saved dataset from phone storage
+      const stored = localStorage.getItem('gfmp_dataset_v3');
       if (stored) {
-        this.data = JSON.parse(stored);
-        console.log('[GFMPEngine] Loaded dataset from phone storage');
-      } else {
-        const res = await fetch('./baseline_data.json');
-        this.data = await res.json();
-        this.save();
-        console.log('[GFMPEngine] Initialized rich baseline dataset');
-      }
-
-      if (this.data && this.data.config) {
-        if (this.data.config.LANGUE_UI) this.lang = this.data.config.LANGUE_UI;
-        if (this.data.config.SYS_DEVISE_BASE) this.currency = this.data.config.SYS_DEVISE_BASE;
+        const parsed = JSON.parse(stored);
+        if (parsed && Array.isArray(parsed.transactions) && parsed.transactions.length > 0) {
+          this.data = parsed;
+          console.log('[GFMPEngine] Loaded dataset from phone storage:', this.data.transactions.length, 'transactions');
+        }
       }
     } catch (e) {
-      console.error('[GFMPEngine] Init error:', e);
+      console.warn('[GFMPEngine] LocalStorage read failed:', e);
+    }
+
+    // 2. Synchronous & bulletproof fallback to embedded baseline data
+    if (!this.data || !Array.isArray(this.data.transactions) || this.data.transactions.length === 0) {
+      if (typeof window !== 'undefined' && window.GFMP_BASELINE) {
+        this.data = JSON.parse(JSON.stringify(window.GFMP_BASELINE));
+        console.log('[GFMPEngine] Initialized from embedded baseline data:', this.data.transactions.length, 'transactions');
+        this.save();
+      } else {
+        // Fallback minimal structure if window.GFMP_BASELINE is somehow unavailable
+        this.data = {
+          app_name: 'GFMP',
+          comptes: [
+            { id: '1', nom: 'Compte Courant Principal', classe: 'LIQUIDITE', devise: 'MUR', actif: 'OUI' },
+            { id: '2', nom: 'Livret d\'Épargne', classe: 'LIQUIDITE', devise: 'MUR', actif: 'OUI' }
+          ],
+          categories: [
+            { id: '1', nom: 'Salaire / Revenus Pro', type: 'REVENU' },
+            { id: '4', nom: 'Logement (Loyer/Prêt/Charges)', type: 'DEPENSE' },
+            { id: '5', nom: 'Alimentation & Supermarché', type: 'DEPENSE' }
+          ],
+          tiers: [
+            { id: '1', nom: 'Employeur principal', type: 'ENTREPRISE' },
+            { id: '4', nom: 'Supermarché / Alimentaire', type: 'COMMERCE' }
+          ],
+          transactions: [
+            { id: 1, date: '2026-02-05', id_compte: '1', id_categorie: '4', id_tiers: '4', montant: 12000, devise: 'MUR', notes: 'Loyer' },
+            { id: 2, date: '2026-02-23', id_compte: '1', id_categorie: '1', id_tiers: '1', montant: 78000, devise: 'MUR', notes: 'Salaire' }
+          ],
+          budgets: [
+            { id: 1, mois: '2026-02', id_categorie: '4', montant: 15000 },
+            { id: 2, mois: '2026-02', id_categorie: '5', montant: 10000 }
+          ],
+          devises: { MUR: 12.2243, EUR: 656.168, USD: 567.5369, GBP: 757.0023, ZAR: 33.2723, XOF: 1 },
+          dictionary: {},
+          config: { LANGUE_UI: 'FR', SYS_DEVISE_BASE: 'MUR' }
+        };
+        this.save();
+      }
+    }
+
+    // Apply config
+    if (this.data && this.data.config) {
+      if (this.data.config.LANGUE_UI) this.lang = this.data.config.LANGUE_UI;
+      if (this.data.config.SYS_DEVISE_BASE) this.currency = this.data.config.SYS_DEVISE_BASE;
     }
   }
 
   save() {
     try {
-      localStorage.setItem('gfmp_dataset_v2', JSON.stringify(this.data));
+      if (this.data) {
+        localStorage.setItem('gfmp_dataset_v3', JSON.stringify(this.data));
+      }
     } catch (e) {
-      console.error('[GFMPEngine] Save error:', e);
+      console.warn('[GFMPEngine] Save failed:', e);
     }
   }
 
@@ -61,17 +102,71 @@ class GFMPEngine {
   }
 
   notify() {
-    this.listeners.forEach(fn => fn(this));
+    this.listeners.forEach(fn => {
+      try {
+        fn(this);
+      } catch (e) {
+        console.error('[GFMPEngine] Listener error:', e);
+      }
+    });
   }
 
-  // --- I18N SELF-HEALING ENGINE ---
+  // --- I18N SELF-HEALING ENGINE (NO RAW KEYS EVER) ---
   tr(key) {
     if (!key) return '';
     const cleanKey = String(key).trim();
+
+    // 1. Try dataset dictionary
     if (this.data && this.data.dictionary && this.data.dictionary[cleanKey]) {
       const entry = this.data.dictionary[cleanKey];
-      return entry[this.lang] || entry['FR'] || cleanKey;
+      const val = entry[this.lang] || entry['FR'];
+      if (val) return val;
     }
+
+    // 2. High-grade multilingual fallback dictionary
+    const fallbackDict = {
+      'APP_TITLE': { FR: 'GFMP • SFP v1.0', EN: 'GFMP • PFS v1.0', ES: 'GFMP • SFP v1.0', PT: 'GFMP • SFP v1.0' },
+      'WELCOME': {
+        FR: 'Sélectionnez un module d\'application ci-dessous pour démarrer.',
+        EN: 'Select an application module below to get started.',
+        ES: 'Seleccione un módulo de aplicación a continuación para comenzar.',
+        PT: 'Selecione um módulo de aplicativo abaixo para começar.'
+      },
+      'SAISIE_T': { FR: 'SAISIE TRANSACTION', EN: 'TRANSACTION ENTRY', ES: 'ENTRADA DE TRANSACCIÓN', PT: 'ENTRADA DE TRANSAÇÃO' },
+      'SAISIE_D': {
+        FR: 'Ajouter un revenu, dépense ou virement interne avec validation d\'intégrité.',
+        EN: 'Add an income, expense or transfer with data integrity verification.',
+        ES: 'Agregar un ingreso, gasto o transferencia con verificación de integridad.',
+        PT: 'Adicionar uma receita, despesa ou transferência com validação de integridade.'
+      },
+      'DASH_T': { FR: 'DASHBOARD CASHFLOW', EN: 'CASHFLOW DASHBOARD', ES: 'PANEL DE CASHFLOW', PT: 'PAINEL DE FLUXO DE CAIXA' },
+      'DASH_D': {
+        FR: 'Analyser les flux mensuels consolidés et le net de trésorerie.',
+        EN: 'Analyze monthly consolidated flows and net treasury balance.',
+        ES: 'Analizar flujos mensuales consolidados y tesorería neta.',
+        PT: 'Analisar fluxos mensais consolidados e saldo de tesouraria líquido.'
+      },
+      'NETW_T': { FR: 'BILAN PATRIMONIAL', EN: 'NET WORTH & ASSETS', ES: 'BALANCE PATRIMONIAL', PT: 'BALANÇO PATRIMONIAL' },
+      'NETW_D': {
+        FR: 'Calcul de la Valeur Nette et photographie patrimoniale à date.',
+        EN: 'Calculation of Net Worth and asset photography as of date.',
+        ES: 'Cálculo del Valor Neto y fotografía patrimonial a la fecha.',
+        PT: 'Cálculo do Patrimônio Líquido e fotografia patrimonial na data.'
+      },
+      'BUDG_T': { FR: 'PILOTAGE BUDGÉTAIRE', EN: 'BUDGET MANAGEMENT', ES: 'GESTIÓN PRESUPUESTARIA', PT: 'GESTÃO ORÇAMENTÁRIA' },
+      'BUDG_D': {
+        FR: 'Suivi des enveloppes (ZBB) avec jauges de consommation dorées.',
+        EN: 'Zero-Based Budget tracking with golden consumption gauges.',
+        ES: 'Seguimiento de sobres (ZBB) con medidores de consumo dorados.',
+        PT: 'Acompanhamento de envelopes (ZBB) com barras de consumo douradas.'
+      },
+      'ANNÉE ENTIÈRE': { FR: 'ANNÉE ENTIÈRE', EN: 'FULL YEAR', ES: 'AÑO COMPLETO', PT: 'ANO INTEIRO' }
+    };
+
+    if (fallbackDict[cleanKey]) {
+      return fallbackDict[cleanKey][this.lang] || fallbackDict[cleanKey]['FR'];
+    }
+
     return cleanKey;
   }
 
@@ -223,7 +318,7 @@ class GFMPEngine {
 
     filteredTx.sort((a, b) => (b.date.localeCompare(a.date) || b.id - a.id));
 
-    // Color palette for category breakdown
+    // Color palette for category breakdown (SFP v1.0 Strict)
     const palette = ['#4169E1', '#FADA5E', '#7851A9', '#10B981', '#F43F5E', '#8B5CF6', '#06B6D4', '#F97316'];
     let colorIdx = 0;
 
@@ -319,9 +414,9 @@ class GFMPEngine {
             const txDev = tx.devise || cptNativeDevise;
             const montantNormalise = this.convert(tx.montant, txDev, cptNativeDevise);
 
-            if (fluxType === 'REVENU' || fluxType === 'TRANSFERT') {
+            if (fluxType === 'REVENU') {
               soldeNatif += montantNormalise;
-            } else {
+            } else if (fluxType === 'DEPENSE') {
               soldeNatif -= montantNormalise;
             }
           }
@@ -329,33 +424,30 @@ class GFMPEngine {
       });
 
       const soldeConverti = this.convert(soldeNatif, cptNativeDevise, this.currency);
-      const classe = (cpt.classe || 'LIQUIDITE').toUpperCase();
-      const isDette = (classe === 'DETTE');
+      const isDette = (cpt.classe === 'DETTE');
 
       if (isDette) {
         totalLiabilities += Math.abs(soldeConverti);
-        allocation.DETTE += Math.abs(soldeConverti);
+        allocation.DETTE = (allocation.DETTE || 0) + Math.abs(soldeConverti);
       } else {
         totalAssets += soldeConverti;
-        if (allocation[classe] !== undefined) {
-          allocation[classe] += soldeConverti;
+        if (cpt.classe === 'INVESTISSEMENT') {
+          allocation.INVESTISSEMENT = (allocation.INVESTISSEMENT || 0) + Math.max(0, soldeConverti);
         } else {
-          allocation.LIQUIDITE += soldeConverti;
+          allocation.LIQUIDITE = (allocation.LIQUIDITE || 0) + Math.max(0, soldeConverti);
         }
       }
 
       accountResults.push({
         id: cpt.id,
         nom: cpt.nom,
-        classe,
+        classe: cpt.classe || 'LIQUIDITE',
         deviseNative: cptNativeDevise,
         soldeNatif,
         soldeConverti,
         isDette
       });
     });
-
-    accountResults.sort((a, b) => Math.abs(b.soldeConverti) - Math.abs(a.soldeConverti));
 
     return {
       totalAssets,
@@ -368,23 +460,16 @@ class GFMPEngine {
 
   // --- 4. MODULE PILOTAGE BUDGÉTAIRE ZBB ---
   computeBudgetZBB() {
-    if (!this.data) return { totalAlloue: 0, totalConsomme: 0, totalEcart: 0, categories: [] };
+    if (!this.data) return { mois: `${this.year}-${this.month}`, totalAlloue: 0, totalConsomme: 0, totalEcart: 0, consumptionRate: 0, categories: [] };
 
     const targetMonthStr = (this.month === '00') ? `${this.year}-02` : `${this.year}-${this.month}`;
-    const expenseCats = (this.data.categories || []).filter(c => c.type === 'DEPENSE');
+    const depenseCategories = (this.data.categories || []).filter(c => c.type === 'DEPENSE');
 
-    const allocations = {};
-    (this.data.budgets || []).forEach(b => {
-      if (b.mois === targetMonthStr) {
-        allocations[b.id_categorie] = (allocations[b.id_categorie] || 0) + this.convert(b.montant, 'MUR', this.currency);
-      }
-    });
-
-    const realised = {};
+    const catRealise = {};
     (this.data.transactions || []).forEach(tx => {
       if (tx.date && tx.date.substring(0, 7) === targetMonthStr) {
         const converted = this.convert(tx.montant, tx.devise, this.currency);
-        realised[tx.id_categorie] = (realised[tx.id_categorie] || 0) + converted;
+        catRealise[tx.id_categorie] = (catRealise[tx.id_categorie] || 0) + converted;
       }
     });
 
@@ -392,9 +477,11 @@ class GFMPEngine {
     let totalConsomme = 0;
     const catResults = [];
 
-    expenseCats.forEach(cat => {
-      const alloue = allocations[cat.id] || 0;
-      const consomme = realised[cat.id] || 0;
+    depenseCategories.forEach(cat => {
+      const budgetEntry = (this.data.budgets || []).find(b => b.mois === targetMonthStr && String(b.id_categorie) === String(cat.id));
+      const alloueBase = budgetEntry ? budgetEntry.montant : 0;
+      const alloue = this.convert(alloueBase, 'MUR', this.currency);
+      const consomme = catRealise[cat.id] || 0;
       const ecart = alloue - consomme;
       const rawPct = alloue > 0 ? (consomme / alloue) * 100 : (consomme > 0 ? 100 : 0);
 
@@ -433,7 +520,7 @@ class GFMPEngine {
   // --- 5. TRANSACTION MUTATIONS ---
   addTransaction(tx) {
     if (!this.data) return false;
-    const nextId = (this.data.transactions.length > 0)
+    const nextId = (this.data.transactions && this.data.transactions.length > 0)
       ? Math.max(...this.data.transactions.map(t => t.id || 0)) + 1
       : 1;
 
@@ -449,6 +536,10 @@ class GFMPEngine {
       devise: tx.devise || this.currency,
       notes: cleanNotes
     };
+
+    if (!Array.isArray(this.data.transactions)) {
+      this.data.transactions = [];
+    }
 
     this.data.transactions.push(newTx);
     this.save();
@@ -473,7 +564,11 @@ class GFMPEngine {
     const targetMois = mois || ((this.month === '00') ? `${this.year}-02` : `${this.year}-${this.month}`);
     const numAmount = Math.abs(parseFloat(montant) || 0);
 
-    const existing = (this.data.budgets || []).find(b => b.mois === targetMois && String(b.id_categorie) === String(idCategorie));
+    if (!Array.isArray(this.data.budgets)) {
+      this.data.budgets = [];
+    }
+
+    const existing = this.data.budgets.find(b => b.mois === targetMois && String(b.id_categorie) === String(idCategorie));
     if (existing) {
       existing.montant = numAmount;
     } else {
@@ -494,6 +589,7 @@ class GFMPEngine {
   }
 
   addAccount(nom, classe = 'LIQUIDITE', devise = 'MUR') {
+    if (!this.data.comptes) this.data.comptes = [];
     const nextId = String(this.data.comptes.length + 1);
     const newCpt = { id: nextId, nom, classe, devise, actif: 'OUI' };
     this.data.comptes.push(newCpt);
@@ -502,6 +598,7 @@ class GFMPEngine {
   }
 
   addCategory(nom, type = 'DEPENSE') {
+    if (!this.data.categories) this.data.categories = [];
     const nextId = String(this.data.categories.length + 1);
     const newCat = { id: nextId, nom, type };
     this.data.categories.push(newCat);
@@ -510,6 +607,7 @@ class GFMPEngine {
   }
 
   addTiers(nom, type = 'COMMERCE') {
+    if (!this.data.tiers) this.data.tiers = [];
     const nextId = String(this.data.tiers.length + 1);
     const newTiers = { id: nextId, nom, type };
     this.data.tiers.push(newTiers);

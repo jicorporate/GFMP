@@ -58,6 +58,10 @@ class MainActivity : ComponentActivity() {
                 databaseEnabled = true
                 allowFileAccess = true
                 allowContentAccess = true
+                @Suppress("DEPRECATION")
+                allowFileAccessFromFileURLs = true
+                @Suppress("DEPRECATION")
+                allowUniversalAccessFromFileURLs = true
                 loadWithOverviewMode = true
                 useWideViewPort = true
                 builtInZoomControls = false

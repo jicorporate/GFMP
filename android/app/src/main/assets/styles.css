@@ -767,8 +767,16 @@ body {
 }
 
 .nav-tab .tab-icon {
-  font-size: 1.25rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
   transition: transform 0.2s;
+}
+.nav-tab .tab-icon svg {
+  stroke: currentColor;
+}
+.card-icon svg {
+  stroke: currentColor;
 }
 
 .nav-tab.active {

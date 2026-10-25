@@ -6,8 +6,13 @@
   <title>GFMP — Global Finance Management Platform</title>
   <meta name="description" content="Plateforme Financière & Décisionnelle Entreprise-Grade SFP v1.0. 100% Hors-Ligne, Zéro Réseau.">
   <meta name="theme-color" content="#4169E1">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
   <link rel="manifest" href="manifest.json">
-  <link rel="icon" type="image/png" href="assets/favicon_jic.png">
+  <link rel="icon" type="image/png" sizes="192x192" href="assets/favicon_jic.png">
+  <link rel="icon" type="image/png" sizes="512x512" href="assets/icon_512.png">
+  <link rel="apple-touch-icon" sizes="180x180" href="assets/icon_512.png">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=ADLaM+Display&family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
@@ -16,7 +21,7 @@
 <body>
 
   <!-- =========================================================================
-       BANDEAU SUPÉRIEUR BLEU ROYAL & OR (SFP SPEC)
+       BANDEAU SUPÉRIEUR HAUTE JOAILLERIE (BLEU ROYAL & OR)
        ========================================================================= -->
   <header class="gfmp-header">
     <div class="header-top">
@@ -84,7 +89,14 @@
         <div class="solid-card card-saisie" id="card-nav-saisie">
           <div class="card-header-inner">
             <h2 class="card-title" id="lbl-card-saisie">SAISIE TRANSACTION</h2>
-            <div class="card-icon">💳</div>
+            <div class="card-icon">
+              <!-- SVG Credit Card Icon -->
+              <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <rect x="2" y="5" width="20" height="14" rx="2"/>
+                <line x1="2" y1="10" x2="22" y2="10"/>
+                <line x1="6" y1="15" x2="10" y2="15"/>
+              </svg>
+            </div>
           </div>
           <p class="card-desc" id="desc-card-saisie">Ajouter un revenu, dépense ou virement interne avec validation d'intégrité.</p>
           <div class="card-kpi-preview">
@@ -97,11 +109,19 @@
         <div class="solid-card card-cashflow" id="card-nav-cashflow">
           <div class="card-header-inner">
             <h2 class="card-title" id="lbl-card-cashflow">DASHBOARD CASHFLOW</h2>
-            <div class="card-icon">📊</div>
+            <div class="card-icon">
+              <!-- SVG Analytics Bar Chart Icon -->
+              <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <line x1="18" y1="20" x2="18" y2="10"/>
+                <line x1="12" y1="20" x2="12" y2="4"/>
+                <line x1="6" y1="20" x2="6" y2="14"/>
+                <polyline points="4 9 10 3 16 7 20 2"/>
+              </svg>
+            </div>
           </div>
           <p class="card-desc" id="desc-card-cashflow">Analyser les flux mensuels consolidés et le net de trésorerie.</p>
           <div class="card-kpi-preview">
-            <span id="preview-cashflow-net">0.00 Rs</span>
+            <span id="preview-cashflow-net">53 200,00 Rs</span>
             <span class="card-kpi-sub">Flux Net</span>
           </div>
         </div>
@@ -110,11 +130,16 @@
         <div class="solid-card card-networth" id="card-nav-networth">
           <div class="card-header-inner">
             <h2 class="card-title" id="lbl-card-networth">BILAN PATRIMONIAL</h2>
-            <div class="card-icon">🏛️</div>
+            <div class="card-icon">
+              <!-- SVG Stacked Vault/Pillar Icon -->
+              <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5"/>
+              </svg>
+            </div>
           </div>
           <p class="card-desc" id="desc-card-networth">Calcul de la Valeur Nette et photographie patrimoniale à date.</p>
           <div class="card-kpi-preview">
-            <span id="preview-networth-val">0.00 Rs</span>
+            <span id="preview-networth-val">100 000,00 Rs</span>
             <span class="card-kpi-sub">Actifs & Dettes</span>
           </div>
         </div>
@@ -123,11 +148,18 @@
         <div class="solid-card card-budget" id="card-nav-budget">
           <div class="card-header-inner">
             <h2 class="card-title" id="lbl-card-budget">PILOTAGE BUDGÉTAIRE</h2>
-            <div class="card-icon">🎯</div>
+            <div class="card-icon">
+              <!-- SVG Target/Gauge Icon -->
+              <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <circle cx="12" cy="12" r="10"/>
+                <circle cx="12" cy="12" r="6"/>
+                <circle cx="12" cy="12" r="2"/>
+              </svg>
+            </div>
           </div>
           <p class="card-desc" id="desc-card-budget">Suivi des enveloppes (ZBB) avec jauges de consommation dorées.</p>
           <div class="card-kpi-preview">
-            <span id="preview-budget-pct">0%</span>
+            <span id="preview-budget-pct">35%</span>
             <span class="card-kpi-sub">Consommé</span>
           </div>
         </div>
@@ -136,15 +168,43 @@
       <!-- Quick Action Utilities -->
       <div style="margin-top: 22px; display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 8px;">
         <button id="btn-open-report" class="btn-back-tactile" style="justify-content:center; background:linear-gradient(135deg, #1E3A8A 0%, #4169E1 100%); color:#FFF;">
-          📑 Rapport
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="margin-right:6px;">
+            <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
+            <polyline points="14 2 14 8 20 8"/>
+            <line x1="16" y1="13" x2="8" y2="13"/>
+            <line x1="16" y1="17" x2="8" y2="17"/>
+          </svg>
+          Rapport
         </button>
         <button id="btn-export-backup" class="btn-back-tactile" style="justify-content:center; background:#1E293B; color:#FFF;">
-          💾 Exporter
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="margin-right:6px;">
+            <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+            <polyline points="7 10 12 15 17 10"/>
+            <line x1="12" y1="15" x2="12" y2="3"/>
+          </svg>
+          Exporter
         </button>
         <button id="btn-import-backup" class="btn-back-tactile" style="justify-content:center; background:#1E293B; color:#FFF;">
-          📂 Importer
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="margin-right:6px;">
+            <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+            <polyline points="17 8 12 3 7 8"/>
+            <line x1="12" y1="3" x2="12" y2="15"/>
+          </svg>
+          Importer
         </button>
         <input type="file" id="file-import-input" accept=".json,.csv,.xlsx" style="display:none;">
+      </div>
+
+      <!-- In-App PWA Install Banner (When accessible in mobile browser) -->
+      <div id="pwa-install-banner" style="display:none; margin-top:14px; background:rgba(250,218,94,0.1); border:1px solid var(--c-yellow-royal); border-radius:12px; padding:12px 16px; align-items:center; justify-content:space-between;">
+        <div style="display:flex; align-items:center; gap:10px;">
+          <img src="assets/favicon_jic.png" style="width:32px; height:32px; border-radius:8px;">
+          <div style="font-size:0.78rem;">
+            <div style="font-weight:700; color:#FFF;">Installer l'Application GFMP</div>
+            <div style="color:var(--text-muted); font-size:0.7rem;">Accès direct avec icône sur l'écran d'accueil</div>
+          </div>
+        </div>
+        <button id="btn-pwa-install" class="btn-allouer" style="font-size:0.75rem; padding:6px 14px;">Installer</button>
       </div>
     </section>
 
@@ -214,15 +274,15 @@
       <div class="kpi-row">
         <div class="kpi-mini-card kpi-rev">
           <div class="kpi-mini-label">REVENUS</div>
-          <div class="kpi-mini-value" id="kpi-cashflow-rev">0.00 Rs</div>
+          <div class="kpi-mini-value" id="kpi-cashflow-rev">0,00 Rs</div>
         </div>
         <div class="kpi-mini-card kpi-dep">
           <div class="kpi-mini-label">DÉPENSES</div>
-          <div class="kpi-mini-value" id="kpi-cashflow-dep">0.00 Rs</div>
+          <div class="kpi-mini-value" id="kpi-cashflow-dep">0,00 Rs</div>
         </div>
         <div class="kpi-mini-card kpi-net" id="card-kpi-net">
           <div class="kpi-mini-label">CASHFLOW NET</div>
-          <div class="kpi-mini-value" id="kpi-cashflow-net">0.00 Rs</div>
+          <div class="kpi-mini-value" id="kpi-cashflow-net">0,00 Rs</div>
         </div>
       </div>
 
@@ -251,7 +311,12 @@
       <!-- Recherche & Filtres Rapides -->
       <div class="search-filter-box">
         <div class="search-input-wrapper">
-          <span class="search-icon-lens">🔍</span>
+          <span class="search-icon-lens">
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <circle cx="11" cy="11" r="8"/>
+              <line x1="21" y1="21" x2="16.65" y2="16.65"/>
+            </svg>
+          </span>
           <input type="text" id="input-tx-search" class="search-input" placeholder="Rechercher catégorie, tiers, compte ou note...">
         </div>
         <div class="filter-chips-row">
@@ -275,11 +340,11 @@
               <th>Catégorie / Compte</th>
               <th>Tiers</th>
               <th style="text-align:right;">Montant</th>
-              <th style="width:30px; text-align:center;"></th>
+              <th style="width:34px; text-align:center;"></th>
             </tr>
           </thead>
           <tbody id="cashflow-table-body">
-            <tr><td colspan="5" class="empty-state">Aucune transaction pour cette période</td></tr>
+            <tr><td colspan="5" class="empty-state">Chargement des transactions...</td></tr>
           </tbody>
         </table>
       </div>
@@ -293,15 +358,15 @@
 
       <div class="networth-hero" id="networth-hero-card">
         <div class="networth-label">VALEUR NETTE PATRIMONIALE (SNAPSHOT)</div>
-        <div class="networth-val" id="nw-hero-val">0.00 Rs</div>
+        <div class="networth-val" id="nw-hero-val">0,00 Rs</div>
         <div class="networth-breakdown">
           <div class="nw-sub-col">
             <div class="nw-sub-label">Total Actifs</div>
-            <div class="nw-sub-val assets" id="nw-hero-assets">0.00 Rs</div>
+            <div class="nw-sub-val assets" id="nw-hero-assets">0,00 Rs</div>
           </div>
           <div class="nw-sub-col">
             <div class="nw-sub-label">Total Dettes</div>
-            <div class="nw-sub-val liabilities" id="nw-hero-liabilities">0.00 Rs</div>
+            <div class="nw-sub-val liabilities" id="nw-hero-liabilities">0,00 Rs</div>
           </div>
         </div>
 
@@ -345,8 +410,8 @@
       <div class="budget-hero-card">
         <div>
           <div style="font-size:0.72rem; color:var(--text-muted); text-transform:uppercase;">Enveloppe Globale ZBB</div>
-          <div style="font-size:1.4rem; font-weight:800;" id="budget-hero-total">0.00 Rs</div>
-          <div style="font-size:0.75rem; color:var(--text-secondary);" id="budget-hero-sub">Consommé : 0.00 Rs</div>
+          <div style="font-size:1.4rem; font-weight:800;" id="budget-hero-total">0,00 Rs</div>
+          <div style="font-size:0.75rem; color:var(--text-secondary);" id="budget-hero-sub">Consommé : 0,00 Rs</div>
         </div>
         <button class="btn-allouer" id="btn-open-alloc-modal">+ ALLOUER</button>
       </div>
@@ -378,7 +443,12 @@
   <!-- =========================================================================
        FLOATING ACTION BUTTON (FAB) — ACCÈS RAPIDE PARTOUT
        ========================================================================= -->
-  <button class="fab-quick-add" id="btn-fab-add" aria-label="Saisie Express" title="Saisie Rapide">+</button>
+  <button class="fab-quick-add" id="btn-fab-add" aria-label="Saisie Express" title="Saisie Rapide">
+    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+      <line x1="12" y1="5" x2="12" y2="19"/>
+      <line x1="5" y1="12" x2="19" y2="12"/>
+    </svg>
+  </button>
 
   <!-- =========================================================================
        MODAL BOTTOM SHEET : SAISIE EXPRESS PARTOUT (VIA FAB)
@@ -466,38 +536,67 @@
       </div>
       <div style="display:flex; gap:10px; margin-top:16px;">
         <button type="button" class="btn-back-tactile" id="btn-close-report" style="flex:1; justify-content:center; background:#334155; color:#FFF;">Fermer</button>
-        <button type="button" class="btn-submit-tx" id="btn-copy-report" style="flex:1; background:var(--c-blue-royal);">📋 Copier</button>
+        <button type="button" class="btn-submit-tx" id="btn-copy-report" style="flex:1; background:var(--c-blue-royal);">Copier</button>
       </div>
     </div>
   </div>
 
   <!-- =========================================================================
-       NAVIGATION TACTILE INFÉRIEURE AU POUCE (THUMB-ZONE)
+       NAVIGATION TACTILE INFÉRIEURE AU POUCE (THUMB-ZONE) — ZERO EMOJIS, PURE SVG
        ========================================================================= -->
   <nav class="bottom-nav">
     <button class="nav-tab active" data-view="home">
-      <span class="tab-icon">🏛️</span>
+      <span class="tab-icon">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/>
+          <polyline points="9 22 9 12 15 12 15 22"/>
+        </svg>
+      </span>
       <span>Hub</span>
     </button>
     <button class="nav-tab" data-view="transaction">
-      <span class="tab-icon">💳</span>
+      <span class="tab-icon">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <rect x="2" y="5" width="20" height="14" rx="2"/>
+          <line x1="2" y1="10" x2="22" y2="10"/>
+          <line x1="6" y1="15" x2="10" y2="15"/>
+        </svg>
+      </span>
       <span>Saisie</span>
     </button>
     <button class="nav-tab" data-view="cashflow">
-      <span class="tab-icon">📊</span>
+      <span class="tab-icon">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <line x1="18" y1="20" x2="18" y2="10"/>
+          <line x1="12" y1="20" x2="12" y2="4"/>
+          <line x1="6" y1="20" x2="6" y2="14"/>
+          <polyline points="4 9 10 3 16 7 20 2"/>
+        </svg>
+      </span>
       <span>Cashflow</span>
     </button>
     <button class="nav-tab" data-view="networth">
-      <span class="tab-icon">💰</span>
+      <span class="tab-icon">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5"/>
+        </svg>
+      </span>
       <span>Patrimoine</span>
     </button>
     <button class="nav-tab" data-view="budget">
-      <span class="tab-icon">🎯</span>
+      <span class="tab-icon">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <circle cx="12" cy="12" r="10"/>
+          <circle cx="12" cy="12" r="6"/>
+          <circle cx="12" cy="12" r="2"/>
+        </svg>
+      </span>
       <span>Budget</span>
     </button>
   </nav>
 
-  <!-- Scripts -->
+  <!-- Scripts: 1. Synchronous Baseline Data, 2. Analytics Engine, 3. App Controller -->
+  <script src="baseline_data.js"></script>
   <script src="analytics-engine.js"></script>
   <script src="app.js"></script>
   <script>

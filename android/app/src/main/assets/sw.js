@@ -1,23 +1,25 @@
 /**
- * Service Worker — EditionBI Mobile (100% Offline & Autonomous)
+ * Service Worker — GFMP Mobile (100% Offline & Autonomous)
  * Cache-First Strategy for Ultra-Fast Instant Mobile Loading
  */
 
-const CACHE_NAME = 'gfmp-mobile-v2.0.0';
+const CACHE_NAME = 'gfmp-mobile-v3.0.0';
 const ASSETS_TO_CACHE = [
   './',
   './index.html',
   './styles.css',
   './app.js',
   './analytics-engine.js',
+  './baseline_data.js',
   './baseline_data.json',
   './manifest.json',
   './assets/favicon_jic.png',
+  './assets/icon_512.png',
   './assets/logo_jic_transparent.png',
   './assets/logo_jic.png'
 ];
 
-// Install: Cache all core assets
+// Install: Cache all core assets immediately
 self.addEventListener('install', (event) => {
   event.waitUntil(
     caches.open(CACHE_NAME).then((cache) => {
@@ -27,7 +29,7 @@ self.addEventListener('install', (event) => {
   );
 });
 
-// Activate: Clean up previous caches
+// Activate: Clean up previous caches immediately
 self.addEventListener('activate', (event) => {
   event.waitUntil(
     caches.keys().then((keyList) => {
