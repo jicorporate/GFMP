@@ -121,9 +121,27 @@ class MainActivity : ComponentActivity() {
             }
         })
 
+        // Detect fresh APK installation or APK update to guarantee the Startup Configuration screen
+        val prefs = getSharedPreferences("gfmp_install_prefs", MODE_PRIVATE)
+        val lastApkUpdateTime = try {
+            packageManager.getPackageInfo(packageName, 0).lastUpdateTime
+        } catch (e: Exception) {
+            0L
+        }
+        val recordedUpdateTime = prefs.getLong("last_apk_update_time", -1L)
+        val isFreshApkInstall = (recordedUpdateTime != lastApkUpdateTime)
+        if (isFreshApkInstall) {
+            prefs.edit().putLong("last_apk_update_time", lastApkUpdateTime).apply()
+        }
+
         // Load 100% offline self-contained local bundle
         webView.clearCache(true)
-        webView.loadUrl("file:///android_asset/index.html")
+        val startUrl = if (isFreshApkInstall) {
+            "file:///android_asset/index.html?onboarding=1"
+        } else {
+            "file:///android_asset/index.html"
+        }
+        webView.loadUrl(startUrl)
     }
 
     override fun onResume() {

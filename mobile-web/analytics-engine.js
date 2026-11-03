@@ -737,6 +737,8 @@ class GFMPEngine {
     this.currency = 'MUR';
     this.year = '2026';
     this.month = '02'; // '00' = Année entière
+    this.referenceDate = '2026-02-27';
+    this.theme = 'blue';
     this.currentView = 'home';
     this.hubFilter = 'ALL'; // 'ALL', 'CASHFLOW', 'PATRIMOINE', 'BUDGET'
     this.searchTerm = '';
@@ -898,19 +900,50 @@ class GFMPEngine {
     return symbols[currency] || currency;
   }
 
-  init() {
+  getStorage() {
     try {
-      // 1. Try reading saved dataset from phone storage
-      const stored = localStorage.getItem('gfmp_dataset_v3');
-      if (stored) {
-        const parsed = JSON.parse(stored);
-        if (parsed && Array.isArray(parsed.transactions) && parsed.transactions.length > 0) {
-          this.data = parsed;
-          console.log('[GFMPEngine] Loaded dataset from phone storage:', this.data.transactions.length, 'transactions');
-        }
+      if (typeof localStorage !== 'undefined' && localStorage) return localStorage;
+      if (typeof window !== 'undefined' && window.localStorage) return window.localStorage;
+    } catch (e) {}
+    return null;
+  }
+
+  resolvePeriod(period = null) {
+    if (period && typeof period === 'string') {
+      const trimmed = period.trim();
+      if (/^\d{4}-\d{2}$/.test(trimmed)) {
+        const [y, m] = trimmed.split('-');
+        return { year: y, month: m };
       }
-    } catch (e) {
-      console.warn('[GFMPEngine] LocalStorage read failed:', e);
+      if (/^\d{4}$/.test(trimmed)) {
+        return { year: trimmed, month: '00' };
+      }
+    }
+    return {
+      year: String(this.year || '2026'),
+      month: String(this.month || '02').padStart(2, '0')
+    };
+  }
+
+  init(customData = null) {
+    const storage = this.getStorage();
+
+    if (customData && typeof customData === 'object' && Array.isArray(customData.transactions)) {
+      this.data = JSON.parse(JSON.stringify(customData));
+    } else {
+      try {
+        // 1. Try reading saved dataset from phone storage
+        const stored = storage ? storage.getItem('gfmp_dataset_v3') : null;
+        if (stored) {
+          const parsed = JSON.parse(stored);
+          if (parsed && Array.isArray(parsed.transactions) && parsed.transactions.length > 0) {
+            this.data = parsed;
+            console.log('[GFMPEngine] Loaded dataset from phone storage:', this.data.transactions.length, 'transactions');
+          }
+        }
+      } catch (e) {
+        console.warn('[GFMPEngine] LocalStorage read failed:', e);
+      }
     }
 
     // 2. Synchronous & bulletproof fallback to embedded baseline data
@@ -976,19 +1009,32 @@ class GFMPEngine {
     if (this.data && this.data.config) {
       if (this.data.config.LANGUE_UI) this.lang = this.data.config.LANGUE_UI;
       if (this.data.config.SYS_DEVISE_BASE) this.currency = this.data.config.SYS_DEVISE_BASE;
+      if (this.data.config.SYS_DATE_REF) this.referenceDate = this.data.config.SYS_DATE_REF;
+      if (this.data.config.SYS_YEAR) this.year = String(this.data.config.SYS_YEAR);
+      if (this.data.config.SYS_MONTH) this.month = String(this.data.config.SYS_MONTH).padStart(2, '0');
+      if (this.data.config.SYS_THEME) this.theme = this.data.config.SYS_THEME;
     }
 
-    // Check if initial onboarding setup has been completed
-    const initializedFlag = (typeof localStorage !== 'undefined') ? localStorage.getItem('gfmp_initialized') : 'true';
-    this.needsOnboarding = (initializedFlag !== 'true');
+    // Check if initial onboarding setup has been completed (versioned v5.6 + native APK install trigger)
+    const onboardingFlag = storage ? storage.getItem('gfmp_onboarding_v5_6') : 'true';
+    const forceOnboardingUrl = (typeof window !== 'undefined' && window.location && typeof window.location.search === 'string' && window.location.search.includes('onboarding=1'));
+    this.needsOnboarding = forceOnboardingUrl || (onboardingFlag !== 'true');
 
-    // Load cached live rates if available
+    // Load cached live rates if available (normalized to XOF=1 base scale)
     try {
-      const cached = localStorage.getItem('gfmp_live_rates');
+      const cached = storage ? storage.getItem('gfmp_live_rates') : null;
       if (cached) {
         const parsed = JSON.parse(cached);
         if (parsed && parsed.devises) {
-          this.data.devises = Object.assign({}, this.data.devises, parsed.devises);
+          const cachedRates = { ...parsed.devises };
+          if (cachedRates.EUR && cachedRates.EUR <= 2) {
+            const scale = 656.168;
+            Object.keys(cachedRates).forEach(k => {
+              cachedRates[k] = Number((cachedRates[k] * scale).toFixed(4));
+            });
+            cachedRates.XOF = 1;
+          }
+          this.data.devises = Object.assign({}, this.data.devises, cachedRates);
           this.lastExchangeSync = parsed.lastSync;
         }
       }
@@ -1012,8 +1058,9 @@ class GFMPEngine {
 
   save() {
     try {
-      if (this.data) {
-        localStorage.setItem('gfmp_dataset_v3', JSON.stringify(this.data));
+      const storage = this.getStorage();
+      if (this.data && storage) {
+        storage.setItem('gfmp_dataset_v3', JSON.stringify(this.data));
       }
     } catch (e) {
       console.warn('[GFMPEngine] Save failed:', e);
@@ -1035,9 +1082,16 @@ class GFMPEngine {
   }
 
   // --- I18N SELF-HEALING ENGINE (NO RAW KEYS EVER) ---
-  tr(key, params = {}) {
+  getDictionary() {
+    return (this.data && this.data.dictionary) ? this.data.dictionary : {};
+  }
+
+  tr(key, params = {}, langOverride = null) {
     if (!key) return '';
     const cleanKey = String(key).trim();
+    const targetLang = (langOverride && ['FR', 'EN', 'ES', 'PT'].includes(String(langOverride).toUpperCase()))
+      ? String(langOverride).toUpperCase()
+      : this.lang;
 
     const fallbackDict = {
       // Header & Global
@@ -1092,11 +1146,75 @@ class GFMPEngine {
         ES: 'Solvencia: {sol}% • Puntuación: {score}/100',
         PT: 'Solvência: {sol}% • Pontuação: {score}/100'
       },
-      'HUB_TREND_TITLE': { FR: 'ÉVOLUTION DES FLUX SUR 6 MOIS (TRÉSORERIE)', EN: '6-MONTH CASHFLOW TREND', ES: 'EVOLUCIÓN DE FLUJOS EN 6 MESES', PT: 'EVOLUÇÃO DOS FLUXOS EM 6 MESES' },
+      'HUB_TREND_TITLE': { FR: 'ÉVOLUTION DES FLUX MENSUELS (TRÉSORERIE)', EN: 'MONTH CASHFLOW TREND', ES: 'EVOLUCIÓN MENSUAL DE FLUJOS', PT: 'EVOLUÇÃO MENSAL DOS FLUXOS' },
       'HUB_DONUT_TITLE': { FR: 'RÉPARTITION DES DÉPENSES PAR CATÉGORIE', EN: 'EXPENSE BREAKDOWN BY CATEGORY', ES: 'DISTRIBUCIÓN DE GASTOS POR CATEGORÍA', PT: 'DISTRIBUIÇÃO DE DESPESAS POR CATEGORIA' },
       'HUB_PATRIMOINE_TITLE': { FR: 'ALLOCATION D\'ACTIFS & STRUCTURE PATRIMONIALE', EN: 'ASSET ALLOCATION & WEALTH STRUCTURE', ES: 'DISTRIBUCIÓN DE ACTIVOS Y PATRIMONIO', PT: 'ALOCAÇÃO DE ATIVOS E PATRIMÔNIO' },
       'HUB_BUDGET_TITLE': { FR: 'PILOTAGE & SANTÉ DES ENVELOPPES BUDGÉTAIRES', EN: 'BUDGET ENVELOPES HEALTH & TRACKING', ES: 'GESTIÓN Y SALUD PRESUPUESTARIA', PT: 'GESTÃO E SAÚDE ORÇAMENTÁRIA' },
       'HUB_RECENT_TITLE': { FR: 'DERNIÈRES TRANSACTIONS ENREGISTRÉES', EN: 'LATEST RECORDED TRANSACTIONS', ES: 'ÚLTIMAS TRANSACCIONES REGISTRADAS', PT: 'ÚLTIMAS TRANSAÇÕES REGISTRADAS' },
+      'INIT_BADGE': { FR: 'SFP v1.0 • ÉDITION GOLD PRIVÉE', EN: 'SFP v1.0 • PRIVATE GOLD EDITION', ES: 'SFP v1.0 • EDICIÓN GOLD PRIVADA', PT: 'SFP v1.0 • EDIÇÃO GOLD PRIVADA' },
+      'INIT_TITLE': { FR: 'INITIALISATION DU SYSTÈME', EN: 'SYSTEM INITIALIZATION', ES: 'INICIALIZACIÓN DEL SISTEMA', PT: 'INICIALIZAÇÃO DO SISTEMA' },
+      'INIT_SUBTITLE': {
+        FR: 'Configurez votre environnement de gestion patrimoniale et financière haute précision.',
+        EN: 'Configure your high-precision wealth and personal finance management environment.',
+        ES: 'Configure su entorno de gestión patrimonial y financiera de alta precisión.',
+        PT: 'Configure o seu ambiente de gestão patrimonial e financeira de alta precisão.'
+      },
+      'INIT_TRUST_1': { FR: '100% Hors-Ligne & Privé', EN: '100% Offline & Private', ES: '100% Sin Conexión y Privado', PT: '100% Offline e Privado' },
+      'INIT_TRUST_2': { FR: 'Multi-Devises Live API', EN: 'Live Multi-Currency API', ES: 'API Multidivisa en Vivo', PT: 'API Multimoeda ao Vivo' },
+      'INIT_TRUST_3': { FR: 'Architecture ZBB & Audit', EN: 'ZBB & Audit Architecture', ES: 'Arquitectura ZBB y Auditoría', PT: 'Arquitetura ZBB e Auditoria' },
+      'INIT_STEP1_BADGE': { FR: 'ÉTAPE 01 / 04', EN: 'STEP 01 / 04', ES: 'PASO 01 / 04', PT: 'PASSO 01 / 04' },
+      'INIT_STEP1_TITLE': { FR: 'Sélectionnez la langue du système', EN: 'Select your system language', ES: 'Seleccione el idioma del sistema', PT: 'Selecione o idioma do sistema' },
+      'INIT_STEP1_DESC': {
+        FR: 'L\'ensemble de vos synthèses, rapports et interfaces s\'adapteront immédiatement.',
+        EN: 'All your dashboards, financial reports, and interfaces will adapt immediately.',
+        ES: 'Todos sus paneles, informes financieros e interfaces se adaptarán de inmediato.',
+        PT: 'Todos os seus painéis, relatórios financeiros e interfaces adaptar-se-ão imediatamente.'
+      },
+      'INIT_STEP2_BADGE': { FR: 'ÉTAPE 02 / 04', EN: 'STEP 02 / 04', ES: 'PASO 02 / 04', PT: 'PASSO 02 / 04' },
+      'INIT_STEP2_TITLE': { FR: 'Sélectionnez votre devise de référence', EN: 'Select your primary reference currency', ES: 'Seleccione su divisa principal de referencia', PT: 'Selecione a sua moeda principal de referência' },
+      'INIT_STEP2_DESC': {
+        FR: 'Devise mère sur laquelle l\'ensemble de votre patrimoine et flux seront consolidés.',
+        EN: 'Base currency in which all your net worth, assets, and cashflows will be consolidated.',
+        ES: 'Divisa base en la que se consolidarán todo su patrimonio, activos y flujos.',
+        PT: 'Moeda base na qual todo o seu patrimônio, ativos e fluxos serão consolidados.'
+      },
+      'INIT_STEP3_BADGE': { FR: 'ÉTAPE 03 / 04', EN: 'STEP 03 / 04', ES: 'PASO 03 / 04', PT: 'PASSO 03 / 04' },
+      'INIT_STEP3_TITLE': { FR: 'Configurez la date et la période financière', EN: 'Configure date & active financial period', ES: 'Configure la fecha y el período financiero', PT: 'Configure a data e o período financeiro' },
+      'INIT_STEP3_DESC': {
+        FR: 'Définissez la date système par défaut pour vos saisies et le mois/année d\'ouverture du tableau de bord.',
+        EN: 'Set the default system date for your entries and the opening month/year for your dashboard.',
+        ES: 'Defina la fecha del sistema por defecto para sus registros y el mes/año de apertura del panel.',
+        PT: 'Defina a data do sistema padrão para os seus registos e o mês/ano de abertura do painel.'
+      },
+      'INIT_DATE_LABEL': { FR: 'Date de référence du système', EN: 'System reference date', ES: 'Fecha de referencia del sistema', PT: 'Data de referência do sistema' },
+      'INIT_MONTH_LABEL': { FR: 'Mois de pilotage', EN: 'Active month', ES: 'Mes de control', PT: 'Mês de controlo' },
+      'INIT_YEAR_LABEL': { FR: 'Exercice (Année)', EN: 'Fiscal year', ES: 'Ejercicio (Año)', PT: 'Exercício (Ano)' },
+      'INIT_BTN_TODAY': { FR: 'Aujourd\'hui', EN: 'Today', ES: 'Hoy', PT: 'Hoje' },
+      'INIT_BTN_DEMO': { FR: 'Période Démo SFP (Fév 2026)', EN: 'SFP Demo Period (Feb 2026)', ES: 'Período Demo SFP (Feb 2026)', PT: 'Período Demo SFP (Fev 2026)' },
+      'INIT_STEP4_BADGE': { FR: 'ÉTAPE 04 / 04', EN: 'STEP 04 / 04', ES: 'PASO 04 / 04', PT: 'PASSO 04 / 04' },
+      'INIT_STEP4_TITLE': { FR: 'Choisissez le thème visuel de l\'application', EN: 'Choose the application visual theme', ES: 'Elija el tema visual de la aplicación', PT: 'Escolha o tema visual da aplicação' },
+      'INIT_STEP4_DESC': {
+        FR: 'Personnalisez l\'ambiance Haute Joaillerie de votre interface avec aperçu instantané en direct.',
+        EN: 'Customize the Haute Joaillerie ambiance of your interface with instant live preview.',
+        ES: 'Personalice el ambiente de Alta Joyería de su interfaz con vista previa instantánea en vivo.',
+        PT: 'Personalize o ambiente de Alta Joalharia da sua interface com pré-visualização instantânea ao vivo.'
+      },
+      'THEME_NAME_BLUE': { FR: 'Bleu Royal', EN: 'Royal Blue', ES: 'Azul Real', PT: 'Azul Real' },
+      'THEME_SUB_BLUE': { FR: 'Standard SFP • Or & Saphir', EN: 'SFP Standard • Gold & Sapphire', ES: 'Estándar SFP • Oro y Zafiro', PT: 'Padrão SFP • Ouro e Safira' },
+      'THEME_NAME_GOLD': { FR: 'Or & Noir Impérial', EN: 'Imperial Gold & Black', ES: 'Oro y Negro Imperial', PT: 'Ouro e Preto Imperial' },
+      'THEME_SUB_GOLD': { FR: 'Prestige • Obsidienne & Or', EN: 'Prestige • Obsidian & Gold', ES: 'Prestigio • Obsidiana y Oro', PT: 'Prestígio • Obsidiana e Ouro' },
+      'THEME_NAME_EMERALD': { FR: 'Émeraude Wealth', EN: 'Emerald Wealth', ES: 'Esmeralda Wealth', PT: 'Esmeralda Wealth' },
+      'THEME_SUB_EMERALD': { FR: 'Banque Privée • Émeraude', EN: 'Private Banking • Emerald', ES: 'Banca Privada • Esmeralda', PT: 'Private Banking • Esmeralda' },
+      'THEME_NAME_AMETHYST': { FR: 'Améthyste Royale', EN: 'Royal Amethyst', ES: 'Amatista Real', PT: 'Ametista Real' },
+      'THEME_SUB_AMETHYST': { FR: 'Haute Joaillerie • Pourpre', EN: 'Haute Joaillerie • Purple', ES: 'Alta Joyería • Púrpura', PT: 'Alta Joalharia • Púrpura' },
+      'CURR_NAME_MUR': { FR: 'Roupie (Rs)', EN: 'Rupee (Rs)', ES: 'Rupia (Rs)', PT: 'Rupia (Rs)' },
+      'CURR_NAME_EUR': { FR: 'Euro (€)', EN: 'Euro (€)', ES: 'Euro (€)', PT: 'Euro (€)' },
+      'CURR_NAME_USD': { FR: 'Dollar ($)', EN: 'US Dollar ($)', ES: 'Dólar ($)', PT: 'Dólar ($)' },
+      'CURR_NAME_GBP': { FR: 'Livre (£)', EN: 'Pound (£)', ES: 'Libra (£)', PT: 'Libra (£)' },
+      'CURR_NAME_ZAR': { FR: 'Rand (R)', EN: 'Rand (R)', ES: 'Rand (R)', PT: 'Rand (R)' },
+      'CURR_NAME_XOF': { FR: 'Franc CFA', EN: 'CFA Franc', ES: 'Franco CFA', PT: 'Franco CFA' },
+      'INIT_SUMMARY_PREFIX': { FR: 'Configuration active :', EN: 'Active configuration:', ES: 'Configuración activa:', PT: 'Configuração ativa:' },
+      'INIT_BTN_CONFIRM': { FR: 'CONFIRMER & LANCER L\'APPLICATION', EN: 'CONFIRM & LAUNCH APPLICATION', ES: 'CONFIRMAR E INICIAR APLICACIÓN', PT: 'CONFIRMAR E INICIAR APLICAÇÃO' },
       'TOP_ASSETS_LABEL': { FR: 'Principaux Actifs :', EN: 'Main Assets:', ES: 'Activos Principales:', PT: 'Principais Ativos:' },
       'NET_ASSETS': { FR: 'Actifs Nets', EN: 'Net Assets', ES: 'Activos Netos', PT: 'Ativos Líquidos' },
       'LIQUIDITIES': { FR: 'Liquidités', EN: 'Liquidities', ES: 'Liquidez', PT: 'Liquidez' },
@@ -1451,10 +1569,10 @@ class GFMPEngine {
 
     let template = '';
     if (fallbackDict[cleanKey]) {
-      template = fallbackDict[cleanKey][this.lang] || fallbackDict[cleanKey]['FR'];
+      template = fallbackDict[cleanKey][targetLang] || fallbackDict[cleanKey]['FR'];
     } else if (this.data && this.data.dictionary && this.data.dictionary[cleanKey]) {
       const entry = this.data.dictionary[cleanKey];
-      template = entry[this.lang] || entry['FR'] || cleanKey;
+      template = entry[targetLang] || entry['FR'] || cleanKey;
     } else {
       template = cleanKey;
     }
@@ -1513,17 +1631,27 @@ class GFMPEngine {
       if (json && json.rates) {
         const supported = ['MUR', 'EUR', 'USD', 'GBP', 'ZAR', 'XOF'];
         const newDevises = {};
+        const eurBaseXof = (this.data && this.data.devises && this.data.devises.EUR > 10)
+          ? this.data.devises.EUR
+          : 656.168;
 
         supported.forEach(curr => {
-          if (json.rates[curr]) {
-            newDevises[curr] = (curr === 'EUR') ? 1.0 : (1.0 / json.rates[curr]);
+          if (curr === 'EUR') {
+            newDevises[curr] = eurBaseXof;
+          } else if (curr === 'XOF') {
+            newDevises[curr] = 1;
+          } else if (json.rates[curr] && json.rates[curr] > 0) {
+            newDevises[curr] = Number((eurBaseXof / json.rates[curr]).toFixed(4));
           }
         });
 
-        if (!newDevises['XOF']) newDevises['XOF'] = 1 / 655.957;
+        if (!newDevises['XOF']) newDevises['XOF'] = 1;
 
         if (!this.data) this.data = {};
         this.data.devises = Object.assign({}, this.data.devises, newDevises);
+        if (this.data.config) {
+          this.data.config.TAUX_CHANGE = { ...this.data.devises };
+        }
         this.lastExchangeSync = new Date().toISOString();
         this.rateStatus = {
           isLive: true,
@@ -1532,8 +1660,9 @@ class GFMPEngine {
           error: null
         };
 
-        if (typeof localStorage !== 'undefined') {
-          localStorage.setItem('gfmp_live_rates', JSON.stringify({
+        const storage = this.getStorage();
+        if (storage) {
+          storage.setItem('gfmp_live_rates', JSON.stringify({
             devises: this.data.devises,
             lastSync: this.lastExchangeSync
           }));
@@ -1559,11 +1688,27 @@ class GFMPEngine {
   }
 
   // --- APP INITIALIZATION & RECONFIGURATION ---
-  initializeSystem(defaultCurrency = 'MUR', defaultLanguage = 'FR') {
+  initializeSystem(defaultCurrency = 'MUR', defaultLanguage = 'FR', defaultDate = null, defaultTheme = null, defaultYear = null, defaultMonth = null) {
     const sanitizedCurrency = (typeof defaultCurrency === 'string') ? defaultCurrency.trim().toUpperCase() : 'MUR';
     const sanitizedLanguage = (typeof defaultLanguage === 'string') ? defaultLanguage.trim().toUpperCase() : 'FR';
+    const validThemes = ['blue', 'gold', 'emerald', 'amethyst'];
+    const sanitizedTheme = (typeof defaultTheme === 'string' && validThemes.includes(defaultTheme.trim().toLowerCase()))
+      ? defaultTheme.trim().toLowerCase()
+      : (this.theme || 'blue');
+
     this.lang = sanitizedLanguage;
     this.currency = sanitizedCurrency;
+    this.theme = sanitizedTheme;
+
+    if (defaultDate && /^\d{4}-\d{2}-\d{2}$/.test(String(defaultDate).trim())) {
+      this.referenceDate = String(defaultDate).trim();
+      const [y, m] = this.referenceDate.split('-');
+      this.year = defaultYear ? String(defaultYear) : y;
+      this.month = defaultMonth ? String(defaultMonth).padStart(2, '0') : m;
+    } else {
+      if (defaultYear) this.year = String(defaultYear);
+      if (defaultMonth) this.month = String(defaultMonth).padStart(2, '0');
+    }
 
     // Reset dataset to baseline with chosen defaults
     if (typeof window !== 'undefined' && window.GFMP_BASELINE) {
@@ -1577,20 +1722,35 @@ class GFMPEngine {
     if (this.data && this.data.config) {
       this.data.config.SYS_DEVISE_BASE = sanitizedCurrency;
       this.data.config.LANGUE_UI = sanitizedLanguage;
+      this.data.config.SYS_DATE_REF = this.referenceDate;
+      this.data.config.SYS_YEAR = this.year;
+      this.data.config.SYS_MONTH = this.month;
+      this.data.config.SYS_THEME = sanitizedTheme;
     }
 
-    if (typeof localStorage !== 'undefined') {
-      localStorage.setItem('gfmp_initialized', 'true');
+    const storage = this.getStorage();
+    if (storage) {
+      storage.setItem('gfmp_initialized', 'true');
+      storage.setItem('gfmp_onboarding_v5_6', 'true');
+      storage.setItem('gfmp_theme', sanitizedTheme);
     }
     this.needsOnboarding = false;
 
     // Trigger immediate background rate sync
     this.fetchLiveExchangeRates(false);
 
-    this.logHistory('INIT_SYSTEM', 'CONFIG', sanitizedCurrency, `Initialisation du système : Devise ${sanitizedCurrency}, Langue ${sanitizedLanguage}`);
+    this.logHistory('INIT_SYSTEM', 'CONFIG', sanitizedCurrency, `Initialisation du système : Devise ${sanitizedCurrency}, Langue ${sanitizedLanguage}, Période ${this.month}/${this.year}, Thème ${sanitizedTheme}`);
     this.save();
     this.notify();
-    return { success: true, currency: sanitizedCurrency, lang: sanitizedLanguage };
+    return {
+      success: true,
+      currency: sanitizedCurrency,
+      lang: sanitizedLanguage,
+      date: this.referenceDate,
+      year: this.year,
+      month: this.month,
+      theme: sanitizedTheme
+    };
   }
 
   getExchangeRateStatus() {
@@ -1635,7 +1795,7 @@ class GFMPEngine {
       XOF: 'CFA'
     };
     const sym = symbols[currency] || currency;
-    const safeAmount = (Math.abs(amount) < 0.001) ? 0 : (amount || 0);
+    const safeAmount = this.roundMoney(amount || 0);
     const formatted = new Intl.NumberFormat('fr-FR', {
       minimumFractionDigits: 2,
       maximumFractionDigits: 2
@@ -1693,8 +1853,10 @@ class GFMPEngine {
   }
 
   // --- 1. MODULE CASHFLOW & INTERACTIVE CHARTS ---
-  computeCashflow() {
+  computeCashflow(period = null) {
     if (!this.data) return { totalRevenus: 0, totalDepenses: 0, netCashflow: 0, savingsRate: 0, transactions: [], breakdown: [] };
+
+    const { year: targetYear, month: targetMonth } = this.resolvePeriod(period);
 
     const catDict = {};
     const catTypeDict = {};
@@ -1720,8 +1882,8 @@ class GFMPEngine {
       const txYear = txParts[0];
       const txMonth = txParts[1];
 
-      const matchYear = (txYear === this.year);
-      const matchMonth = (this.month === '00' || txMonth === this.month);
+      const matchYear = (txYear === targetYear);
+      const matchMonth = (targetMonth === '00' || txMonth === targetMonth);
 
       if (matchYear && matchMonth) {
         const typeFlux = catTypeDict[tx.id_categorie] || 'DEPENSE';
@@ -1807,11 +1969,12 @@ class GFMPEngine {
   }
 
   // --- 2. MULTI-MONTH CASHFLOW TREND (INTERACTIVE) ---
-  computeCashflowTrend(monthsCount = 6) {
+  computeCashflowTrend(monthsCount = 6, period = null) {
     if (!this.data) return [];
     const trend = [];
-    const currentM = parseInt(this.month === '00' ? '12' : this.month, 10);
-    const currentY = parseInt(this.year, 10);
+    const { year: targetYear, month: targetMonth } = this.resolvePeriod(period);
+    const currentM = parseInt(targetMonth === '00' ? '12' : targetMonth, 10);
+    const currentY = parseInt(targetYear, 10);
 
     const catTypeDict = {};
     (this.data.categories || []).forEach(c => { catTypeDict[c.id] = c.type; });
@@ -1846,14 +2009,17 @@ class GFMPEngine {
         }
       });
 
+      const roundedRev = this.roundMoney(rev);
+      const roundedDep = this.roundMoney(dep);
+
       trend.push({
         year: String(y),
         month: mStr,
         yearMonth: ymStr,
         label: `${langShort[m - 1]} ${String(y).slice(-2)}`,
-        revenus: rev,
-        depenses: dep,
-        net: rev - dep
+        revenus: roundedRev,
+        depenses: roundedDep,
+        net: this.roundMoney(roundedRev - roundedDep)
       });
     }
 
@@ -1861,10 +2027,11 @@ class GFMPEngine {
   }
 
   // --- 3. MODULE BILAN PATRIMONIAL / NET WORTH ---
-  computeNetWorth() {
+  computeNetWorth(period = null) {
     if (!this.data) return { totalAssets: 0, totalLiabilities: 0, netWorth: 0, accounts: [], allocation: {} };
 
-    const targetFilterMonth = (this.month === '00') ? `${this.year}-12` : `${this.year}-${this.month}`;
+    const { year: targetYear, month: targetMonth } = this.resolvePeriod(period);
+    const targetFilterMonth = (targetMonth === '00') ? `${targetYear}-12` : `${targetYear}-${targetMonth}`;
     const catTypeDict = {};
     (this.data.categories || []).forEach(c => { catTypeDict[c.id] = c.type; });
 
@@ -1910,6 +2077,11 @@ class GFMPEngine {
       });
 
       soldeNatif = this.roundMoney(soldeNatif);
+
+      // Exclude empty template trigger placeholder ("Autre (Préciser...)") from Net Worth inventory
+      const isPlaceholder = (cpt.classe === 'AUTRE' && (cpt.nom || '').toLowerCase().includes('préciser') && Math.abs(soldeNatif) < 0.005);
+      if (isPlaceholder) return;
+
       const soldeConverti = this.roundMoney(this.convert(soldeNatif, cptNativeDevise, this.currency));
       const isDette = (cpt.classe === 'DETTE');
 
@@ -1962,18 +2134,19 @@ class GFMPEngine {
   }
 
   // --- 4. MODULE PILOTAGE BUDGÉTAIRE ZBB ---
-  computeBudgetZBB() {
-    if (!this.data) return { mois: `${this.year}-${this.month}`, totalAlloue: 0, totalConsomme: 0, totalEcart: 0, consumptionRate: 0, categories: [] };
+  computeBudgetZBB(period = null) {
+    const { year: targetYear, month: targetMonth } = this.resolvePeriod(period);
+    if (!this.data) return { mois: `${targetYear}-${targetMonth}`, totalAlloue: 0, totalConsomme: 0, totalEcart: 0, consumptionRate: 0, categories: [] };
 
-    const isAllYear = (this.month === '00');
-    const targetMonthStr = isAllYear ? this.year : `${this.year}-${this.month}`;
+    const isAllYear = (targetMonth === '00');
+    const targetMonthStr = isAllYear ? targetYear : `${targetYear}-${targetMonth}`;
     const depenseCategories = (this.data.categories || []).filter(c => c.type === 'DEPENSE');
 
     const catRealise = {};
     (this.data.transactions || []).forEach(tx => {
       const matchPeriod = isAllYear
-        ? (tx.date && tx.date.startsWith(`${this.year}-`))
-        : (tx.date && tx.date.startsWith(`${this.year}-${this.month}`));
+        ? (tx.date && tx.date.startsWith(`${targetYear}-`))
+        : (tx.date && tx.date.startsWith(`${targetYear}-${targetMonth}`));
       if (matchPeriod) {
         const converted = this.convert(tx.montant, tx.devise || this.currency, this.currency);
         catRealise[tx.id_categorie] = (catRealise[tx.id_categorie] || 0) + converted;
@@ -1988,7 +2161,7 @@ class GFMPEngine {
       let alloue = 0;
       (this.data.budgets || []).forEach(b => {
         const bMois = b.mois || b.mois_annee || '';
-        const matchMonth = isAllYear ? bMois.startsWith(`${this.year}-`) : (bMois === targetMonthStr);
+        const matchMonth = isAllYear ? bMois.startsWith(`${targetYear}-`) : (bMois === targetMonthStr);
         if (matchMonth && String(b.id_categorie) === String(cat.id)) {
           const rawAmt = (b.montant !== undefined) ? b.montant : (b.montant_alloue !== undefined ? b.montant_alloue : 0);
           const bDev = b.devise || 'MUR';
@@ -2038,7 +2211,7 @@ class GFMPEngine {
     const consumptionRate = totalAlloue > 0 ? this.roundMoney((totalConsomme / totalAlloue) * 100) : (totalConsomme > 0 ? 100 : 0);
 
     return {
-      mois: isAllYear ? `${this.year} (${this.tr('ANNÉE ENTIÈRE')})` : targetMonthStr,
+      mois: isAllYear ? `${targetYear} (${this.tr('ANNÉE ENTIÈRE')})` : targetMonthStr,
       totalAlloue,
       totalConsomme,
       totalEcart,
@@ -2092,8 +2265,8 @@ class GFMPEngine {
     return false;
   }
 
-  computeBudget() {
-    return this.computeBudgetZBB();
+  computeBudget(period = null) {
+    return this.computeBudgetZBB(period);
   }
 
   allocateBudget(idCategorie, montant, mois = null) {
@@ -2319,10 +2492,11 @@ class GFMPEngine {
   }
 
   // --- 8. HUB CONSOLIDATED DASHBOARD ANALYTICS ---
-  getConsolidatedHubData() {
-    const cf = this.computeCashflow();
-    const nw = this.computeNetWorth();
-    const bg = this.computeBudgetZBB();
+  getConsolidatedHubData(period = null) {
+    const { year: targetYear, month: targetMonth } = this.resolvePeriod(period);
+    const cf = this.computeCashflow(period);
+    const nw = this.computeNetWorth(period);
+    const bg = this.computeBudgetZBB(period);
 
     // Financial health score (10 to 100)
     let healthScore = 50;
@@ -2346,7 +2520,7 @@ class GFMPEngine {
 
     return {
       hubFilter: this.hubFilter,
-      period: `${this.getMonthLabel()} ${this.year}`,
+      period: `${this.getMonthLabel(targetMonth)} ${targetYear}`,
       currency: this.currency,
       healthScore: Math.max(10, Math.min(100, healthScore)),
       // Net Worth
@@ -2384,8 +2558,13 @@ class GFMPEngine {
           solde: this.formatMoney(a.soldeConverti),
           rawSolde: a.soldeConverti
         })),
-      // Recent 5 Transactions
+      // Recent 5 Transactions (filtered by selectedCategoryFilter if active)
       recentTransactions: ((this.data && this.data.transactions) ? [...this.data.transactions] : [])
+        .filter(tx => {
+          if (!this.selectedCategoryFilter) return true;
+          const cat = (this.data.categories || []).find(c => String(c.id) === String(tx.id_categorie));
+          return cat && cat.nom === this.selectedCategoryFilter;
+        })
         .sort((a, b) => (b.date || '').localeCompare(a.date || ''))
         .slice(0, 5)
         .map(tx => {
@@ -2395,6 +2574,7 @@ class GFMPEngine {
           return {
             id: tx.id,
             date: tx.date,
+            rawCategorie: cat ? cat.nom : '',
             categorie: cat ? this.trEntity(cat.nom) : (this.tr('OPERATION_DEFAULT') || 'Opération'),
             compte: cpt ? this.cleanAssetName(cpt.nom) : (this.tr('ASSETS_DEFAULT') || 'Actifs'),
             type: cat ? cat.type : 'DEPENSE',
@@ -2405,13 +2585,14 @@ class GFMPEngine {
     };
   }
 
-  generateFinancialReport() {
-    const cf = this.computeCashflow();
-    const nw = this.computeNetWorth();
-    const bg = this.computeBudgetZBB();
+  generateFinancialReport(period = null) {
+    const { year: targetYear, month: targetMonth } = this.resolvePeriod(period);
+    const cf = this.computeCashflow(period);
+    const nw = this.computeNetWorth(period);
+    const bg = this.computeBudgetZBB(period);
 
     return {
-      period: `${this.getMonthLabel()} ${this.year}`,
+      period: `${this.getMonthLabel(targetMonth)} ${targetYear}`,
       currency: this.currency,
       revenus: this.formatMoney(cf.totalRevenus),
       depenses: this.formatMoney(cf.totalDepenses),

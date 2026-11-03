@@ -29,7 +29,9 @@ console.log('✔ PASS: Cache busters in index.html verified at ?v=5.5.0');
 const css = fs.readFileSync(path.join(__dirname, '../mobile-web/styles.css'), 'utf8');
 assert(!css.includes('.btn-header-settings'), 'FAIL: .btn-header-settings rules should be removed from styles.css');
 assert(css.includes('mask-image: linear-gradient(to right, transparent 0px, black 8px, black calc(100% - 8px), transparent 100%)'), 'FAIL: horizontal scroll containers should have edge mask in styles.css');
-console.log('✔ PASS: styles.css clean of obsolete settings styles and has modern edge fading masks');
+assert(css.includes('overflow-anchor: none;'), 'FAIL: styles.css should include overflow-anchor: none to prevent sticky header scroll-anchoring oscillation');
+assert(css.includes('container-type: scroll-state;'), 'FAIL: styles.css should include container-type: scroll-state for state-aware sticky header');
+console.log('✔ PASS: styles.css clean of obsolete settings styles and has modern edge fading masks & scroll-anchoring protection');
 
 // 3. Verify Service Worker
 const sw = fs.readFileSync(path.join(__dirname, '../mobile-web/sw.js'), 'utf8');
@@ -127,5 +129,19 @@ console.log('Hub Consolidated Data:', {
 
 assert(hubData.healthScore >= 10 && hubData.healthScore <= 100, `Health score must be between 10 and 100, got: ${hubData.healthScore}`);
 console.log('✔ PASS: Consolidated Hub Data & Financial Health Score verified');
+
+// Test 4.7: Deterministic Period Resolution & Trend Rounding
+const cfJan = engine.computeCashflow('2026-01');
+assert(cfJan.totalRevenus !== cfFeb.totalRevenus || cfJan.totalDepenses !== cfFeb.totalDepenses, 'computeCashflow("2026-01") must compute January figures independently of engine.month');
+const trend = engine.computeCashflowTrend(6, '2026-02');
+assert.strictEqual(trend.length, 6, 'computeCashflowTrend(6) must return 6 monthly data points');
+trend.forEach(pt => {
+  assert.strictEqual(pt.revenus, engine.roundMoney(pt.revenus), 'Trend revenus must be rounded to 2 decimals');
+  assert.strictEqual(pt.depenses, engine.roundMoney(pt.depenses), 'Trend depenses must be rounded to 2 decimals');
+  assert.strictEqual(pt.net, engine.roundMoney(pt.revenus - pt.depenses), 'Trend net must equal roundMoney(revenus - depenses)');
+});
+const hasPlaceholderAccount = nwFeb.accounts.some(a => a.id === '9' && a.soldeNatif === 0);
+assert(!hasPlaceholderAccount, 'Template placeholder account id=9 with 0 balance should be excluded from Net Worth inventory');
+console.log('✔ PASS: Deterministic period resolution, trend rounding, and placeholder account exclusion verified');
 
 console.log('\n=== ALL TESTS PASSED SUCCESSFULLY! ZERO REGRESSION! ===');

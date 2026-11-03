@@ -8,24 +8,24 @@
     <path android:pathData="M0,0h108v108h-108z">
         <aapt:attr name="android:fillColor">
             <gradient
-                android:startX="0"
-                android:startY="0"
-                android:endX="108"
-                android:endY="108"
+                android:startX="12"
+                android:startY="8"
+                android:endX="96"
+                android:endY="100"
                 android:type="linear">
-                <item android:offset="0.0" android:color="#0A1329" />
-                <item android:offset="0.5" android:color="#1A2D6D" />
-                <item android:offset="1.0" android:color="#4169E1" />
+                <item android:offset="0.0" android:color="#070E24" />
+                <item android:offset="0.52" android:color="#102052" />
+                <item android:offset="1.0" android:color="#1E3A8A" />
             </gradient>
         </aapt:attr>
     </path>
-    <!-- Concentric golden decorative rings -->
+    <!-- Concentric Haute Joaillerie guilloché rings -->
     <path
-        android:pathData="M54,54m-42,0a42,42 0,1,1 84,0a42,42 0,1,1 -84,0"
-        android:strokeWidth="1.2"
-        android:strokeColor="#55FADA5E" />
+        android:pathData="M54,54m-41,0a41,41 0,1,1 82,0a41,41 0,1,1 -82,0"
+        android:strokeWidth="1.4"
+        android:strokeColor="#66FADA5E" />
     <path
-        android:pathData="M54,54m-38,0a38,38 0,1,1 76,0a38,38 0,1,1 -76,0"
-        android:strokeWidth="0.6"
-        android:strokeColor="#33FADA5E" />
+        android:pathData="M54,54m-37.5,0a37.5,37.5 0,1,1 75,0a37.5,37.5 0,1,1 -75,0"
+        android:strokeWidth="0.7"
+        android:strokeColor="#38FADA5E" />
 </vector>

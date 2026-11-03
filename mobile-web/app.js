@@ -20,12 +20,26 @@ document.addEventListener('DOMContentLoaded', () => {
     }
   }
 
+  // --- 1.1 SECURITY HELPER: HTML ENTITY ESCAPING FOR DYNAMIC DOM SINKS ---
+  function escapeHTML(val) {
+    if (val === null || val === undefined) return '';
+    return String(val)
+      .replace(/&/g, '&amp;')
+      .replace(/</g, '&lt;')
+      .replace(/>/g, '&gt;')
+      .replace(/"/g, '&quot;')
+      .replace(/'/g, '&#39;');
+  }
+
   // --- 2. FLOATING TOAST NOTIFICATION ---
   function showToast(message, type = 'success') {
     let toast = document.getElementById('gfmp-toast');
     if (!toast) {
       toast = document.createElement('div');
       toast.id = 'gfmp-toast';
+      toast.setAttribute('role', 'status');
+      toast.setAttribute('aria-live', 'polite');
+      toast.setAttribute('aria-atomic', 'true');
       toast.style.cssText = `
         position: fixed;
         top: 20px;
@@ -157,11 +171,11 @@ document.addEventListener('DOMContentLoaded', () => {
         timelineEl.innerHTML = logs.map(log => `
           <div class="history-timeline-item">
             <div class="history-header">
-              <span class="history-badge ${log.action}">${log.action}</span>
-              <span class="history-time">${log.timestamp ? log.timestamp.replace('T', ' ').substring(0, 19) : ''}</span>
+              <span class="history-badge ${escapeHTML(log.action)}">${escapeHTML(log.action)}</span>
+              <span class="history-time">${log.timestamp ? escapeHTML(log.timestamp.replace('T', ' ').substring(0, 19)) : ''}</span>
             </div>
-            <div class="history-desc">${log.description}</div>
-            <div style="font-size:0.68rem; color:var(--text-muted);">${log.entity} ${log.entityId ? `#${log.entityId}` : ''}</div>
+            <div class="history-desc">${escapeHTML(log.description)}</div>
+            <div style="font-size:0.68rem; color:var(--text-muted);">${escapeHTML(log.entity)} ${log.entityId ? `#${escapeHTML(log.entityId)}` : ''}</div>
           </div>
         `).join('');
       }
@@ -182,8 +196,10 @@ document.addEventListener('DOMContentLoaded', () => {
     document.querySelectorAll('.bottom-nav .nav-tab').forEach(t => {
       if (t.dataset.view === viewName) {
         t.classList.add('active');
+        t.setAttribute('aria-current', 'page');
       } else {
         t.classList.remove('active');
+        t.removeAttribute('aria-current');
       }
     });
 
@@ -392,8 +408,8 @@ document.addEventListener('DOMContentLoaded', () => {
       }
     }
 
-    // Set default dates to today
-    const todayStr = new Date().toISOString().split('T')[0];
+    // Set default dates to system reference date or today
+    const todayStr = engine.referenceDate || new Date().toISOString().split('T')[0];
     const txDate = document.getElementById('tx-date');
     if (txDate && !txDate.value) txDate.value = todayStr;
     const expDate = document.getElementById('exp-tx-date');
@@ -1230,33 +1246,41 @@ document.addEventListener('DOMContentLoaded', () => {
       return;
     }
 
-    const size = 130;
+    const size = 140;
     const strokeW = 16;
     const radius = (size - strokeW) / 2;
     const center = size / 2;
     const circ = 2 * Math.PI * radius;
 
+    const formatCatPct = (pct) => {
+      if (!pct || pct <= 0) return '0';
+      if (pct < 1) return pct.toFixed(1);
+      return String(Math.round(pct));
+    };
+
     let accumPct = 0;
     let pathsHtml = '';
-    const gap = breakdown.length > 1 ? 2 : 0; // Modern slice gap
 
     breakdown.forEach(item => {
       const slicePct = item.pct / 100;
-      const sliceLength = Math.max(0, (slicePct * circ) - gap);
+      const rawArc = slicePct * circ;
+      const effectiveGap = breakdown.length > 1 ? Math.min(2, rawArc * 0.25) : 0;
+      const sliceLength = Math.max(3, rawArc - effectiveGap);
       const strokeDash = `${sliceLength} ${circ}`;
       const strokeOffset = -(accumPct * circ);
       accumPct += slicePct;
 
       const isSelected = (engine.selectedCategoryFilter === item.nom);
       const catTraduit = item.nomTraduit || engine.trEntity(item.nom);
-      const titleText = `${catTraduit}: ${engine.formatMoney(item.montant)} (${Math.round(item.pct)}%) - ${engine.tr('CLICK_TO_FILTER') || 'Cliquer pour filtrer'}`;
+      const pctDisplay = formatCatPct(item.pct);
+      const titleText = `${catTraduit}: ${engine.formatMoney(item.montant)} (${pctDisplay}%) - ${engine.tr('CLICK_TO_FILTER') || 'Cliquer pour filtrer'}`;
 
       pathsHtml += `
         <circle cx="${center}" cy="${center}" r="${radius}"
           class="donut-slice ${isSelected ? 'active' : ''}"
           data-cat="${item.nom}"
           data-amount="${item.montant}"
-          data-pct="${Math.round(item.pct)}"
+          data-pct="${pctDisplay}"
           data-color="${item.color}"
           data-label="${catTraduit}"
           fill="transparent"
@@ -1273,66 +1297,58 @@ document.addEventListener('DOMContentLoaded', () => {
       `;
     });
 
-    // Display top 5 categories in legend (or top 4 + others if > 5)
+    // Display ALL categories in legend with 100% interactivity, exact amounts, percentages, and micro-bars
     let legendItemsHtml = '';
-    const maxLegend = breakdown.length <= 5 ? 5 : 4;
-    const topItems = breakdown.slice(0, maxLegend);
-    const otherItems = breakdown.slice(maxLegend);
-
-    topItems.forEach(item => {
+    breakdown.forEach(item => {
       const isSelected = (engine.selectedCategoryFilter === item.nom);
       const catTraduit = item.nomTraduit || engine.trEntity(item.nom);
+      const pctDisplay = formatCatPct(item.pct);
+      const barWidth = Math.max(3, Math.min(100, item.pct));
       legendItemsHtml += `
         <div class="legend-item ${isSelected ? 'active' : ''}"
              data-cat="${item.nom}"
              data-amount="${item.montant}"
-             data-pct="${Math.round(item.pct)}"
+             data-pct="${pctDisplay}"
              data-color="${item.color}"
              data-label="${catTraduit}"
+             style="--cat-color: ${item.color};"
              tabindex="0"
              role="button"
              aria-pressed="${isSelected ? 'true' : 'false'}"
-             title="${catTraduit}: ${engine.formatMoney(item.montant)} (${Math.round(item.pct)}%)">
-          <span class="legend-label-wrap">
-            <span class="legend-color-dot" style="background:${item.color}; box-shadow: 0 0 6px ${item.color}88;"></span>
-            <span class="legend-text ${isSelected ? 'selected' : ''}">${catTraduit}</span>
-          </span>
-          <span class="legend-pct">${Math.round(item.pct)}%</span>
+             title="${catTraduit}: ${engine.formatMoney(item.montant)} (${pctDisplay}%) - ${engine.tr('CLICK_TO_FILTER') || 'Cliquer pour filtrer'}">
+          <div class="legend-item-main">
+            <span class="legend-label-wrap">
+              <span class="legend-color-dot" style="background:${item.color}; box-shadow: 0 0 6px ${item.color}88;"></span>
+              <span class="legend-text ${isSelected ? 'selected' : ''}">${catTraduit}</span>
+            </span>
+            <span class="legend-metrics">
+              <span class="legend-amount">${engine.formatMoney(item.montant)}</span>
+              <span class="legend-pct">${pctDisplay}%</span>
+            </span>
+          </div>
+          <div class="legend-mini-bar-track" aria-hidden="true">
+            <div class="legend-mini-bar-fill" style="width:${barWidth}%; background:${item.color};"></div>
+          </div>
         </div>
       `;
     });
 
-    if (otherItems.length > 0) {
-      const otherTotal = otherItems.reduce((acc, it) => acc + it.montant, 0);
-      const otherPct = Math.round((otherTotal / totalDepenses) * 100);
-      const otherLabel = `+${otherItems.length} ${engine.tr('OTHERS') || 'Autres'}`;
-      legendItemsHtml += `
-        <div class="legend-item" style="opacity:0.75; cursor:default;" title="${otherLabel}: ${engine.formatMoney(otherTotal)} (${otherPct}%)">
-          <span class="legend-label-wrap">
-            <span class="legend-color-dot" style="background:#94A3B8; box-shadow: 0 0 4px #94A3B888;"></span>
-            <span class="legend-text">${otherLabel}</span>
-          </span>
-          <span class="legend-pct">${otherPct}%</span>
-        </div>
-      `;
-    }
-
     const activeItem = breakdown.find(b => b.nom === engine.selectedCategoryFilter);
     const initialLabel = activeItem ? (activeItem.nomTraduit || engine.trEntity(activeItem.nom)) : (engine.tr('TOTAL') || 'TOTAL');
     const initialVal = activeItem ? engine.formatMoney(activeItem.montant) : engine.formatMoney(totalDepenses);
-    const initialPct = activeItem ? `${Math.round(activeItem.pct)}%` : '';
+    const initialPct = activeItem ? `${formatCatPct(activeItem.pct)}%` : '';
 
     container.innerHTML = `
-      <div style="position:relative; width:${size}px; height:${size}px; flex-shrink:0;">
+      <div class="donut-ring-box" style="position:relative; width:${size}px; height:${size}px; flex-shrink:0;">
         <svg width="${size}" height="${size}" viewBox="0 0 ${size} ${size}" role="img" aria-label="${engine.tr('HUB_DONUT_TITLE') || 'Répartition des dépenses par catégorie'}">
           <circle cx="${center}" cy="${center}" r="${radius}" fill="transparent" stroke="rgba(255,255,255,0.06)" stroke-width="${strokeW}" />
           ${pathsHtml}
         </svg>
         <div class="donut-center-box" id="${containerId}-center-box" style="position:absolute; top:0; left:0; width:100%; height:100%; display:flex; flex-direction:column; align-items:center; justify-content:center; pointer-events:none; padding:10px; text-align:center;">
-          <div class="donut-center-lbl" style="font-size:0.6rem; font-weight:700; color:var(--text-muted); text-transform:uppercase; letter-spacing:0.5px; max-width:85px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">
+          <div class="donut-center-lbl" style="font-size:0.6rem; font-weight:700; color:var(--text-muted); text-transform:uppercase; letter-spacing:0.5px; max-width:92px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">
             ${initialLabel}
           </div>
-          <div class="donut-center-val" style="font-size:0.8rem; font-weight:900; color:var(--c-yellow-royal); max-width:92px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; font-feature-settings:'tnum'; margin-top:1px;">
+          <div class="donut-center-val" style="font-size:0.8rem; font-weight:900; color:var(--c-yellow-royal); max-width:98px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; font-feature-settings:'tnum'; margin-top:1px;">
             ${initialVal}
           </div>
           <div class="donut-center-sub" style="font-size:0.62rem; font-weight:700; color:#93C5FD; margin-top:1px; ${initialPct ? '' : 'display:none;'}">
@@ -1340,7 +1356,7 @@ document.addEventListener('DOMContentLoaded', () => {
           </div>
         </div>
       </div>
-      <div class="donut-legend">
+      <div class="donut-legend" role="list" aria-label="${engine.tr('HUB_DONUT_TITLE') || 'Catégories de dépenses'}">
         ${legendItemsHtml}
       </div>
     `;
@@ -1370,7 +1386,7 @@ document.addEventListener('DOMContentLoaded', () => {
       if (engine.selectedCategoryFilter) {
         const curActive = breakdown.find(b => b.nom === engine.selectedCategoryFilter);
         if (curActive) {
-          updateCenter(curActive.nomTraduit || engine.trEntity(curActive.nom), engine.formatMoney(curActive.montant), Math.round(curActive.pct));
+          updateCenter(curActive.nomTraduit || engine.trEntity(curActive.nom), engine.formatMoney(curActive.montant), formatCatPct(curActive.pct));
           return;
         }
       }
@@ -1524,9 +1540,14 @@ document.addEventListener('DOMContentLoaded', () => {
       btn.classList.toggle('active', btn.dataset.curr === engine.currency);
     });
 
-    // 5. Header Language Buttons
+    // 5. Header Language Buttons & Document Human Language Attribute
+    if (typeof document !== 'undefined' && document.documentElement) {
+      document.documentElement.lang = (engine.lang || 'FR').toLowerCase();
+    }
     document.querySelectorAll('.lang-btn').forEach(btn => {
-      btn.classList.toggle('active', btn.dataset.lang === engine.lang);
+      const isAct = (btn.dataset.lang === engine.lang);
+      btn.classList.toggle('active', isAct);
+      btn.setAttribute('aria-pressed', isAct ? 'true' : 'false');
     });
 
     // 6. Currency Synchronization across all Views, Forms and Modals
@@ -1892,11 +1913,33 @@ document.addEventListener('DOMContentLoaded', () => {
     // Section 2: Expense Category Donut
     const donutPeriod = document.getElementById('hub-donut-period');
     if (donutPeriod) donutPeriod.textContent = `${engine.getMonthLabel()} ${engine.year}`;
+
+    const hubFilterBadgeEl = document.getElementById('hub-donut-active-filter');
+    if (hubFilterBadgeEl) {
+      if (engine.selectedCategoryFilter) {
+        hubFilterBadgeEl.style.display = 'inline-flex';
+        hubFilterBadgeEl.className = 'active-filter-badge';
+        hubFilterBadgeEl.innerHTML = `
+          <span>${engine.tr('TH_CATEGORIE')} : <strong>${engine.trEntity(engine.selectedCategoryFilter)}</strong></span>
+          <button type="button" class="clear-btn" id="btn-hub-clear-cat-filter" title="${engine.tr('CAT_FILTER_CLEAR') || 'Effacer le filtre'}">✕</button>
+        `;
+        document.getElementById('btn-hub-clear-cat-filter')?.addEventListener('click', () => {
+          engine.selectedCategoryFilter = null;
+          renderHomeView();
+        });
+      } else {
+        hubFilterBadgeEl.style.display = 'none';
+      }
+    }
+
     renderDonutChart('hub-donut-chart-box', data.breakdown, data.totalDepenses);
 
-    // Section 3: Asset Allocation & Top Assets
+    // Section 3: Asset Allocation & Top Assets (Clean header without redundant Net Assets clutter)
     const patTotal = document.getElementById('hub-patrimoine-total');
-    if (patTotal) patTotal.textContent = `${engine.tr('NET_ASSETS')} : ${engine.formatMoney(data.netWorth)}`;
+    if (patTotal) {
+      patTotal.textContent = '';
+      patTotal.style.display = 'none';
+    }
 
     const patBarsBox = document.getElementById('hub-patrimoine-bars-box');
     if (patBarsBox) {
@@ -1942,10 +1985,10 @@ document.addEventListener('DOMContentLoaded', () => {
         topAssetsList.innerHTML = data.topAssets.map(ast => `
           <div class="hub-asset-row" style="display:flex; justify-content:space-between; align-items:center; background:rgba(255,255,255,0.03); border:1px solid rgba(255,255,255,0.07); border-radius:8px; padding:8px 12px;">
             <div style="display:flex; align-items:center; gap:8px;">
-              <span class="badge-classe ${ast.classe}" style="font-size:0.62rem; padding:2px 6px;">${ast.classe}</span>
-              <span style="font-size:0.82rem; font-weight:700; color:#FFF;">${ast.nom}</span>
+              <span class="badge-classe ${escapeHTML(ast.classe)}" style="font-size:0.62rem; padding:2px 6px;">${escapeHTML(ast.classe)}</span>
+              <span style="font-size:0.82rem; font-weight:700; color:#FFF;">${escapeHTML(ast.nom)}</span>
             </div>
-            <span style="font-size:0.85rem; font-weight:900; color:var(--c-yellow-royal); font-feature-settings:'tnum';">${ast.solde}</span>
+            <span style="font-size:0.85rem; font-weight:900; color:var(--c-yellow-royal); font-feature-settings:'tnum';">${escapeHTML(ast.solde)}</span>
           </div>
         `).join('');
       }
@@ -1998,15 +2041,15 @@ document.addEventListener('DOMContentLoaded', () => {
           return `
             <tr>
               <td>
-                <div style="font-weight:700; font-size:0.78rem; color:#FFF;">${tx.date}</div>
-                <div style="font-size:0.65rem; color:var(--text-muted);">#${tx.id}</div>
+                <div style="font-weight:700; font-size:0.78rem; color:#FFF;">${escapeHTML(tx.date)}</div>
+                <div style="font-size:0.65rem; color:var(--text-muted);">#${escapeHTML(tx.id)}</div>
               </td>
               <td>
-                <div style="font-weight:700; font-size:0.8rem; color:#FFF;">${tx.categorie}</div>
-                <div style="font-size:0.68rem; color:var(--text-secondary);">${tx.compte}</div>
+                <div style="font-weight:700; font-size:0.8rem; color:#FFF;">${escapeHTML(tx.categorie)}</div>
+                <div style="font-size:0.68rem; color:var(--text-secondary);">${escapeHTML(tx.compte)}</div>
               </td>
               <td style="text-align:right;">
-                <div style="font-weight:900; font-size:0.85rem; color:${color}; font-feature-settings:'tnum';">${sign} ${tx.montant}</div>
+                <div style="font-weight:900; font-size:0.85rem; color:${color}; font-feature-settings:'tnum';">${sign} ${escapeHTML(tx.montant)}</div>
               </td>
             </tr>
           `;
@@ -2052,7 +2095,7 @@ document.addEventListener('DOMContentLoaded', () => {
         filterBadgeEl.style.display = 'inline-flex';
         filterBadgeEl.className = 'active-filter-badge';
         filterBadgeEl.innerHTML = `
-          <span>${engine.tr('TH_CATEGORIE')} : <strong>${engine.selectedCategoryFilter}</strong></span>
+          <span>${engine.tr('TH_CATEGORIE')} : <strong>${engine.trEntity(engine.selectedCategoryFilter)}</strong></span>
           <button type="button" class="clear-btn" id="btn-clear-cat-filter" title="${engine.tr('CAT_FILTER_CLEAR')}">✕</button>
         `;
         document.getElementById('btn-clear-cat-filter')?.addEventListener('click', () => {
@@ -2074,23 +2117,23 @@ document.addEventListener('DOMContentLoaded', () => {
     tbody.innerHTML = cf.transactions.map(tx => `
       <tr>
         <td>
-          <div style="font-weight:700;">${tx.date}</div>
-          <div style="font-size:0.68rem; opacity:0.8;">#${tx.id}</div>
+          <div style="font-weight:700;">${escapeHTML(tx.date)}</div>
+          <div style="font-size:0.68rem; opacity:0.8;">#${escapeHTML(tx.id)}</div>
         </td>
         <td>
-          <div style="font-weight:700;">${tx.nomCategorieTraduit || engine.trEntity(tx.nomCategorie)}</div>
-          <div style="font-size:0.7rem; opacity:0.8;">${tx.nomCompteTraduit || engine.cleanAssetName(tx.nomCompte)}</div>
+          <div style="font-weight:700;">${escapeHTML(tx.nomCategorieTraduit || engine.trEntity(tx.nomCategorie))}</div>
+          <div style="font-size:0.7rem; opacity:0.8;">${escapeHTML(tx.nomCompteTraduit || engine.cleanAssetName(tx.nomCompte))}</div>
         </td>
         <td>
-          <div>${tx.nomTiersTraduit || engine.trEntity(tx.nomTiers)}</div>
-          <span class="badge-flux ${tx.typeFlux}">${engine.trEntity(tx.typeFlux)}</span>
+          <div>${escapeHTML(tx.nomTiersTraduit || engine.trEntity(tx.nomTiers))}</div>
+          <span class="badge-flux ${escapeHTML(tx.typeFlux)}">${escapeHTML(engine.trEntity(tx.typeFlux))}</span>
         </td>
         <td class="td-amount">
-          <div>${engine.formatMoney(tx.montantConverti)}</div>
-          ${tx.devise !== engine.currency ? `<div style="font-size:0.68rem; opacity:0.75;">(${tx.montant} ${tx.devise})</div>` : ''}
+          <div>${escapeHTML(engine.formatMoney(tx.montantConverti))}</div>
+          ${tx.devise !== engine.currency ? `<div style="font-size:0.68rem; opacity:0.75;">(${escapeHTML(tx.montant)} ${escapeHTML(tx.devise)})</div>` : ''}
         </td>
         <td style="text-align:center;">
-          <button class="btn-del-tx" data-id="${tx.id}" aria-label="Supprimer" title="Supprimer">
+          <button class="btn-del-tx" data-id="${escapeHTML(tx.id)}" aria-label="Supprimer" title="Supprimer">
             <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
               <polyline points="3 6 5 6 21 6"/>
               <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/>
@@ -2149,8 +2192,11 @@ document.addEventListener('DOMContentLoaded', () => {
     const stackBar = document.getElementById('nw-asset-stack-bar');
     const stackLegend = document.getElementById('nw-asset-legend');
     if (stackBar && nw.totalAssets > 0) {
-      const liqPct = Math.round((nw.allocation.LIQUIDITE / nw.totalAssets) * 100);
-      const invPct = Math.round((nw.allocation.INVESTISSEMENT / nw.totalAssets) * 100);
+      const otherAssets = Math.max(0, engine.roundMoney(nw.totalAssets - (nw.allocation.LIQUIDITE || 0) - (nw.allocation.INVESTISSEMENT || 0)));
+      const liqPct = Math.round(((nw.allocation.LIQUIDITE || 0) / nw.totalAssets) * 100);
+      const invPct = (otherAssets === 0)
+        ? Math.max(0, 100 - liqPct)
+        : Math.round(((nw.allocation.INVESTISSEMENT || 0) / nw.totalAssets) * 100);
       const restPct = Math.max(0, 100 - liqPct - invPct);
 
       stackBar.innerHTML = `
@@ -2181,17 +2227,17 @@ document.addEventListener('DOMContentLoaded', () => {
     tbody.innerHTML = nw.accounts.map(cpt => `
       <tr>
         <td>
-          <div style="font-weight:700;">${engine.cleanAssetName(cpt.nom)}</div>
+          <div style="font-weight:700;">${escapeHTML(engine.cleanAssetName(cpt.nom))}</div>
           <div style="font-size:0.68rem; opacity:0.8;">${cpt.isDette ? engine.tr('ASSET_LIABILITY') : engine.tr('ASSET_ACTIVE')}</div>
         </td>
         <td>
-          <span class="badge-flux ${cpt.classe}">${cpt.classeTraduit || engine.trEntity(cpt.classe)}</span>
+          <span class="badge-flux ${escapeHTML(cpt.classe)}">${escapeHTML(cpt.classeTraduit || engine.trEntity(cpt.classe))}</span>
         </td>
         <td>
-          <div>${cpt.soldeNatif.toLocaleString('fr-FR', { minimumFractionDigits: 2 })} ${cpt.deviseNative}</div>
+          <div>${cpt.soldeNatif.toLocaleString('fr-FR', { minimumFractionDigits: 2 })} ${escapeHTML(cpt.deviseNative)}</div>
         </td>
         <td class="td-amount" style="color: ${cpt.isDette ? 'var(--c-yellow-royal)' : '#FFF'};">
-          ${engine.formatMoney(cpt.soldeConverti)}
+          ${escapeHTML(engine.formatMoney(cpt.soldeConverti))}
         </td>
       </tr>
     `).join('');
@@ -2225,7 +2271,7 @@ document.addEventListener('DOMContentLoaded', () => {
         statusText = engine.tr('STATUS_WARN');
       }
 
-      const catNomTraduit = engine.trEntity(c.nom);
+      const catNomTraduit = escapeHTML(engine.trEntity(c.nom));
       return `
         <tr>
           <td>
@@ -2234,8 +2280,8 @@ document.addEventListener('DOMContentLoaded', () => {
               <div class="budget-gauge-bar ${gaugeClass}" style="width: ${c.pct}%;"></div>
             </div>
           </td>
-          <td>${engine.formatMoney(c.alloue)}</td>
-          <td>${engine.formatMoney(c.consomme)}</td>
+          <td>${escapeHTML(engine.formatMoney(c.alloue))}</td>
+          <td>${escapeHTML(engine.formatMoney(c.consomme))}</td>
           <td class="td-amount">
             <span class="budget-status-pill ${statusClass}">${Math.round(c.rawPct)}% • ${statusText}</span>
           </td>
@@ -2349,10 +2395,14 @@ document.addEventListener('DOMContentLoaded', () => {
   // Settings Database buttons
   document.getElementById('btn-set-init')?.addEventListener('click', () => {
     triggerHaptic(18);
-    selectedInitLang = engine.lang;
-    selectedInitCurr = engine.currency;
-    updateInitModalUI();
+    selectedInitLang = engine.lang || 'FR';
+    selectedInitCurr = engine.currency || 'MUR';
+    selectedInitDate = engine.referenceDate || '2026-02-27';
+    selectedInitYear = engine.year || '2026';
+    selectedInitMonth = engine.month || '02';
+    selectedInitTheme = localStorage.getItem('gfmp_theme') || engine.theme || 'blue';
     modalInit?.classList.add('open');
+    updateInitModalUI();
   });
 
   document.getElementById('btn-set-refresh')?.addEventListener('click', async () => {
@@ -2448,27 +2498,156 @@ document.addEventListener('DOMContentLoaded', () => {
     reader.readAsText(file);
   });
 
-  // --- 16. FULLSCREEN INITIALIZATION MODAL (SYSTEM ONBOARDING & CONFIG) ---
+  // --- 16. FULLSCREEN INITIALIZATION MODAL (4-STEP GOLD-STANDARD SYSTEM ONBOARDING & CONFIG) ---
   const modalInit = document.getElementById('modal-initialization');
   let selectedInitLang = engine.lang || 'FR';
   let selectedInitCurr = engine.currency || 'MUR';
+  let selectedInitDate = engine.referenceDate || '2026-02-27';
+  let selectedInitYear = engine.year || '2026';
+  let selectedInitMonth = engine.month || '02';
+  let selectedInitTheme = localStorage.getItem('gfmp_theme') || engine.theme || 'blue';
+
+  function trInit(key, params = {}) {
+    return engine.tr(key, params, selectedInitLang);
+  }
+
+  function getInitMonthNames(langCode) {
+    const names = {
+      FR: ['Janvier', 'Février', 'Mars', 'Avril', 'Mai', 'Juin', 'Juillet', 'Août', 'Septembre', 'Octobre', 'Novembre', 'Décembre'],
+      EN: ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'],
+      ES: ['Enero', 'Febrero', 'Marzo', 'Abril', 'Mayo', 'Junio', 'Julio', 'Agosto', 'Septiembre', 'Octubre', 'Noviembre', 'Diciembre'],
+      PT: ['Janeiro', 'Fevereiro', 'Março', 'Abril', 'Maio', 'Junho', 'Julho', 'Agosto', 'Setembro', 'Outubro', 'Novembro', 'Dezembro']
+    };
+    return names[langCode] || names.FR;
+  }
 
   function updateInitModalUI() {
+    // 1. Language Cards Active State
     document.querySelectorAll('#init-lang-grid .init-choice-card').forEach(card => {
       const isSel = (card.dataset.initLang === selectedInitLang);
       card.classList.toggle('active', isSel);
+      card.setAttribute('aria-pressed', isSel ? 'true' : 'false');
       const code = card.querySelector('.init-choice-code');
       if (code) code.style.color = isSel ? 'var(--c-yellow-royal)' : '#94A3B8';
     });
 
+    // 2. Currency Cards Active State
     document.querySelectorAll('#init-curr-grid .init-choice-card').forEach(card => {
       const isSel = (card.dataset.initCurr === selectedInitCurr);
       card.classList.toggle('active', isSel);
+      card.setAttribute('aria-pressed', isSel ? 'true' : 'false');
       const code = card.querySelector('.init-choice-code');
       if (code) code.style.color = isSel ? 'var(--c-yellow-royal)' : '#94A3B8';
     });
+
+    // 3. Theme Cards Active State
+    document.querySelectorAll('#init-theme-grid .init-choice-card').forEach(card => {
+      const isSel = (card.dataset.initTheme === selectedInitTheme);
+      card.classList.toggle('active', isSel);
+      card.setAttribute('aria-pressed', isSel ? 'true' : 'false');
+      const code = card.querySelector('.init-choice-code');
+      if (code) code.style.color = isSel ? 'var(--c-yellow-royal)' : '#94A3B8';
+    });
+
+    // 4. Live Quadrilingual Translation of All 4 Steps
+    const setTxt = (id, key) => {
+      const el = document.getElementById(id);
+      if (el) el.textContent = trInit(key);
+    };
+    setTxt('init-modal-badge', 'INIT_BADGE');
+    setTxt('init-modal-title', 'INIT_TITLE');
+    setTxt('init-modal-sub', 'INIT_SUBTITLE');
+    setTxt('init-step1-badge', 'INIT_STEP1_BADGE');
+    setTxt('init-step1-title', 'INIT_STEP1_TITLE');
+    setTxt('init-step1-desc', 'INIT_STEP1_DESC');
+    setTxt('init-step2-badge', 'INIT_STEP2_BADGE');
+    setTxt('init-step2-title', 'INIT_STEP2_TITLE');
+    setTxt('init-step2-desc', 'INIT_STEP2_DESC');
+    setTxt('init-step3-badge', 'INIT_STEP3_BADGE');
+    setTxt('init-step3-title', 'INIT_STEP3_TITLE');
+    setTxt('init-step3-desc', 'INIT_STEP3_DESC');
+    setTxt('init-step4-badge', 'INIT_STEP4_BADGE');
+    setTxt('init-step4-title', 'INIT_STEP4_TITLE');
+    setTxt('init-step4-desc', 'INIT_STEP4_DESC');
+    setTxt('lbl-init-date-picker', 'INIT_DATE_LABEL');
+    setTxt('lbl-init-month-picker', 'INIT_MONTH_LABEL');
+    setTxt('lbl-init-year-picker', 'INIT_YEAR_LABEL');
+    setTxt('lbl-init-btn-demo', 'INIT_BTN_DEMO');
+    setTxt('lbl-init-btn-today', 'INIT_BTN_TODAY');
+    setTxt('lbl-btn-confirm-init', 'INIT_BTN_CONFIRM');
+
+    // 5. Translate Currency Card Names
+    document.querySelectorAll('#init-curr-grid [data-curr-name]').forEach(el => {
+      const curr = el.getAttribute('data-curr-name');
+      if (curr) el.textContent = trInit(`CURR_NAME_${curr}`);
+    });
+
+    // 6. Translate Theme Card Names & Subtitles
+    document.querySelectorAll('#init-theme-grid [data-theme-name]').forEach(el => {
+      const th = el.getAttribute('data-theme-name');
+      if (th) el.textContent = trInit(`THEME_NAME_${th}`);
+    });
+    document.querySelectorAll('#init-theme-grid [data-theme-sub]').forEach(el => {
+      const th = el.getAttribute('data-theme-sub');
+      if (th) el.textContent = trInit(`THEME_SUB_${th}`);
+    });
+
+    // 7. Synchronize & Translate Date / Month / Year Controls
+    const dateInput = document.getElementById('init-date-input');
+    if (dateInput && dateInput.value !== selectedInitDate) {
+      dateInput.value = selectedInitDate;
+    }
+
+    const monthSelect = document.getElementById('init-month-select');
+    const mNames = getInitMonthNames(selectedInitLang);
+    if (monthSelect) {
+      Array.from(monthSelect.options).forEach(opt => {
+        if (opt.value === '00') {
+          opt.textContent = `00 — ${trInit('FULL_YEAR', { year: selectedInitYear })}`;
+        } else {
+          const idx = parseInt(opt.value, 10) - 1;
+          if (idx >= 0 && idx < 12) {
+            opt.textContent = `${opt.value} — ${mNames[idx]}`;
+          }
+        }
+      });
+      monthSelect.value = selectedInitMonth;
+    }
+
+    const yearSelect = document.getElementById('init-year-select');
+    if (yearSelect) {
+      if (!Array.from(yearSelect.options).some(o => o.value === String(selectedInitYear))) {
+        const opt = document.createElement('option');
+        opt.value = String(selectedInitYear);
+        opt.textContent = String(selectedInitYear);
+        yearSelect.appendChild(opt);
+      }
+      yearSelect.value = String(selectedInitYear);
+    }
+
+    // Highlight active date shortcut chip
+    const demoChip = document.getElementById('btn-init-date-demo');
+    const todayChip = document.getElementById('btn-init-date-today');
+    const realToday = new Date().toISOString().split('T')[0];
+    if (demoChip) demoChip.classList.toggle('active', selectedInitDate === '2026-02-27' && selectedInitMonth === '02' && selectedInitYear === '2026');
+    if (todayChip) todayChip.classList.toggle('active', selectedInitDate === realToday);
+
+    // 8. Update Live Summary Pill (All 4 Pillars: Language • Currency • Period • Theme)
+    const langLabels = { FR: 'Français (FR)', EN: 'English (EN)', ES: 'Español (ES)', PT: 'Português (PT)' };
+    const summaryText = document.getElementById('init-summary-text');
+    if (summaryText) {
+      const prefix = trInit('INIT_SUMMARY_PREFIX');
+      const themeUpper = String(selectedInitTheme || 'blue').toUpperCase();
+      const themeLabel = trInit(`THEME_NAME_${themeUpper}`);
+      const mIdx = parseInt(selectedInitMonth, 10) - 1;
+      const periodLabel = (selectedInitMonth === '00')
+        ? trInit('FULL_YEAR', { year: selectedInitYear })
+        : `${(mNames[mIdx] || selectedInitMonth)} ${selectedInitYear}`;
+      summaryText.innerHTML = `${prefix} <strong>${langLabels[selectedInitLang] || selectedInitLang}</strong> • <strong>${selectedInitCurr}</strong> • <strong>${periodLabel}</strong> • <strong>${themeLabel}</strong>`;
+    }
   }
 
+  // Step 1: Language Card Click
   document.querySelectorAll('#init-lang-grid .init-choice-card').forEach(card => {
     card.addEventListener('click', () => {
       triggerHaptic(15);
@@ -2477,6 +2656,7 @@ document.addEventListener('DOMContentLoaded', () => {
     });
   });
 
+  // Step 2: Currency Card Click
   document.querySelectorAll('#init-curr-grid .init-choice-card').forEach(card => {
     card.addEventListener('click', () => {
       triggerHaptic(15);
@@ -2485,19 +2665,106 @@ document.addEventListener('DOMContentLoaded', () => {
     });
   });
 
+  // Step 3: Date Input & Period Selectors
+  document.getElementById('init-date-input')?.addEventListener('change', (e) => {
+    const val = e.target.value;
+    if (val && /^\d{4}-\d{2}-\d{2}$/.test(val)) {
+      triggerHaptic(12);
+      selectedInitDate = val;
+      const parts = val.split('-');
+      selectedInitYear = parts[0];
+      selectedInitMonth = parts[1];
+      updateInitModalUI();
+    }
+  });
+
+  document.getElementById('init-month-select')?.addEventListener('change', (e) => {
+    triggerHaptic(12);
+    selectedInitMonth = e.target.value;
+    if (selectedInitMonth !== '00') {
+      const dayPart = (selectedInitDate && /^\d{4}-\d{2}-\d{2}$/.test(selectedInitDate)) ? selectedInitDate.split('-')[2] : '01';
+      const maxDay = new Date(parseInt(selectedInitYear, 10), parseInt(selectedInitMonth, 10), 0).getDate();
+      const safeDay = String(Math.min(parseInt(dayPart, 10) || 1, maxDay)).padStart(2, '0');
+      selectedInitDate = `${selectedInitYear}-${selectedInitMonth}-${safeDay}`;
+    }
+    updateInitModalUI();
+  });
+
+  document.getElementById('init-year-select')?.addEventListener('change', (e) => {
+    triggerHaptic(12);
+    selectedInitYear = e.target.value;
+    const monthPart = (selectedInitMonth === '00') ? '02' : selectedInitMonth;
+    const dayPart = (selectedInitDate && /^\d{4}-\d{2}-\d{2}$/.test(selectedInitDate)) ? selectedInitDate.split('-')[2] : '01';
+    const maxDay = new Date(parseInt(selectedInitYear, 10), parseInt(monthPart, 10), 0).getDate();
+    const safeDay = String(Math.min(parseInt(dayPart, 10) || 1, maxDay)).padStart(2, '0');
+    selectedInitDate = `${selectedInitYear}-${monthPart}-${safeDay}`;
+    updateInitModalUI();
+  });
+
+  document.getElementById('btn-init-date-demo')?.addEventListener('click', () => {
+    triggerHaptic(15);
+    selectedInitDate = '2026-02-27';
+    selectedInitYear = '2026';
+    selectedInitMonth = '02';
+    updateInitModalUI();
+  });
+
+  document.getElementById('btn-init-date-today')?.addEventListener('click', () => {
+    triggerHaptic(15);
+    const now = new Date();
+    const y = String(now.getFullYear());
+    const m = String(now.getMonth() + 1).padStart(2, '0');
+    const d = String(now.getDate()).padStart(2, '0');
+    selectedInitDate = `${y}-${m}-${d}`;
+    selectedInitYear = y;
+    selectedInitMonth = m;
+    updateInitModalUI();
+  });
+
+  // Step 4: Theme Card Click (with Instant Live Theme Preview)
+  document.querySelectorAll('#init-theme-grid .init-choice-card').forEach(card => {
+    card.addEventListener('click', () => {
+      triggerHaptic(15);
+      selectedInitTheme = card.dataset.initTheme || 'blue';
+      document.body.className = (selectedInitTheme === 'blue') ? '' : `theme-${selectedInitTheme}`;
+      updateInitModalUI();
+    });
+  });
+
+  // Confirm Initialization Button
   document.getElementById('btn-confirm-init')?.addEventListener('click', () => {
     triggerHaptic(25);
-    engine.initializeSystem(selectedInitCurr, selectedInitLang);
+    engine.initializeSystem(
+      selectedInitCurr,
+      selectedInitLang,
+      selectedInitDate,
+      selectedInitTheme,
+      selectedInitYear,
+      selectedInitMonth
+    );
+    document.body.className = (selectedInitTheme === 'blue') ? '' : `theme-${selectedInitTheme}`;
+    localStorage.setItem('gfmp_theme', selectedInitTheme);
+
+    const txDate = document.getElementById('tx-date');
+    if (txDate) txDate.value = selectedInitDate;
+    const expDate = document.getElementById('exp-tx-date');
+    if (expDate) expDate.value = selectedInitDate;
+
     modalInit?.classList.remove('open');
-    showToast(`Système initialisé : ${selectedInitCurr} • ${selectedInitLang}`, 'success');
+    showToast(`Système configuré : ${selectedInitLang} • ${selectedInitCurr} • ${selectedInitMonth === '00' ? selectedInitYear : selectedInitMonth + '/' + selectedInitYear}`, 'success');
     populateSelects();
+    renderSettingsView();
     renderCurrentView();
   });
 
-  // Automatically show on first app launch if not initialized
+  // Automatically show on first app launch / after APK installation
   if (engine.needsOnboarding && modalInit) {
-    updateInitModalUI();
     modalInit.classList.add('open');
+    try {
+      updateInitModalUI();
+    } catch (err) {
+      console.error('Init modal UI update warning:', err);
+    }
   }
 
   // --- 17. PWA BEFOREINSTALLPROMPT HANDLER ---
@@ -2526,15 +2793,16 @@ document.addEventListener('DOMContentLoaded', () => {
     if (!header) return;
 
     let ticking = false;
-    const SCROLL_THRESHOLD = 20;
+    const SCROLL_DOWN_THRESHOLD = 28;
+    const SCROLL_UP_THRESHOLD = 10;
 
     function handleScroll() {
       const scrollY = window.scrollY || document.documentElement.scrollTop || 0;
-      if (scrollY > SCROLL_THRESHOLD) {
+      if (scrollY > SCROLL_DOWN_THRESHOLD) {
         if (!header.classList.contains('is-compact')) {
           header.classList.add('is-compact');
         }
-      } else {
+      } else if (scrollY < SCROLL_UP_THRESHOLD) {
         if (header.classList.contains('is-compact')) {
           header.classList.remove('is-compact');
         }

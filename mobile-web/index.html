@@ -26,7 +26,7 @@
   <header class="gfmp-header">
     <div class="header-top">
       <div class="brand-wrapper">
-        <img src="assets/favicon_jic.png" alt="Logo" class="brand-logo-img">
+        <img src="assets/favicon_jic.png" alt="Emblème GFMP" width="38" height="38" fetchpriority="high" class="brand-logo-img">
         <div class="brand-text">
           <h1 id="app-title-display">SYSTÈME FINANCIER PERSONNEL</h1>
           <div class="sub-title" id="date-display">25 Février 2026</div>
@@ -148,7 +148,7 @@
       <!-- Hub Multi-Report Consolidated Interactive Visualizations Grid -->
       <div class="hub-dashboard-sections" id="hub-dashboard-sections" style="display:flex; flex-direction:column; gap:16px;">
 
-        <!-- Section 1 (Cashflow): Évolution & Tendance des Flux sur 6 Mois -->
+        <!-- Section 1 (Cashflow): Évolution & Tendance des Flux Mensuels -->
         <div class="chart-card hub-dash-card" id="hub-card-trend">
           <div class="chart-header">
             <div style="display:flex; align-items:center; gap:8px;">
@@ -157,7 +157,7 @@
                 <line x1="12" y1="20" x2="12" y2="4"/>
                 <line x1="6" y1="20" x2="6" y2="14"/>
               </svg>
-              <h3 style="font-size:0.88rem;" id="hub-trend-title">ÉVOLUTION DES FLUX SUR 6 MOIS (TRÉSORERIE)</h3>
+              <h3 style="font-size:0.88rem;" id="hub-trend-title">ÉVOLUTION DES FLUX MENSUELS (TRÉSORERIE)</h3>
             </div>
             <span style="font-size:0.7rem; color:var(--text-muted);" id="hub-trend-period">Période Active</span>
           </div>
@@ -176,19 +176,20 @@
             </div>
             <span style="font-size:0.7rem; color:var(--text-muted);" id="hub-donut-period">Mois en cours</span>
           </div>
+          <div id="hub-donut-active-filter" style="display:none; margin-bottom:10px;"></div>
           <div id="hub-donut-chart-box" class="donut-chart-wrapper svg-donut-container" style="min-height:140px;"></div>
         </div>
 
         <!-- Section 3 (Patrimoine): Allocation d'Actifs & Structure Patrimoniale -->
         <div class="chart-card hub-dash-card" id="hub-card-patrimoine">
           <div class="chart-header">
-            <div style="display:flex; align-items:center; gap:8px;">
-              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="var(--c-yellow-royal)" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+            <div style="display:flex; align-items:center; gap:8px; min-width:0;">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="var(--c-yellow-royal)" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink:0;">
                 <path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5"/>
               </svg>
               <h3 style="font-size:0.88rem;" id="hub-patrimoine-title">ALLOCATION D'ACTIFS & STRUCTURE PATRIMONIALE</h3>
             </div>
-            <span style="font-size:0.7rem; color:var(--c-yellow-royal); font-weight:700;" id="hub-patrimoine-total">Actifs Nets</span>
+            <span style="display:none;" id="hub-patrimoine-total" aria-hidden="true"></span>
           </div>
           <div id="hub-patrimoine-bars-box" style="margin-bottom:14px;"></div>
           <div style="font-size:0.72rem; font-weight:700; color:var(--text-muted); text-transform:uppercase; margin-bottom:8px;" id="lbl-hub-top-assets-title">Principaux Actifs :</div>
@@ -226,9 +227,9 @@
           <table class="violet-zebra-table" style="margin-top:6px;">
             <thead>
               <tr>
-                <th id="hub-th-date">Date</th>
-                <th id="hub-th-op">Opération / Actif</th>
-                <th style="text-align:right;" id="hub-th-amt">Montant</th>
+                <th scope="col" id="hub-th-date">Date</th>
+                <th scope="col" id="hub-th-op">Opération / Actif</th>
+                <th scope="col" style="text-align:right;" id="hub-th-amt">Montant</th>
               </tr>
             </thead>
             <tbody id="hub-recent-tx-body">
@@ -273,10 +274,10 @@
         <form id="form-transaction">
           <!-- Hero Amount Input -->
           <div class="form-group">
-            <label class="form-label" id="lbl-form-montant">Montant</label>
+            <label class="form-label" id="lbl-form-montant" for="tx-montant">Montant</label>
             <div class="hero-amount-box">
               <input type="number" step="0.01" id="tx-montant" class="hero-amount-input" placeholder="0.00" required>
-              <select id="tx-devise" class="hero-amount-currency" style="border:none; cursor:pointer; outline:none;"></select>
+              <select id="tx-devise" class="hero-amount-currency" aria-label="Devise de la transaction" style="border:none; cursor:pointer; outline:none;"></select>
             </div>
             <!-- Quick Amount Chips -->
             <div class="quick-amount-row">
@@ -288,13 +289,13 @@
           </div>
 
           <div class="form-group">
-            <label class="form-label" id="lbl-form-date">Date de l'opération</label>
+            <label class="form-label" id="lbl-form-date" for="tx-date">Date de l'opération</label>
             <input type="date" id="tx-date" class="form-input" required>
           </div>
 
           <div class="form-group">
             <div class="field-header-row">
-              <label class="form-label" id="lbl-form-compte">Actifs / Comptes</label>
+              <label class="form-label" id="lbl-form-compte" for="tx-compte">Actifs / Comptes</label>
               <button type="button" class="btn-field-add" data-entity="compte" id="btn-add-compte-main" title="Créer un nouvel actif">+ Nouveau</button>
             </div>
             <select id="tx-compte" class="form-select" required></select>
@@ -302,7 +303,7 @@
 
           <div class="form-group">
             <div class="field-header-row">
-              <label class="form-label" id="lbl-form-categorie">Catégorie Budgétaire</label>
+              <label class="form-label" id="lbl-form-categorie" for="tx-categorie">Catégorie Budgétaire</label>
               <button type="button" class="btn-field-add" data-entity="categorie" id="btn-add-cat-main" title="Créer une nouvelle catégorie">+ Nouvelle</button>
             </div>
             <select id="tx-categorie" class="form-select" required></select>
@@ -310,14 +311,14 @@
 
           <div class="form-group">
             <div class="field-header-row">
-              <label class="form-label" id="lbl-form-tiers">Tiers (Bénéficiaire / Émetteur)</label>
+              <label class="form-label" id="lbl-form-tiers" for="tx-tiers">Tiers (Bénéficiaire / Émetteur)</label>
               <button type="button" class="btn-field-add" data-entity="tiers" id="btn-add-tiers-main" title="Créer un nouveau tiers">+ Nouveau</button>
             </div>
             <select id="tx-tiers" class="form-select" required></select>
           </div>
 
           <div class="form-group">
-            <label class="form-label" id="lbl-form-notes">Description / Notes</label>
+            <label class="form-label" id="lbl-form-notes" for="tx-notes">Description / Notes</label>
             <input type="text" id="tx-notes" class="form-input" placeholder="Notes (ex: Facture KIMYA ÉDITION)">
           </div>
 
@@ -392,7 +393,7 @@
               <line x1="21" y1="21" x2="16.65" y2="16.65"/>
             </svg>
           </span>
-          <input type="text" id="input-tx-search" class="search-input" placeholder="Rechercher catégorie, tiers, compte ou note...">
+          <input type="text" id="input-tx-search" class="search-input" aria-label="Rechercher une transaction" placeholder="Rechercher catégorie, tiers, compte ou note...">
         </div>
         <div class="filter-chips-row">
           <button class="filter-chip active" id="cf-chip-all" data-filter="ALL">Tous</button>
@@ -401,11 +402,11 @@
           <button class="filter-chip" id="cf-chip-tra" data-filter="TRANSFERT">Virements</button>
         </div>
         <div style="display:flex; justify-content:space-between; align-items:center; gap:8px;">
-          <select id="cf-account-filter" class="sort-select" style="flex:1;">
+          <select id="cf-account-filter" class="sort-select" aria-label="Filtrer par compte" style="flex:1;">
             <option value="ALL">Tous les comptes</option>
           </select>
           <div class="sort-select-wrapper">
-            <span style="font-size:0.7rem; color:var(--text-muted);" id="lbl-cf-sort">Trier :</span>
+            <label for="cf-sort-select" style="font-size:0.7rem; color:var(--text-muted);" id="lbl-cf-sort">Trier :</label>
             <select id="cf-sort-select" class="sort-select">
               <option value="date-desc">Date (récent)</option>
               <option value="date-asc">Date (ancien)</option>
@@ -425,11 +426,11 @@
         <table class="violet-zebra-table">
           <thead>
             <tr>
-              <th id="cf-th-date">Date</th>
-              <th id="cf-th-cat">Catégorie / Compte</th>
-              <th id="cf-th-tiers">Tiers</th>
-              <th style="text-align:right;" id="cf-th-amt">Montant</th>
-              <th style="width:34px; text-align:center;"></th>
+              <th scope="col" id="cf-th-date">Date</th>
+              <th scope="col" id="cf-th-cat">Catégorie / Compte</th>
+              <th scope="col" id="cf-th-tiers">Tiers</th>
+              <th scope="col" style="text-align:right;" id="cf-th-amt">Montant</th>
+              <th scope="col" style="width:34px; text-align:center;" aria-label="Actions"></th>
             </tr>
           </thead>
           <tbody id="cashflow-table-body">
@@ -490,10 +491,10 @@
         <table class="violet-zebra-table">
           <thead>
             <tr>
-              <th id="nw-th-cpt">Compte</th>
-              <th id="nw-th-classe">Classe</th>
-              <th id="nw-th-native">Solde Natif</th>
-              <th style="text-align:right;" id="nw-th-conv">Solde Converti</th>
+              <th scope="col" id="nw-th-cpt">Compte</th>
+              <th scope="col" id="nw-th-classe">Classe</th>
+              <th scope="col" id="nw-th-native">Solde Natif</th>
+              <th scope="col" style="text-align:right;" id="nw-th-conv">Solde Converti</th>
             </tr>
           </thead>
           <tbody id="networth-table-body">
@@ -539,10 +540,10 @@
         <table class="violet-zebra-table">
           <thead>
             <tr>
-              <th id="bg-th-cat">Catégorie</th>
-              <th id="bg-th-alloue">Alloué</th>
-              <th id="bg-th-consomme">Réalisé</th>
-              <th style="text-align:right;" id="bg-th-conso">Consommation</th>
+              <th scope="col" id="bg-th-cat">Catégorie</th>
+              <th scope="col" id="bg-th-alloue">Alloué</th>
+              <th scope="col" id="bg-th-consomme">Réalisé</th>
+              <th scope="col" style="text-align:right;" id="bg-th-conso">Consommation</th>
             </tr>
           </thead>
           <tbody id="budget-table-body">
@@ -609,7 +610,7 @@
         </div>
         <div style="display:flex; flex-direction:column; gap:12px; margin-top:8px;">
           <div>
-            <label class="form-label" style="margin-bottom:4px; font-size:0.75rem;">Devise Principale Active</label>
+            <label class="form-label" for="settings-currency-select" style="margin-bottom:4px; font-size:0.75rem;">Devise Principale Active</label>
             <select id="settings-currency-select" class="form-select" style="font-size:0.88rem; font-weight:700;">
               <option value="MUR">MUR — Roupie Mauricienne (Rs)</option>
               <option value="EUR">EUR — Euro (€)</option>
@@ -620,7 +621,7 @@
             </select>
           </div>
           <div>
-            <label class="form-label" style="margin-bottom:4px; font-size:0.75rem;">Langue du Système</label>
+            <label class="form-label" for="settings-lang-select" style="margin-bottom:4px; font-size:0.75rem;">Langue du Système</label>
             <select id="settings-lang-select" class="form-select" style="font-size:0.88rem; font-weight:700;">
               <option value="FR">Français (FR)</option>
               <option value="EN">English (EN)</option>
@@ -958,8 +959,8 @@
   <!-- =========================================================================
        NAVIGATION TACTILE INFÉRIEURE AU POUCE (THUMB-ZONE) — ZERO EMOJIS, PURE SVG
        ========================================================================= -->
-  <nav class="bottom-nav">
-    <button class="nav-tab active" data-view="home">
+  <nav class="bottom-nav" aria-label="Navigation principale">
+    <button class="nav-tab active" data-view="home" aria-current="page">
       <span class="tab-icon">
         <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
           <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/>
@@ -1021,48 +1022,99 @@
   <!-- =========================================================================
        MODALE PLEIN ÉCRAN : CONFIGURATION & INITIALISATION DU SYSTÈME (SFP v1.0)
        ========================================================================= -->
-  <div id="modal-initialization" class="modal modal-fullscreen">
-    <div class="modal-content modal-fullscreen-content" style="max-width: 600px;">
-      <div class="modal-header">
-        <div style="display:flex; align-items:center; gap:10px;">
-          <div style="width:36px; height:36px; border-radius:10px; background:rgba(250,218,94,0.15); border:1.5px solid var(--c-yellow-royal); display:flex; align-items:center; justify-content:center; color:var(--c-yellow-royal);">
-            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
-              <path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5"/>
-            </svg>
-          </div>
-          <div>
-            <h3 style="font-family: var(--font-display); color: #FFF; font-size:1.15rem; font-weight:800;">INITIALISATION DU SYSTÈME</h3>
-            <span style="font-size:0.72rem; color:var(--text-secondary);">Configuration initiale de votre Système Financier</span>
-          </div>
+  <div id="modal-initialization" class="modal modal-fullscreen" role="dialog" aria-modal="true" aria-labelledby="init-modal-title">
+    <div class="modal-content modal-fullscreen-content init-onboarding-shell">
+      
+      <!-- Hero Welcome Banner -->
+      <div class="modal-header init-hero-banner">
+        <div class="init-brand-emblem" aria-hidden="true">
+          <div class="init-emblem-glow"></div>
+          <svg class="init-emblem-svg" width="44" height="44" viewBox="0 0 64 64" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+            <defs>
+              <linearGradient id="gfmp-gold-grad" x1="8" y1="6" x2="56" y2="58" gradientUnits="userSpaceOnUse">
+                <stop offset="0%" stop-color="#FFF6B7"/>
+                <stop offset="35%" stop-color="#FADA5E"/>
+                <stop offset="70%" stop-color="#D4AF37"/>
+                <stop offset="100%" stop-color="#9A6F18"/>
+              </linearGradient>
+              <linearGradient id="gfmp-gold-bright" x1="16" y1="10" x2="48" y2="52" gradientUnits="userSpaceOnUse">
+                <stop offset="0%" stop-color="#FFFFFF"/>
+                <stop offset="28%" stop-color="#FFF099"/>
+                <stop offset="65%" stop-color="#FADA5E"/>
+                <stop offset="100%" stop-color="#C59B27"/>
+              </linearGradient>
+              <radialGradient id="gfmp-sapphire-core" cx="50%" cy="38%" r="58%">
+                <stop offset="0%" stop-color="#1E3A8A"/>
+                <stop offset="65%" stop-color="#0F1D45"/>
+                <stop offset="100%" stop-color="#070E24"/>
+              </radialGradient>
+            </defs>
+            <!-- Outer Guilloché Gold Octagonal-Circle Medallion Rim -->
+            <circle cx="32" cy="32" r="29" fill="url(#gfmp-sapphire-core)" stroke="url(#gfmp-gold-grad)" stroke-width="2.2"/>
+            <circle cx="32" cy="32" r="25.2" stroke="url(#gfmp-gold-grad)" stroke-width="0.85" stroke-dasharray="3 2.2" opacity="0.75"/>
+            <!-- Cardinal Sovereign Diamond Studs -->
+            <circle cx="32" cy="5.2" r="1.3" fill="#FFF6B7"/>
+            <circle cx="32" cy="58.8" r="1.3" fill="#FADA5E"/>
+            <circle cx="5.2" cy="32" r="1.3" fill="#FADA5E"/>
+            <circle cx="58.8" cy="32" r="1.3" fill="#FADA5E"/>
+            <!-- Sovereign Cut Diamond Crest (Haute Joaillerie Wealth Crown) -->
+            <polygon points="28.2,12.2 35.8,12.2 38.8,15.8 32,23.5 25.2,15.8" fill="url(#gfmp-gold-bright)" stroke="#FFF9D2" stroke-width="0.85" stroke-linejoin="round"/>
+            <line x1="25.4" y1="15.8" x2="38.6" y2="15.8" stroke="#FFF9D2" stroke-width="0.75" opacity="0.85"/>
+            <polyline points="28.2,12.2 29.4,15.8 32,23.3 34.6,15.8 35.8,12.2" stroke="#FFF9D2" stroke-width="0.7" stroke-linejoin="round" opacity="0.85"/>
+            <!-- Ascending Private Banking Wealth Pillars -->
+            <rect x="18.8" y="35.5" width="6.4" height="9" rx="1.2" fill="url(#gfmp-gold-grad)" stroke="#FFF9D2" stroke-width="0.65" opacity="0.9"/>
+            <rect x="28.8" y="31" width="6.4" height="13.5" rx="1.2" fill="url(#gfmp-gold-grad)" stroke="#FFF9D2" stroke-width="0.65" opacity="0.95"/>
+            <rect x="38.8" y="25.5" width="6.4" height="19" rx="1.2" fill="url(#gfmp-gold-bright)" stroke="#FFF9D2" stroke-width="0.65"/>
+            <!-- Dual-Tier Gold Pedestal Base -->
+            <path d="M16.5 46.8H47.5" stroke="url(#gfmp-gold-grad)" stroke-width="2" stroke-linecap="round"/>
+            <path d="M21.5 49.5H42.5" stroke="url(#gfmp-gold-grad)" stroke-width="1.25" stroke-linecap="round" opacity="0.85"/>
+          </svg>
         </div>
+        <div class="init-version-pill" id="init-modal-badge">SFP v1.0 • ÉDITION GOLD PRIVÉE</div>
+        <h3 class="init-hero-title" id="init-modal-title">INITIALISATION DU SYSTÈME</h3>
+        <p class="init-hero-subtitle" id="init-modal-sub">Configurez votre environnement de gestion patrimoniale et financière haute précision.</p>
       </div>
 
-      <div class="modal-body" style="display:flex; flex-direction:column; gap:18px;">
+      <div class="modal-body init-steps-container">
         <!-- Question 1: Langue -->
-        <div class="alloc-question-card">
-          <div class="alloc-question-badge">Étape 1</div>
-          <div class="alloc-question-title">Sélectionnez la langue du système</div>
-          <p style="font-size:0.75rem; color:var(--text-muted); margin-bottom:12px;">
+        <div class="alloc-question-card init-step-card">
+          <div class="init-step-header">
+            <div class="alloc-question-badge" id="init-step1-badge">ÉTAPE 01 / 04</div>
+            <div class="alloc-question-title" id="init-step1-title">Sélectionnez la langue du système</div>
+          </div>
+          <p class="init-step-desc" id="init-step1-desc">
             L'ensemble de vos synthèses, rapports et interfaces s'adapteront immédiatement.
           </p>
-          <div class="init-choice-grid" id="init-lang-grid" style="display:grid; grid-template-columns:repeat(2, 1fr); gap:10px;">
-            <button type="button" class="init-choice-card active" data-init-lang="FR">
-              <span class="init-choice-code" style="font-size:1.1rem; font-weight:800; color:var(--c-yellow-royal);">FR</span>
+          <div class="init-choice-grid init-lang-grid-layout" id="init-lang-grid">
+            <button type="button" class="init-choice-card active" data-init-lang="FR" aria-pressed="true">
+              <div class="init-card-top">
+                <span class="init-choice-code" style="color:var(--c-yellow-royal);">FR</span>
+                <span class="init-card-check" aria-hidden="true">✓</span>
+              </div>
               <span class="init-choice-name">Français</span>
               <span class="init-choice-sub">Standard SFP</span>
             </button>
-            <button type="button" class="init-choice-card" data-init-lang="EN">
-              <span class="init-choice-code" style="font-size:1.1rem; font-weight:800; color:#94A3B8;">EN</span>
+            <button type="button" class="init-choice-card" data-init-lang="EN" aria-pressed="false">
+              <div class="init-card-top">
+                <span class="init-choice-code" style="color:#94A3B8;">EN</span>
+                <span class="init-card-check" aria-hidden="true">✓</span>
+              </div>
               <span class="init-choice-name">English</span>
               <span class="init-choice-sub">International</span>
             </button>
-            <button type="button" class="init-choice-card" data-init-lang="ES">
-              <span class="init-choice-code" style="font-size:1.1rem; font-weight:800; color:#94A3B8;">ES</span>
+            <button type="button" class="init-choice-card" data-init-lang="ES" aria-pressed="false">
+              <div class="init-card-top">
+                <span class="init-choice-code" style="color:#94A3B8;">ES</span>
+                <span class="init-card-check" aria-hidden="true">✓</span>
+              </div>
               <span class="init-choice-name">Español</span>
               <span class="init-choice-sub">Castellano</span>
             </button>
-            <button type="button" class="init-choice-card" data-init-lang="PT">
-              <span class="init-choice-code" style="font-size:1.1rem; font-weight:800; color:#94A3B8;">PT</span>
+            <button type="button" class="init-choice-card" data-init-lang="PT" aria-pressed="false">
+              <div class="init-card-top">
+                <span class="init-choice-code" style="color:#94A3B8;">PT</span>
+                <span class="init-card-check" aria-hidden="true">✓</span>
+              </div>
               <span class="init-choice-name">Português</span>
               <span class="init-choice-sub">Global</span>
             </button>
@@ -1070,44 +1122,194 @@
         </div>
 
         <!-- Question 2: Devise Principale -->
-        <div class="alloc-question-card">
-          <div class="alloc-question-badge">Étape 2</div>
-          <div class="alloc-question-title">Sélectionnez votre devise principale de référence</div>
-          <p style="font-size:0.75rem; color:var(--text-muted); margin-bottom:12px;">
-            Devise mère sur laquelle l'ensemble de votre patrimoine et flux seront indexés. Les taux seront synchronisés en direct via API.
+        <div class="alloc-question-card init-step-card">
+          <div class="init-step-header">
+            <div class="alloc-question-badge" id="init-step2-badge">ÉTAPE 02 / 04</div>
+            <div class="alloc-question-title" id="init-step2-title">Sélectionnez votre devise de référence</div>
+          </div>
+          <p class="init-step-desc" id="init-step2-desc">
+            Devise mère sur laquelle l'ensemble de votre patrimoine et flux seront consolidés.
           </p>
-          <div class="init-choice-grid" id="init-curr-grid" style="display:grid; grid-template-columns:repeat(3, 1fr); gap:10px;">
-            <button type="button" class="init-choice-card active" data-init-curr="MUR">
-              <span class="init-choice-code" style="font-size:1.15rem; font-weight:800; color:var(--c-yellow-royal);">MUR</span>
-              <span class="init-choice-name">Roupie (Rs)</span>
+          <div class="init-choice-grid init-curr-grid-layout" id="init-curr-grid">
+            <button type="button" class="init-choice-card active" data-init-curr="MUR" aria-pressed="true">
+              <div class="init-card-top">
+                <span class="init-curr-sym">Rs</span>
+                <span class="init-card-check" aria-hidden="true">✓</span>
+              </div>
+              <span class="init-choice-code" style="color:var(--c-yellow-royal);">MUR</span>
+              <span class="init-choice-name" data-curr-name="MUR">Roupie (Rs)</span>
             </button>
-            <button type="button" class="init-choice-card" data-init-curr="EUR">
-              <span class="init-choice-code" style="font-size:1.15rem; font-weight:800; color:#94A3B8;">EUR</span>
-              <span class="init-choice-name">Euro (€)</span>
+            <button type="button" class="init-choice-card" data-init-curr="EUR" aria-pressed="false">
+              <div class="init-card-top">
+                <span class="init-curr-sym">€</span>
+                <span class="init-card-check" aria-hidden="true">✓</span>
+              </div>
+              <span class="init-choice-code" style="color:#94A3B8;">EUR</span>
+              <span class="init-choice-name" data-curr-name="EUR">Euro (€)</span>
             </button>
-            <button type="button" class="init-choice-card" data-init-curr="USD">
-              <span class="init-choice-code" style="font-size:1.15rem; font-weight:800; color:#94A3B8;">USD</span>
-              <span class="init-choice-name">Dollar ($)</span>
+            <button type="button" class="init-choice-card" data-init-curr="USD" aria-pressed="false">
+              <div class="init-card-top">
+                <span class="init-curr-sym">$</span>
+                <span class="init-card-check" aria-hidden="true">✓</span>
+              </div>
+              <span class="init-choice-code" style="color:#94A3B8;">USD</span>
+              <span class="init-choice-name" data-curr-name="USD">Dollar ($)</span>
             </button>
-            <button type="button" class="init-choice-card" data-init-curr="GBP">
-              <span class="init-choice-code" style="font-size:1.15rem; font-weight:800; color:#94A3B8;">GBP</span>
-              <span class="init-choice-name">Livre (£)</span>
+            <button type="button" class="init-choice-card" data-init-curr="GBP" aria-pressed="false">
+              <div class="init-card-top">
+                <span class="init-curr-sym">£</span>
+                <span class="init-card-check" aria-hidden="true">✓</span>
+              </div>
+              <span class="init-choice-code" style="color:#94A3B8;">GBP</span>
+              <span class="init-choice-name" data-curr-name="GBP">Livre (£)</span>
             </button>
-            <button type="button" class="init-choice-card" data-init-curr="ZAR">
-              <span class="init-choice-code" style="font-size:1.15rem; font-weight:800; color:#94A3B8;">ZAR</span>
-              <span class="init-choice-name">Rand (R)</span>
+            <button type="button" class="init-choice-card" data-init-curr="ZAR" aria-pressed="false">
+              <div class="init-card-top">
+                <span class="init-curr-sym">R</span>
+                <span class="init-card-check" aria-hidden="true">✓</span>
+              </div>
+              <span class="init-choice-code" style="color:#94A3B8;">ZAR</span>
+              <span class="init-choice-name" data-curr-name="ZAR">Rand (R)</span>
             </button>
-            <button type="button" class="init-choice-card" data-init-curr="XOF">
-              <span class="init-choice-code" style="font-size:1.15rem; font-weight:800; color:#94A3B8;">XOF</span>
-              <span class="init-choice-name">CFA (XOF)</span>
+            <button type="button" class="init-choice-card" data-init-curr="XOF" aria-pressed="false">
+              <div class="init-card-top">
+                <span class="init-curr-sym">CFA</span>
+                <span class="init-card-check" aria-hidden="true">✓</span>
+              </div>
+              <span class="init-choice-code" style="color:#94A3B8;">XOF</span>
+              <span class="init-choice-name" data-curr-name="XOF">Franc CFA</span>
             </button>
           </div>
         </div>
 
-        <!-- Action Button -->
-        <button type="button" class="btn-primary-alloc" id="btn-confirm-init" style="padding:16px; font-size:0.95rem; font-weight:800; margin-top:8px;">
-          CONFIRMER & INITIALISER L'APPLICATION
-        </button>
+        <!-- Question 3: Date & Période Financière de Référence -->
+        <div class="alloc-question-card init-step-card" id="init-date-section">
+          <div class="init-step-header">
+            <div class="alloc-question-badge" id="init-step3-badge">ÉTAPE 03 / 04</div>
+            <div class="alloc-question-title" id="init-step3-title">Configurez la date et la période financière</div>
+          </div>
+          <p class="init-step-desc" id="init-step3-desc">
+            Définissez la date système par défaut pour vos saisies et le mois/année d'ouverture du tableau de bord.
+          </p>
+          <div class="init-date-controls">
+            <div class="init-field-group">
+              <label for="init-date-input" class="init-field-label" id="lbl-init-date-picker">Date de référence du système</label>
+              <input type="date" id="init-date-input" name="init_date" class="form-input init-date-picker" value="2026-02-27" required>
+            </div>
+            <div class="init-period-row">
+              <div class="init-field-group">
+                <label for="init-month-select" class="init-field-label" id="lbl-init-month-picker">Mois de pilotage</label>
+                <select id="init-month-select" name="init_month" class="form-select init-period-select">
+                  <option value="01">01 — Janvier</option>
+                  <option value="02" selected>02 — Février</option>
+                  <option value="03">03 — Mars</option>
+                  <option value="04">04 — Avril</option>
+                  <option value="05">05 — Mai</option>
+                  <option value="06">06 — Juin</option>
+                  <option value="07">07 — Juillet</option>
+                  <option value="08">08 — Août</option>
+                  <option value="09">09 — Septembre</option>
+                  <option value="10">10 — Octobre</option>
+                  <option value="11">11 — Novembre</option>
+                  <option value="12">12 — Décembre</option>
+                  <option value="00">00 — Année Entière</option>
+                </select>
+              </div>
+              <div class="init-field-group">
+                <label for="init-year-select" class="init-field-label" id="lbl-init-year-picker">Exercice (Année)</label>
+                <select id="init-year-select" name="init_year" class="form-select init-period-select">
+                  <option value="2024">2024</option>
+                  <option value="2025">2025</option>
+                  <option value="2026" selected>2026</option>
+                  <option value="2027">2027</option>
+                  <option value="2028">2028</option>
+                </select>
+              </div>
+            </div>
+            <div class="init-date-shortcuts">
+              <button type="button" class="init-date-chip active" id="btn-init-date-demo">
+                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+                <span id="lbl-init-btn-demo">Période Démo SFP (Fév 2026)</span>
+              </button>
+              <button type="button" class="init-date-chip" id="btn-init-date-today">
+                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+                <span id="lbl-init-btn-today">Aujourd'hui</span>
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <!-- Question 4: Thème Visuel de l'Application -->
+        <div class="alloc-question-card init-step-card" id="init-theme-section">
+          <div class="init-step-header">
+            <div class="alloc-question-badge" id="init-step4-badge">ÉTAPE 04 / 04</div>
+            <div class="alloc-question-title" id="init-step4-title">Choisissez le thème visuel de l'application</div>
+          </div>
+          <p class="init-step-desc" id="init-step4-desc">
+            Personnalisez l'ambiance Haute Joaillerie de votre interface avec aperçu instantané en direct.
+          </p>
+          <div class="init-choice-grid init-theme-grid-layout" id="init-theme-grid">
+            <button type="button" class="init-choice-card active" data-init-theme="blue" aria-pressed="true">
+              <div class="init-card-top">
+                <span class="init-theme-swatch">
+                  <span class="swatch-primary" style="background:#4169E1;"></span>
+                  <span class="swatch-accent" style="background:#FADA5E;"></span>
+                </span>
+                <span class="init-card-check" aria-hidden="true">✓</span>
+              </div>
+              <span class="init-choice-name" data-theme-name="BLUE">Bleu Royal</span>
+              <span class="init-choice-sub" data-theme-sub="BLUE">Standard SFP • Or &amp; Saphir</span>
+            </button>
+            <button type="button" class="init-choice-card" data-init-theme="gold" aria-pressed="false">
+              <div class="init-card-top">
+                <span class="init-theme-swatch">
+                  <span class="swatch-primary" style="background:#D4AF37;"></span>
+                  <span class="swatch-accent" style="background:#080705; border-color:#FADA5E;"></span>
+                </span>
+                <span class="init-card-check" aria-hidden="true">✓</span>
+              </div>
+              <span class="init-choice-name" data-theme-name="GOLD">Or &amp; Noir Impérial</span>
+              <span class="init-choice-sub" data-theme-sub="GOLD">Prestige • Obsidienne &amp; Or</span>
+            </button>
+            <button type="button" class="init-choice-card" data-init-theme="emerald" aria-pressed="false">
+              <div class="init-card-top">
+                <span class="init-theme-swatch">
+                  <span class="swatch-primary" style="background:#10B981;"></span>
+                  <span class="swatch-accent" style="background:#FADA5E;"></span>
+                </span>
+                <span class="init-card-check" aria-hidden="true">✓</span>
+              </div>
+              <span class="init-choice-name" data-theme-name="EMERALD">Émeraude Wealth</span>
+              <span class="init-choice-sub" data-theme-sub="EMERALD">Banque Privée • Émeraude</span>
+            </button>
+            <button type="button" class="init-choice-card" data-init-theme="amethyst" aria-pressed="false">
+              <div class="init-card-top">
+                <span class="init-theme-swatch">
+                  <span class="swatch-primary" style="background:#7851A9;"></span>
+                  <span class="swatch-accent" style="background:#FADA5E;"></span>
+                </span>
+                <span class="init-card-check" aria-hidden="true">✓</span>
+              </div>
+              <span class="init-choice-name" data-theme-name="AMETHYST">Améthyste Royale</span>
+              <span class="init-choice-sub" data-theme-sub="AMETHYST">Haute Joaillerie • Pourpre</span>
+            </button>
+          </div>
+        </div>
+
+        <!-- Live Selection Summary & Action Button -->
+        <div class="init-footer-box">
+          <div class="init-live-summary" id="init-live-summary">
+            <span class="init-summary-dot"></span>
+            <span id="init-summary-text">Configuration active : <strong>Français (FR)</strong> • <strong>MUR (Rs)</strong></span>
+          </div>
+          <button type="button" class="btn-primary-alloc" id="btn-confirm-init">
+            <span id="lbl-btn-confirm-init">CONFIRMER &amp; LANCER L'APPLICATION</span>
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+              <line x1="5" y1="12" x2="19" y2="12"/>
+              <polyline points="12 5 19 12 12 19"/>
+            </svg>
+          </button>
+        </div>
       </div>
     </div>
   </div>

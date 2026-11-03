@@ -1,83 +1,78 @@
 <?xml version="1.0" encoding="utf-8"?>
 <vector xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:aapt="http://schemas.android.com/aapt"
     android:width="108dp"
     android:height="108dp"
     android:viewportWidth="108"
     android:viewportHeight="108">
-    
-    <!-- Outer Gold Ring -->
+
+    <!-- Outer Gold Medallion Ring -->
     <path
-        android:pathData="M54,54m-36,0a36,36 0,1,1 72,0a36,36 0,1,1 -72,0"
+        android:pathData="M54,54m-35,0a35,35 0,1,1 70,0a35,35 0,1,1 -70,0"
+        android:strokeWidth="2.4"
+        android:strokeColor="#FADA5E" />
+
+    <!-- Cardinal Sovereign Studs -->
+    <path
+        android:pathData="M54,19m-1.8,0a1.8,1.8 0,1,1 3.6,0a1.8,1.8 0,1,1 -3.6,0"
+        android:fillColor="#FFF6B7" />
+    <path
+        android:pathData="M54,89m-1.8,0a1.8,1.8 0,1,1 3.6,0a1.8,1.8 0,1,1 -3.6,0"
+        android:fillColor="#FADA5E" />
+    <path
+        android:pathData="M19,54m-1.8,0a1.8,1.8 0,1,1 3.6,0a1.8,1.8 0,1,1 -3.6,0"
+        android:fillColor="#FADA5E" />
+    <path
+        android:pathData="M89,54m-1.8,0a1.8,1.8 0,1,1 3.6,0a1.8,1.8 0,1,1 -3.6,0"
+        android:fillColor="#FADA5E" />
+
+    <!-- Sovereign Cut Diamond Crest (Haute Joaillerie Wealth Crown) -->
+    <path android:pathData="M48.5,25.5 L59.5,25.5 L64,31 L54,42 L44,31 Z">
+        <aapt:attr name="android:fillColor">
+            <gradient
+                android:startX="44"
+                android:startY="25"
+                android:endX="64"
+                android:endY="42"
+                android:type="linear">
+                <item android:offset="0.0" android:color="#FFF9D2" />
+                <item android:offset="0.45" android:color="#FADA5E" />
+                <item android:offset="1.0" android:color="#C59B27" />
+            </gradient>
+        </aapt:attr>
+    </path>
+    <path
+        android:pathData="M44.3,31 L63.7,31 M48.5,25.5 L50.2,31 L54,41.7 L57.8,31 L59.5,25.5"
+        android:strokeWidth="0.9"
+        android:strokeColor="#FFF9D2" />
+
+    <!-- Ascending Private Banking Wealth Pillars -->
+    <path
+        android:pathData="M35.5,58.5 L44.5,58.5 L44.5,71.5 L35.5,71.5 Z"
+        android:fillColor="#D4AF37"
+        android:strokeWidth="0.8"
+        android:strokeColor="#FFF9D2" />
+    <path
+        android:pathData="M49.5,52 L58.5,52 L58.5,71.5 L49.5,71.5 Z"
+        android:fillColor="#EAB308"
+        android:strokeWidth="0.8"
+        android:strokeColor="#FFF9D2" />
+    <path
+        android:pathData="M63.5,44 L72.5,44 L72.5,71.5 L63.5,71.5 Z"
+        android:fillColor="#FADA5E"
+        android:strokeWidth="0.8"
+        android:strokeColor="#FFF9D2" />
+
+    <!-- Dual-Tier Gold Pedestal Base -->
+    <path
+        android:pathData="M32,75 L76,75"
         android:strokeWidth="2.5"
+        android:strokeLineCap="round"
         android:strokeColor="#FADA5E" />
-
-    <!-- Classical Pediment (Temple Triangle) -->
     <path
-        android:pathData="M54,28 L30,41 L78,41 Z"
-        android:fillColor="#FADA5E" />
-    <path
-        android:pathData="M30,41 L78,41"
-        android:strokeWidth="1.5"
-        android:strokeColor="#FFF2A3" />
-
-    <!-- Architrave Beam -->
-    <path
-        android:pathData="M28,42 L80,42 L80,46 L28,46 Z"
-        android:fillColor="#D4AF37" />
-    <path
-        android:pathData="M30,43 L78,43 L78,45 L30,45 Z"
-        android:fillColor="#FADA5E" />
-
-    <!-- 4 Temple Columns -->
-    <!-- Column 1 -->
-    <path
-        android:pathData="M33,47 L39,47 L39,68 L33,68 Z"
-        android:fillColor="#FADA5E" />
-    <path
-        android:pathData="M32,46 L40,46 M32,69 L40,69"
-        android:strokeWidth="1"
-        android:strokeColor="#FFF2A3" />
-
-    <!-- Column 2 -->
-    <path
-        android:pathData="M45,47 L51,47 L51,68 L45,68 Z"
-        android:fillColor="#FADA5E" />
-    <path
-        android:pathData="M44,46 L52,46 M44,69 L52,69"
-        android:strokeWidth="1"
-        android:strokeColor="#FFF2A3" />
-
-    <!-- Column 3 -->
-    <path
-        android:pathData="M57,47 L63,47 L63,68 L57,68 Z"
-        android:fillColor="#FADA5E" />
-    <path
-        android:pathData="M56,46 L64,46 M56,69 L64,69"
-        android:strokeWidth="1"
-        android:strokeColor="#FFF2A3" />
-
-    <!-- Column 4 -->
-    <path
-        android:pathData="M69,47 L75,47 L75,68 L69,68 Z"
-        android:fillColor="#FADA5E" />
-    <path
-        android:pathData="M68,46 L76,46 M68,69 L76,69"
-        android:strokeWidth="1"
-        android:strokeColor="#FFF2A3" />
-
-    <!-- Base Foundation Steps -->
-    <path
-        android:pathData="M27,69 L81,69 L81,73 L27,73 Z"
-        android:fillColor="#D4AF37" />
-    <path
-        android:pathData="M25,74 L83,74 L83,78 L25,78 Z"
-        android:fillColor="#FADA5E" />
-
-    <!-- Monogram Pill Base 'GFMP' -->
-    <path
-        android:pathData="M36,80 L72,80 A3,3 0 0,1 75,83 L75,85 A3,3 0 0,1 72,88 L36,88 A3,3 0 0,1 33,85 L33,83 A3,3 0 0,1 36,80 Z"
-        android:fillColor="#1A2D6D"
-        android:strokeWidth="1"
-        android:strokeColor="#FADA5E" />
+        android:pathData="M39,79 L69,79"
+        android:strokeWidth="1.6"
+        android:strokeLineCap="round"
+        android:strokeColor="#D4AF37" />
 
 </vector>
