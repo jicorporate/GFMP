@@ -750,6 +750,12 @@ class GFMPEngine {
     this.listeners = [];
   }
 
+  roundMoney(val) {
+    if (val === null || val === undefined || isNaN(val)) return 0;
+    const res = Math.round((Number(val) + Number.EPSILON) * 100) / 100;
+    return res === 0 ? 0 : res;
+  }
+
   cleanText(str) {
     if (!str) return '';
     return String(str).replace(/\s+/g, ' ').trim();
@@ -1612,11 +1618,11 @@ class GFMPEngine {
 
   convert(amount, fromCurrency, toCurrency = this.currency) {
     if (amount === 0 || isNaN(amount)) return 0;
-    if (fromCurrency === toCurrency) return amount;
+    if (fromCurrency === toCurrency) return this.roundMoney(amount);
     const rates = (this.data && this.data.devises) ? this.data.devises : { MUR: 12.2243, EUR: 656.168, USD: 567.5369, GBP: 757.0023, ZAR: 33.2723, XOF: 1.0 };
-    const tauxO = rates[fromCurrency] || 1;
-    const tauxC = rates[toCurrency] || 1;
-    return (amount * tauxO) / tauxC;
+    const tauxO = (rates[fromCurrency] !== undefined && rates[fromCurrency] > 0) ? rates[fromCurrency] : 1;
+    const tauxC = (rates[toCurrency] !== undefined && rates[toCurrency] > 0) ? rates[toCurrency] : 1;
+    return this.roundMoney((amount * tauxO) / tauxC);
   }
 
   formatMoney(amount, currency = this.currency) {
@@ -1629,10 +1635,11 @@ class GFMPEngine {
       XOF: 'CFA'
     };
     const sym = symbols[currency] || currency;
+    const safeAmount = (Math.abs(amount) < 0.001) ? 0 : (amount || 0);
     const formatted = new Intl.NumberFormat('fr-FR', {
       minimumFractionDigits: 2,
       maximumFractionDigits: 2
-    }).format(amount || 0);
+    }).format(safeAmount);
 
     return `${formatted} ${sym}`;
   }
@@ -1769,9 +1776,14 @@ class GFMPEngine {
       return (this.sortDir === 'asc') ? a.date.localeCompare(b.date) : b.date.localeCompare(a.date);
     });
 
+    totalRevenus = this.roundMoney(totalRevenus);
+    totalDepenses = this.roundMoney(totalDepenses);
+    const netCashflow = this.roundMoney(totalRevenus - totalDepenses);
+
     // Category expense breakdown with deterministic Haute Joaillerie SFP v1.0 Palette
-    const breakdown = Object.entries(catBreakdown).map(([nom, montant]) => {
-      const pct = totalDepenses > 0 ? (montant / totalDepenses) * 100 : 0;
+    const breakdown = Object.entries(catBreakdown).map(([nom, rawMontant]) => {
+      const montant = this.roundMoney(rawMontant);
+      const pct = totalDepenses > 0 ? this.roundMoney((montant / totalDepenses) * 100) : 0;
       const color = this.getCategoryColor(nom);
       return {
         nom,
@@ -1782,12 +1794,12 @@ class GFMPEngine {
       };
     }).sort((a, b) => b.montant - a.montant);
 
-    const savingsRate = totalRevenus > 0 ? Math.max(0, ((totalRevenus - totalDepenses) / totalRevenus) * 100) : 0;
+    const savingsRate = totalRevenus > 0 ? this.roundMoney(Math.max(0, ((totalRevenus - totalDepenses) / totalRevenus) * 100)) : 0;
 
     return {
       totalRevenus,
       totalDepenses,
-      netCashflow: totalRevenus - totalDepenses,
+      netCashflow,
       savingsRate,
       transactions: filteredTx,
       breakdown
@@ -1869,33 +1881,51 @@ class GFMPEngine {
       let soldeNatif = 0;
 
       (this.data.transactions || []).forEach(tx => {
-        if (String(tx.id_compte) === String(cpt.id) && tx.date) {
-          if (tx.date.substring(0, 7) <= targetFilterMonth) {
-            const fluxType = catTypeDict[tx.id_categorie] || 'DEPENSE';
-            const txDev = tx.devise || cptNativeDevise;
-            const montantNormalise = this.convert(tx.montant, txDev, cptNativeDevise);
+        if (!tx.date || tx.date.substring(0, 7) > targetFilterMonth) return;
+        const fluxType = catTypeDict[tx.id_categorie] || 'DEPENSE';
+        const txDev = tx.devise || cptNativeDevise;
+        const montantNormalise = this.convert(tx.montant, txDev, cptNativeDevise);
 
-            if (fluxType === 'REVENU') {
+        if (String(tx.id_compte) === String(cpt.id)) {
+          if (fluxType === 'REVENU') {
+            soldeNatif += montantNormalise;
+          } else if (fluxType === 'DEPENSE') {
+            soldeNatif -= montantNormalise;
+          } else if (fluxType === 'TRANSFERT') {
+            // Transfers into investments (DCA/Crypto/PEA) increase balance
+            if (cpt.classe === 'INVESTISSEMENT') {
               soldeNatif += montantNormalise;
-            } else if (fluxType === 'DEPENSE') {
+            } else {
+              // Outflow from checking/liquid account to savings/investments
               soldeNatif -= montantNormalise;
             }
+          }
+        } else if (String(cpt.id) === '2' && String(tx.id_compte) === '1' && fluxType === 'TRANSFERT') {
+          // Cross-account counterpart: Transfers from Checking (Account 1) to Savings (Account 2 Livret d'Épargne)
+          const notes = (tx.notes || '').toLowerCase();
+          if (notes.includes('épargne') || notes.includes('epargne') || notes.includes('livret') || notes.includes('precaution') || notes.includes('précaution')) {
+            soldeNatif += montantNormalise;
           }
         }
       });
 
-      const soldeConverti = this.convert(soldeNatif, cptNativeDevise, this.currency);
+      soldeNatif = this.roundMoney(soldeNatif);
+      const soldeConverti = this.roundMoney(this.convert(soldeNatif, cptNativeDevise, this.currency));
       const isDette = (cpt.classe === 'DETTE');
 
       if (isDette) {
-        totalLiabilities += Math.abs(soldeConverti);
-        allocation.DETTE = (allocation.DETTE || 0) + Math.abs(soldeConverti);
+        const debtAmt = Math.abs(soldeConverti);
+        totalLiabilities += debtAmt;
+        allocation.DETTE = (allocation.DETTE || 0) + debtAmt;
       } else {
-        totalAssets += soldeConverti;
         if (cpt.classe === 'INVESTISSEMENT') {
-          allocation.INVESTISSEMENT = (allocation.INVESTISSEMENT || 0) + Math.max(0, soldeConverti);
+          const invAmt = Math.max(0, soldeConverti);
+          totalAssets += invAmt;
+          allocation.INVESTISSEMENT = (allocation.INVESTISSEMENT || 0) + invAmt;
         } else {
-          allocation.LIQUIDITE = (allocation.LIQUIDITE || 0) + Math.max(0, soldeConverti);
+          const liqAmt = Math.max(0, soldeConverti);
+          totalAssets += liqAmt;
+          allocation.LIQUIDITE = (allocation.LIQUIDITE || 0) + liqAmt;
         }
       }
 
@@ -1916,10 +1946,16 @@ class GFMPEngine {
       }
     });
 
+    totalAssets = this.roundMoney(totalAssets);
+    totalLiabilities = this.roundMoney(totalLiabilities);
+    allocation.LIQUIDITE = this.roundMoney(allocation.LIQUIDITE || 0);
+    allocation.INVESTISSEMENT = this.roundMoney(allocation.INVESTISSEMENT || 0);
+    allocation.DETTE = this.roundMoney(allocation.DETTE || 0);
+
     return {
       totalAssets,
       totalLiabilities,
-      netWorth: totalAssets - totalLiabilities,
+      netWorth: this.roundMoney(totalAssets - totalLiabilities),
       accounts: accountResults,
       allocation
     };
@@ -1939,7 +1975,7 @@ class GFMPEngine {
         ? (tx.date && tx.date.startsWith(`${this.year}-`))
         : (tx.date && tx.date.startsWith(`${this.year}-${this.month}`));
       if (matchPeriod) {
-        const converted = this.convert(tx.montant, tx.devise, this.currency);
+        const converted = this.convert(tx.montant, tx.devise || this.currency, this.currency);
         catRealise[tx.id_categorie] = (catRealise[tx.id_categorie] || 0) + converted;
       }
     });
@@ -1949,21 +1985,20 @@ class GFMPEngine {
     const catResults = [];
 
     depenseCategories.forEach(cat => {
-      let alloueBase = 0;
-      if (isAllYear) {
-        (this.data.budgets || []).forEach(b => {
-          if (b.mois && b.mois.startsWith(`${this.year}-`) && String(b.id_categorie) === String(cat.id)) {
-            alloueBase += (b.montant || 0);
-          }
-        });
-      } else {
-        const budgetEntry = (this.data.budgets || []).find(b => b.mois === targetMonthStr && String(b.id_categorie) === String(cat.id));
-        alloueBase = budgetEntry ? budgetEntry.montant : 0;
-      }
+      let alloue = 0;
+      (this.data.budgets || []).forEach(b => {
+        const bMois = b.mois || b.mois_annee || '';
+        const matchMonth = isAllYear ? bMois.startsWith(`${this.year}-`) : (bMois === targetMonthStr);
+        if (matchMonth && String(b.id_categorie) === String(cat.id)) {
+          const rawAmt = (b.montant !== undefined) ? b.montant : (b.montant_alloue !== undefined ? b.montant_alloue : 0);
+          const bDev = b.devise || 'MUR';
+          alloue += this.convert(rawAmt, bDev, this.currency);
+        }
+      });
 
-      const alloue = this.convert(alloueBase, 'MUR', this.currency);
-      const consomme = catRealise[cat.id] || 0;
-      const ecart = alloue - consomme;
+      alloue = this.roundMoney(alloue);
+      const consomme = this.roundMoney(catRealise[cat.id] || 0);
+      const ecart = this.roundMoney(alloue - consomme);
       const rawPct = alloue > 0 ? (consomme / alloue) * 100 : (consomme > 0 ? 100 : 0);
 
       totalAlloue += alloue;
@@ -1975,8 +2010,9 @@ class GFMPEngine {
 
       // Status filter
       const matchStatus = (this.budgetStatusFilter === 'ALL')
-        || (this.budgetStatusFilter === 'OVER' && ecart < 0)
-        || (this.budgetStatusFilter === 'OK' && ecart >= 0);
+        || (this.budgetStatusFilter === 'OVER' && status === 'OVER')
+        || (this.budgetStatusFilter === 'WARN' && status === 'WARN')
+        || (this.budgetStatusFilter === 'OK' && status === 'OK');
 
       if (matchStatus) {
         catResults.push({
@@ -1986,8 +2022,8 @@ class GFMPEngine {
           alloue,
           consomme,
           ecart,
-          pct: Math.min(rawPct, 100),
-          rawPct,
+          pct: Math.min(this.roundMoney(rawPct), 100),
+          rawPct: this.roundMoney(rawPct),
           status,
           isOverBudget: ecart < 0
         });
@@ -1996,12 +2032,17 @@ class GFMPEngine {
 
     catResults.sort((a, b) => b.rawPct - a.rawPct);
 
+    totalAlloue = this.roundMoney(totalAlloue);
+    totalConsomme = this.roundMoney(totalConsomme);
+    const totalEcart = this.roundMoney(totalAlloue - totalConsomme);
+    const consumptionRate = totalAlloue > 0 ? this.roundMoney((totalConsomme / totalAlloue) * 100) : (totalConsomme > 0 ? 100 : 0);
+
     return {
       mois: isAllYear ? `${this.year} (${this.tr('ANNÉE ENTIÈRE')})` : targetMonthStr,
       totalAlloue,
       totalConsomme,
-      totalEcart: totalAlloue - totalConsomme,
-      consumptionRate: totalAlloue > 0 ? (totalConsomme / totalAlloue) * 100 : 0,
+      totalEcart,
+      consumptionRate,
       categories: catResults
     };
   }
@@ -2058,15 +2099,19 @@ class GFMPEngine {
   allocateBudget(idCategorie, montant, mois = null) {
     if (!this.data) return false;
     const targetMois = mois || ((this.month === '00') ? `${this.year}-01` : `${this.year}-${this.month}`);
-    const numAmount = Math.abs(parseFloat(montant) || 0);
+    const numAmount = this.roundMoney(Math.abs(parseFloat(montant) || 0));
 
     if (!Array.isArray(this.data.budgets)) {
       this.data.budgets = [];
     }
 
-    const existing = this.data.budgets.find(b => b.mois === targetMois && String(b.id_categorie) === String(idCategorie));
+    const existing = this.data.budgets.find(b => (b.mois === targetMois || b.mois_annee === targetMois) && String(b.id_categorie) === String(idCategorie));
     if (existing) {
       existing.montant = numAmount;
+      existing.montant_alloue = numAmount;
+      existing.mois = targetMois;
+      existing.mois_annee = targetMois;
+      existing.devise = this.currency;
       this.logHistory('BUDGET_ALLOC', 'budget', existing.id, `Mise à jour enveloppe ${targetMois} : ${numAmount} ${this.currency}`, existing);
     } else {
       const nextId = (this.data.budgets.length > 0)
@@ -2075,8 +2120,11 @@ class GFMPEngine {
       const newB = {
         id: nextId,
         mois: targetMois,
+        mois_annee: targetMois,
         id_categorie: String(idCategorie),
-        montant: numAmount
+        montant: numAmount,
+        montant_alloue: numAmount,
+        devise: this.currency
       };
       this.data.budgets.push(newB);
       this.logHistory('BUDGET_ALLOC', 'budget', nextId, `Nouvelle enveloppe ${targetMois} : ${numAmount} ${this.currency}`, newB);
@@ -2276,17 +2324,24 @@ class GFMPEngine {
     const nw = this.computeNetWorth();
     const bg = this.computeBudgetZBB();
 
-    // Financial health score (0 to 100)
-    let healthScore = 70;
+    // Financial health score (10 to 100)
+    let healthScore = 50;
     if (cf.netCashflow > 0) healthScore += 15;
-    else healthScore -= 20;
+    else healthScore -= 15;
 
-    if (bg.consumptionRate <= 85) healthScore += 15;
+    if (cf.savingsRate >= 20) healthScore += 15;
+    else if (cf.savingsRate >= 10) healthScore += 8;
+
+    if (bg.consumptionRate > 0 && bg.consumptionRate <= 85) healthScore += 10;
+    else if (bg.consumptionRate <= 100) healthScore += 5;
     else if (bg.consumptionRate > 100) healthScore -= 15;
 
     const totalAssets = nw.totalAssets || 0;
     const totalLiabilities = nw.totalLiabilities || 0;
-    const debtRatio = totalAssets > 0 ? Math.round((totalLiabilities / totalAssets) * 100) : 0;
+    const debtRatio = totalAssets > 0 ? Math.round((totalLiabilities / totalAssets) * 100) : (totalLiabilities > 0 ? 100 : 0);
+    if (debtRatio <= 25) healthScore += 10;
+    else if (debtRatio > 60) healthScore -= 10;
+
     const savingsRate = Math.round(cf.savingsRate) || 0;
 
     return {

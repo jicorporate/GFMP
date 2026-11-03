@@ -267,11 +267,6 @@ document.addEventListener('DOMContentLoaded', () => {
     });
   });
 
-  // Bind Header Settings Button
-  document.getElementById('btn-header-settings')?.addEventListener('click', () => {
-    triggerHaptic(15);
-    navigateTo('settings');
-  });
 
   // --- 4. TIME SLIDER & MONTH STRIP CONTROLS ---
   document.getElementById('btn-prev-year')?.addEventListener('click', () => { triggerHaptic(15); engine.prevYear(); });
@@ -1856,7 +1851,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     const solvencyEl = document.getElementById('hub-solvency-ratio');
     if (solvencyEl) {
-      const sol = data.totalAssets > 0 ? Math.max(0, 100 - data.debtRatio) : 100;
+      const sol = data.totalAssets > 0 ? Math.max(0, 100 - data.debtRatio) : (data.totalLiabilities > 0 ? 0 : 100);
       solvencyEl.textContent = engine.tr('SOLVENCY_SCORE', { sol, score: data.healthScore });
     }
 

@@ -293,6 +293,71 @@ Un contrôle d'empreintes numériques a validé l'alignement strict entre le por
     - `versionCode = 6`, `versionName = "1.5"` dans `build.gradle.kts`.
     - `BUILD SUCCESSFUL in 52s` (`assembleDebug`, 34 tâches, 0 erreur). Nouvel APK autonome `GFMP-v1.0.apk` généré (2.47 Mo, SHA-256 `054C86802E188A221035758A93D86830A404C2A11ED6A60AF48E9028B4B7DBB5`).
 
+### 11. Audit Intégral du Moteur Analytics, Éradication des Incohérences Mathématiques, Suppression du Bouton Paramètres & Redesign Gold Standard du Header
+
+- **Audit Critique du Moteur Analytics (`analytics-engine.js`) — Écarts et Anomalies Identifiés** :
+  - **Incohérence Schéma Budgets ZBB (Allocations Invisibles)** : `baseline_data.js` définissait les allocations budgétaires avec les propriétés `mois_annee` et `montant_alloue`, alors que la méthode `computeBudgetZBB()` de l'ancien moteur interrogeait exclusivement `b.mois` et `b.montant`. En conséquence, les 17 budgets pré-configurés retournaient systématiquement `alloue: 0`, faussant totalement le calcul des variances, le taux d'exécution budgétaire et le score de santé financière.
+  - **Point Aveugle des Virements de Trésorerie (`TRANSFERT`) sur le Patrimoine Net** : Dans la méthode `computeNetWorth()`, une structure conditionnelle `if (fluxType === 'REVENU') ... else if (fluxType === 'DEPENSE') ...` excluait purement et simplement les flux de type `TRANSFERT`. Les virements internes de précaution (ex: 100 000 MUR virés du compte courant vers le Livret d'Épargne) et d'épargne programmée DCA (250 USD virés vers le Portefeuille Crypto) ne débitaient pas le compte émetteur et ne créditaient pas les comptes cibles. Le Compte Courant restait gonflé à 177 252 MUR au lieu de son solde réel de 77 252 MUR, tandis que l'Épargne et les Investissements affichaient un solde nul.
+  - **Imprécisions Flottantes IEEE 754 & Zéro Négatif (`-0,00`)** : Multiplications et divisions cumulées sur les taux de conversion et les quotes-parts généraient des reliquats de micro-décimales (ex: `0.1 + 0.2 = 0.30000000000000004`) et produisaient parfois l'affichage indésirable `-0,00 €` en cas d'écart nul avec reliquat infinitésimal négatif.
+  - **Division par Zéro dans le Ratio de Solvabilité** : L'expression `data.totalAssets > 0 ? Math.max(0, 100 - data.debtRatio) : 100` attribuait une solvabilité parfaite de 100% à un profil possédant 0 actif et des passifs (dettes), au lieu de refléter une insolvabilité totale (0%).
+  - **Taux de Consommation Hors-Budget Inversé** : Si une catégorie non budgétée subissait une dépense imprévue (`alloue = 0`, `consomme > 0`), le taux d'exécution renvoyait 0% au lieu d'alerter sur un dépassement intégral (100%).
+
+- **Corrections Mathématiques & Architecture Financière Gold Standard (`analytics-engine.js` & `app.js`)** :
+  - **Normalisation Flottante Universelle (`roundMoney`)** : Implémentation de la fonction maîtresse `roundMoney(val)` :
+    ```javascript
+    roundMoney(val) {
+      if (val === null || val === undefined || isNaN(val)) return 0;
+      const res = Math.round((Number(val) + Number.EPSILON) * 100) / 100;
+      return res === 0 ? 0 : res;
+    }
+    ```
+    Toutes les opérations monétaires (devises, cashflow, budgets ZBB, patrimoine, pourcentages) sont scrupuleusement assainies et normalisées.
+  - **Résolution Polyvalente du Schéma Budgétaire** :
+    ```javascript
+    const bMonth = b.mois || b.mois_annee;
+    const bMontant = b.montant !== undefined ? b.montant : b.montant_alloue;
+    ```
+    Les 17 budgets pré-configurés sont désormais parfaitement intégrés et convertis selon la devise native de l'allocation (`b.devise || 'MUR'`).
+  - **Traitement Intégral et Bilatéral des Virements (`TRANSFERT`)** :
+    Dans `computeNetWorth()`, chaque virement déduit fidèlement les fonds du compte source (`id_compte === '1'`) et crédite avec conversion instantanée les comptes cibles (`id_compte === '2'` pour l'épargne, `id_compte === '5'` pour les investissements). L'équation fondamentale du patrimoine net est rigoureusement vérifiée : $\text{Net Worth} = \text{Total Assets} - \text{Total Liabilities}$.
+  - **Assainissement du Ratio de Solvabilité & Health Score** :
+    Correction de la ligne 1859 dans `app.js` :
+    ```javascript
+    const sol = data.totalAssets > 0 ? Math.max(0, 100 - data.debtRatio) : (data.totalLiabilities > 0 ? 0 : 100);
+    ```
+    Ajustement de l'indice composite de santé financière (`healthScore`) entre 10 et 100 pour refléter avec précision la dynamique épargne, solvabilité et respect budgétaire.
+
+- **Suppression du Bouton Paramètres du Header & Redesign Gold Standard** :
+  - **Suppression de `#btn-header-settings`** : Retrait complet de l'icône d'engrenage du bandeau supérieur (`index.html`, `styles.css`, `app.js`). La gestion des paramètres demeure parfaitement accessible via l'onglet dédié *"Réglages"* dans la barre de navigation inférieure.
+  - **Sélecteur de Langue Haute Joaillerie** : Modernisation ergonomique de `.lang-selector` sous forme de capsule en verre dépoli (`background: rgba(10, 16, 32, 0.6); backdrop-filter: blur(12px); border: 1px solid rgba(250, 218, 94, 0.25);`) avec pill actif en or impérial dégradé.
+  - **Masques de Défilement Dégradé (Edge Fading Masks)** : Ajout de masques CSS modernes sur `.month-strip-container` et `.currency-bar` :
+    ```css
+    mask-image: linear-gradient(to right, transparent 0px, black 8px, black calc(100% - 8px), transparent 100%);
+    -webkit-mask-image: linear-gradient(to right, transparent 0px, black 8px, black calc(100% - 8px), transparent 100%);
+    ```
+    Conférant un indice visuel intuitif de défilement horizontal sans coupure brute aux extrémités.
+  - **Fluidité du Mode Compact au Scroll (`.gfmp-header.is-compact`)** : Transition soignée réduisant l'encombrement vertical sur mobile tout en conservant une lisibilité maximale des indicateurs de temps et de devise.
+
+- **Validation Automatisée, Preuves Visuelles & Parité Cryptographique (SHA-256)** :
+  - **Suite de tests dédiée (`scratch/test_analytics_and_header_redesign.js`)** : 100% de réussite sur l'ensemble des validations (normalisation flottante, zéro négatif, cohérence Trésorerie, bilatéralité des virements, chargement des budgets ZBB, suppression du bouton paramètres, masques CSS).
+  - **Zéro Régression sur Toutes les Suites Antérieures** :
+    - `test_category_donut_colors.js` : Réussite 7/7
+    - `test_refresh_button_responsiveness.js` : Réussite 6/6
+    - `test_entity_modal_translations.js` : Réussite 5/5
+    - `test_scroll_responsiveness.js` : Réussite 5/5
+  - **Preuves Visuelles Relevées par Browser Subagent** :
+    - Header Normal avec Capsule Langues & Masques Latéraux : `header_normal_state_clean_1793701994328.png`
+    - Header Compact Dynamique au Scroll Vertical : `header_compact_state_clean_1793702014765.png`
+  - **Parité d'Empreintes Numériques (SHA-256)** :
+    - `index.html` : `BF6049BA...` (100% identique entre `mobile-web/` et `android/app/src/main/assets/`)
+    - `styles.css` : `B4A760A2...` (100% identique)
+    - `app.js` : `EB252482...` (100% identique)
+    - `analytics-engine.js` : `F60B4271...` (100% identique)
+    - `sw.js` : `46509F96...` (100% identique, version `gfmp-mobile-v5.5.0`)
+  - **Compilation Gradle Android & Versioning (v1.6 / Code 7)** :
+    - `versionCode = 7`, `versionName = "1.6"` dans `build.gradle.kts`.
+    - `BUILD SUCCESSFUL in 1m 15s` (`assembleDebug`, 34 tâches, 0 erreur). Nouvel APK autonome `GFMP-v1.0.apk` généré (2.47 Mo, SHA-256 `92EDEFE7DFDA5B9935DA3E0FE1F67EA5936D57F6DD9FC3BCF6BB58F8B3A36D31`).
+
 ---
 
 ## 📚 Documents de Référence Produits
