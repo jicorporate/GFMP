@@ -8,6 +8,7 @@ import android.os.Bundle
 import android.view.ViewGroup
 import android.webkit.ValueCallback
 import android.webkit.WebChromeClient
+import android.webkit.WebResourceRequest
 import android.webkit.WebSettings
 import android.webkit.WebView
 import android.webkit.WebViewClient
@@ -51,6 +52,7 @@ class MainActivity : ComponentActivity() {
                 ViewGroup.LayoutParams.MATCH_PARENT,
                 ViewGroup.LayoutParams.MATCH_PARENT
             )
+            setLayerType(android.view.View.LAYER_TYPE_HARDWARE, null)
 
             settings.apply {
                 javaScriptEnabled = true
@@ -66,12 +68,17 @@ class MainActivity : ComponentActivity() {
                 useWideViewPort = true
                 builtInZoomControls = false
                 displayZoomControls = false
-                cacheMode = WebSettings.LOAD_DEFAULT
+                cacheMode = WebSettings.LOAD_NO_CACHE
             }
 
             webViewClient = object : WebViewClient() {
+                override fun shouldOverrideUrlLoading(view: WebView?, request: WebResourceRequest?): Boolean {
+                    // Keep all navigation within the local WebView
+                    return false
+                }
+
+                @Deprecated("Deprecated in Java", ReplaceWith("false"))
                 override fun shouldOverrideUrlLoading(view: WebView?, url: String?): Boolean {
-                    // Keep all navigation within the app
                     return false
                 }
             }
@@ -115,6 +122,7 @@ class MainActivity : ComponentActivity() {
         })
 
         // Load 100% offline self-contained local bundle
+        webView.clearCache(true)
         webView.loadUrl("file:///android_asset/index.html")
     }
 

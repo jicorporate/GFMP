@@ -15,8 +15,8 @@
   <link rel="apple-touch-icon" sizes="180x180" href="assets/icon_512.png">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=ADLaM+Display&family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="styles.css">
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800;900&family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="styles.css?v=4.0.0">
 </head>
 <body>
 
@@ -26,14 +26,19 @@
   <header class="gfmp-header">
     <div class="header-top">
       <div class="brand-wrapper">
-        <img src="assets/favicon_jic.png" alt="Logo GFMP" class="brand-logo-img">
+        <img src="assets/favicon_jic.png" alt="Logo" class="brand-logo-img">
         <div class="brand-text">
-          <h1 id="app-title-display">GFMP • SFP v1.0</h1>
+          <h1 id="app-title-display">SYSTÈME FINANCIER PERSONNEL</h1>
           <div class="sub-title" id="date-display">25 Février 2026</div>
         </div>
       </div>
       <div class="header-actions">
-        <span class="offline-badge"><span class="pulse-dot"></span>100% LOCAL</span>
+        <button class="btn-header-settings" id="btn-header-settings" aria-label="Paramètres de l'application" title="Paramètres">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+            <circle cx="12" cy="12" r="3"/>
+            <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"/>
+          </svg>
+        </button>
         <div class="lang-selector">
           <button class="lang-btn active" data-lang="FR">FR</button>
           <button class="lang-btn" data-lang="EN">EN</button>
@@ -45,29 +50,45 @@
 
     <!-- Multi-Devises & Time Slider Toolbar -->
     <div class="header-toolbar">
-      <div class="time-slider-bar">
-        <!-- Year Stepper -->
-        <div class="time-stepper">
+      <div class="time-filter-row">
+        <div class="year-stepper-compact">
           <button class="stepper-btn" id="btn-prev-year" aria-label="Année précédente">&lt;</button>
-          <span class="stepper-label" id="lbl-year">2026</span>
+          <span class="year-val" id="lbl-year">2026</span>
           <button class="stepper-btn" id="btn-next-year" aria-label="Année suivante">&gt;</button>
         </div>
-        <!-- Month Stepper -->
-        <div class="time-stepper">
-          <button class="stepper-btn" id="btn-prev-month" aria-label="Mois précédent">&lt;</button>
-          <span class="stepper-label" id="lbl-month" style="min-width: 90px;">FÉVRIER</span>
-          <button class="stepper-btn" id="btn-next-month" aria-label="Mois suivant">&gt;</button>
+        <div class="month-strip-container" id="header-month-strip">
+          <button class="month-chip" data-month="01">Jan</button>
+          <button class="month-chip active" data-month="02">Fév</button>
+          <button class="month-chip" data-month="03">Mar</button>
+          <button class="month-chip" data-month="04">Avr</button>
+          <button class="month-chip" data-month="05">Mai</button>
+          <button class="month-chip" data-month="06">Jui</button>
+          <button class="month-chip" data-month="07">Jul</button>
+          <button class="month-chip" data-month="08">Aoû</button>
+          <button class="month-chip" data-month="09">Sep</button>
+          <button class="month-chip" data-month="10">Oct</button>
+          <button class="month-chip" data-month="11">Nov</button>
+          <button class="month-chip" data-month="12">Déc</button>
+          <button class="month-chip" data-month="00" id="chip-all-year">Année</button>
         </div>
       </div>
 
-      <!-- Currency Switcher O(1) -->
-      <div class="currency-bar" id="currency-bar">
-        <button class="curr-btn active" data-curr="MUR">MUR (Rs)</button>
-        <button class="curr-btn" data-curr="EUR">EUR (€)</button>
-        <button class="curr-btn" data-curr="USD">USD ($)</button>
-        <button class="curr-btn" data-curr="GBP">GBP (£)</button>
-        <button class="curr-btn" data-curr="ZAR">ZAR (R)</button>
-        <button class="curr-btn" data-curr="XOF">XOF (CFA)</button>
+      <!-- Multi-Devises & Bouton d'Actualisation des Taux (Haute Joaillerie, Sans Texte Parasite) -->
+      <div class="currency-row">
+        <div class="currency-bar" id="currency-bar">
+          <button class="curr-btn active" data-curr="MUR">MUR (Rs)</button>
+          <button class="curr-btn" data-curr="EUR">EUR (€)</button>
+          <button class="curr-btn" data-curr="USD">USD ($)</button>
+          <button class="curr-btn" data-curr="GBP">GBP (£)</button>
+          <button class="curr-btn" data-curr="ZAR">ZAR (R)</button>
+          <button class="curr-btn" data-curr="XOF">XOF (CFA)</button>
+        </div>
+        <button type="button" class="btn-refresh-rates" id="btn-refresh-rates" aria-label="Actualiser les taux de change (Marchés connectés)" title="Actualiser les taux de change (Marchés connectés)">
+          <span class="live-pulse-dot" id="live-pulse-dot"></span>
+          <svg class="refresh-icon" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+            <path d="M23 4v6h-6M1 20v-6h6M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"/>
+          </svg>
+        </button>
       </div>
     </div>
   </header>
@@ -75,191 +96,243 @@
   <main class="main-content">
 
     <!-- =========================================================================
-         VUE 1 : APP_HOME (HUB CENTRAL & 4 SOLID CARDS)
+         VUE 1 : APP_HOME (HUB CENTRAL — DASHBOARD INTERACTIF CONSOLIDÉ)
          ========================================================================= -->
     <section id="view-home" class="view-panel active">
-      <div style="margin-bottom: 14px; text-align: center;">
-        <p style="font-size: 0.85rem; color: var(--text-secondary);" id="txt-welcome">
-          Sélectionnez un module d'application ci-dessous pour démarrer.
-        </p>
+
+      <!-- Hub Consolidation Filter Pills -->
+      <div class="hub-filter-bar" id="hub-filter-bar">
+        <button class="hub-filter-chip active" data-hub-filter="ALL" id="hub-chip-all">Vue Consolidée</button>
+        <button class="hub-filter-chip" data-hub-filter="CASHFLOW" id="hub-chip-cashflow">Trésorerie</button>
+        <button class="hub-filter-chip" data-hub-filter="PATRIMOINE" id="hub-chip-patrimoine">Patrimoine</button>
+        <button class="hub-filter-chip" data-hub-filter="BUDGET" id="hub-chip-budget">Budgets</button>
       </div>
 
-      <div class="home-grid">
-        <!-- Card 1: Saisie Transaction -->
-        <div class="solid-card card-saisie" id="card-nav-saisie">
-          <div class="card-header-inner">
-            <h2 class="card-title" id="lbl-card-saisie">SAISIE TRANSACTION</h2>
-            <div class="card-icon">
-              <!-- SVG Credit Card Icon -->
-              <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                <rect x="2" y="5" width="20" height="14" rx="2"/>
-                <line x1="2" y1="10" x2="22" y2="10"/>
-                <line x1="6" y1="15" x2="10" y2="15"/>
-              </svg>
-            </div>
+      <!-- Hero Portfolio Consolidated Wealth Card -->
+      <div class="hub-hero-portfolio">
+        <div class="hub-hero-header">
+          <span class="hub-hero-label">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5"/>
+            </svg>
+            <span id="lbl-portfolio-consolidated">PORTEFEUILLE CONSOLIDÉ</span>
+          </span>
+          <span class="hub-hero-badge" id="hub-hero-currency">MUR (Rs)</span>
+        </div>
+        <div class="hub-hero-amount" id="hub-hero-networth">0,00 Rs</div>
+        
+        <!-- Consolidated KPI Grid -->
+        <div class="hub-hero-grid">
+          <div class="hub-hero-item">
+            <span class="hub-hero-item-label" id="lbl-hub-cf">FLUX NET MENSUEL</span>
+            <span class="hub-hero-item-val" id="hub-val-cashflow">0,00 Rs</span>
           </div>
-          <p class="card-desc" id="desc-card-saisie">Ajouter un revenu, dépense ou virement interne avec validation d'intégrité.</p>
-          <div class="card-kpi-preview">
-            <span>+ Saisie Express</span>
-            <span class="card-kpi-sub">Gatekeeper USF</span>
+          <div class="hub-hero-item">
+            <span class="hub-hero-item-label" id="lbl-hub-bg">CONSOMMATION BUDGET</span>
+            <span class="hub-hero-item-val" id="hub-val-budget">0%</span>
+          </div>
+          <div class="hub-hero-item">
+            <span class="hub-hero-item-label" id="lbl-hub-assets">TOTAL ACTIFS</span>
+            <span class="hub-hero-item-val" id="hub-val-assets">0,00 Rs</span>
+          </div>
+          <div class="hub-hero-item">
+            <span class="hub-hero-item-label" id="lbl-hub-debts">TOTAL DETTES</span>
+            <span class="hub-hero-item-val" id="hub-val-debts">0,00 Rs</span>
           </div>
         </div>
 
-        <!-- Card 2: Dashboard Cashflow -->
-        <div class="solid-card card-cashflow" id="card-nav-cashflow">
-          <div class="card-header-inner">
-            <h2 class="card-title" id="lbl-card-cashflow">DASHBOARD CASHFLOW</h2>
-            <div class="card-icon">
-              <!-- SVG Analytics Bar Chart Icon -->
-              <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <!-- Proportional Asset & Debt Distribution Mini Bar -->
+        <div class="hub-asset-mini-container" style="margin-top:14px;">
+          <div style="display:flex; justify-content:space-between; font-size:0.68rem; color:var(--text-secondary); margin-bottom:5px;">
+            <span id="lbl-hub-solvency-title">Répartition Actifs vs Dettes</span>
+            <span id="hub-solvency-ratio" style="font-weight:800; color:var(--c-yellow-royal);">Solvabilité : 100%</span>
+          </div>
+          <div class="asset-stack-bar" id="hub-asset-stack-bar" style="height:8px; border-radius:4px;"></div>
+        </div>
+      </div>
+
+      <!-- Hub Multi-Report Consolidated Interactive Visualizations Grid -->
+      <div class="hub-dashboard-sections" id="hub-dashboard-sections" style="display:flex; flex-direction:column; gap:16px;">
+
+        <!-- Section 1 (Cashflow): Évolution & Tendance des Flux sur 6 Mois -->
+        <div class="chart-card hub-dash-card" id="hub-card-trend">
+          <div class="chart-header">
+            <div style="display:flex; align-items:center; gap:8px;">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="var(--c-yellow-royal)" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
                 <line x1="18" y1="20" x2="18" y2="10"/>
                 <line x1="12" y1="20" x2="12" y2="4"/>
                 <line x1="6" y1="20" x2="6" y2="14"/>
-                <polyline points="4 9 10 3 16 7 20 2"/>
               </svg>
+              <h3 style="font-size:0.88rem;" id="hub-trend-title">ÉVOLUTION DES FLUX SUR 6 MOIS (TRÉSORERIE)</h3>
             </div>
+            <span style="font-size:0.7rem; color:var(--text-muted);" id="hub-trend-period">Période Active</span>
           </div>
-          <p class="card-desc" id="desc-card-cashflow">Analyser les flux mensuels consolidés et le net de trésorerie.</p>
-          <div class="card-kpi-preview">
-            <span id="preview-cashflow-net">53 200,00 Rs</span>
-            <span class="card-kpi-sub">Flux Net</span>
-          </div>
+          <div id="hub-trend-chart-box" style="min-height:190px;"></div>
         </div>
 
-        <!-- Card 3: Bilan Patrimonial -->
-        <div class="solid-card card-networth" id="card-nav-networth">
-          <div class="card-header-inner">
-            <h2 class="card-title" id="lbl-card-networth">BILAN PATRIMONIAL</h2>
-            <div class="card-icon">
-              <!-- SVG Stacked Vault/Pillar Icon -->
-              <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <!-- Section 2 (Cashflow): Répartition des Dépenses par Catégorie -->
+        <div class="chart-card hub-dash-card" id="hub-card-donut">
+          <div class="chart-header">
+            <div style="display:flex; align-items:center; gap:8px;">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="var(--c-yellow-royal)" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                <circle cx="12" cy="12" r="10"/>
+                <path d="M12 2a10 10 0 0 1 10 10h-10z"/>
+              </svg>
+              <h3 style="font-size:0.88rem;" id="hub-donut-title">RÉPARTITION DES DÉPENSES PAR CATÉGORIE</h3>
+            </div>
+            <span style="font-size:0.7rem; color:var(--text-muted);" id="hub-donut-period">Mois en cours</span>
+          </div>
+          <div id="hub-donut-chart-box" class="donut-chart-wrapper" style="min-height:140px;"></div>
+        </div>
+
+        <!-- Section 3 (Patrimoine): Allocation d'Actifs & Structure Patrimoniale -->
+        <div class="chart-card hub-dash-card" id="hub-card-patrimoine">
+          <div class="chart-header">
+            <div style="display:flex; align-items:center; gap:8px;">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="var(--c-yellow-royal)" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
                 <path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5"/>
               </svg>
+              <h3 style="font-size:0.88rem;" id="hub-patrimoine-title">ALLOCATION D'ACTIFS & STRUCTURE PATRIMONIALE</h3>
             </div>
+            <span style="font-size:0.7rem; color:var(--c-yellow-royal); font-weight:700;" id="hub-patrimoine-total">Actifs Nets</span>
           </div>
-          <p class="card-desc" id="desc-card-networth">Calcul de la Valeur Nette et photographie patrimoniale à date.</p>
-          <div class="card-kpi-preview">
-            <span id="preview-networth-val">100 000,00 Rs</span>
-            <span class="card-kpi-sub">Actifs & Dettes</span>
-          </div>
+          <div id="hub-patrimoine-bars-box" style="margin-bottom:14px;"></div>
+          <div style="font-size:0.72rem; font-weight:700; color:var(--text-muted); text-transform:uppercase; margin-bottom:8px;" id="lbl-hub-top-assets-title">Principaux Actifs :</div>
+          <div id="hub-top-assets-list" style="display:flex; flex-direction:column; gap:6px;"></div>
         </div>
 
-        <!-- Card 4: Pilotage Budgétaire ZBB -->
-        <div class="solid-card card-budget" id="card-nav-budget">
-          <div class="card-header-inner">
-            <h2 class="card-title" id="lbl-card-budget">PILOTAGE BUDGÉTAIRE</h2>
-            <div class="card-icon">
-              <!-- SVG Target/Gauge Icon -->
-              <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <!-- Section 4 (Budgets): Pilotage des Enveloppes Budgétaires -->
+        <div class="chart-card hub-dash-card" id="hub-card-budget">
+          <div class="chart-header">
+            <div style="display:flex; align-items:center; gap:8px;">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="var(--c-yellow-royal)" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
                 <circle cx="12" cy="12" r="10"/>
                 <circle cx="12" cy="12" r="6"/>
                 <circle cx="12" cy="12" r="2"/>
               </svg>
+              <h3 style="font-size:0.88rem;" id="hub-budget-title">PILOTAGE & SANTÉ DES ENVELOPPES BUDGÉTAIRES</h3>
             </div>
+            <span style="font-size:0.7rem; color:var(--c-yellow-royal); font-weight:700;" id="hub-budget-global-pct">0%</span>
           </div>
-          <p class="card-desc" id="desc-card-budget">Suivi des enveloppes (ZBB) avec jauges de consommation dorées.</p>
-          <div class="card-kpi-preview">
-            <span id="preview-budget-pct">35%</span>
-            <span class="card-kpi-sub">Consommé</span>
-          </div>
+          <div id="hub-budget-gauges-box" style="display:flex; flex-direction:column; gap:10px;"></div>
         </div>
+
+        <!-- Section 5: Dernières Transactions Consolidées -->
+        <div class="table-card hub-dash-card" id="hub-card-recent-tx">
+          <div class="table-header-title">
+            <div style="display:flex; align-items:center; gap:8px;">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="var(--c-yellow-royal)" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
+                <polyline points="14 2 14 8 20 8"/>
+              </svg>
+              <h3 style="font-size:0.88rem;" id="hub-recent-title">DERNIÈRES TRANSACTIONS ENREGISTRÉES</h3>
+            </div>
+            <button class="btn-allouer" id="btn-hub-quick-saisie" style="padding:4px 10px; font-size:0.68rem;">+ SAISIE EXPRESS</button>
+          </div>
+          <table class="violet-zebra-table" style="margin-top:6px;">
+            <thead>
+              <tr>
+                <th id="hub-th-date">Date</th>
+                <th id="hub-th-op">Opération / Actif</th>
+                <th style="text-align:right;" id="hub-th-amt">Montant</th>
+              </tr>
+            </thead>
+            <tbody id="hub-recent-tx-body">
+              <tr><td colspan="3" class="empty-state">Aucune transaction</td></tr>
+            </tbody>
+          </table>
+        </div>
+
       </div>
 
-      <!-- Quick Action Utilities -->
-      <div style="margin-top: 22px; display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 8px;">
-        <button id="btn-open-report" class="btn-back-tactile" style="justify-content:center; background:linear-gradient(135deg, #1E3A8A 0%, #4169E1 100%); color:#FFF;">
-          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="margin-right:6px;">
-            <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
-            <polyline points="14 2 14 8 20 8"/>
-            <line x1="16" y1="13" x2="8" y2="13"/>
-            <line x1="16" y1="17" x2="8" y2="17"/>
-          </svg>
-          Rapport
-        </button>
-        <button id="btn-export-backup" class="btn-back-tactile" style="justify-content:center; background:#1E293B; color:#FFF;">
-          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="margin-right:6px;">
-            <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
-            <polyline points="7 10 12 15 17 10"/>
-            <line x1="12" y1="15" x2="12" y2="3"/>
-          </svg>
-          Exporter
-        </button>
-        <button id="btn-import-backup" class="btn-back-tactile" style="justify-content:center; background:#1E293B; color:#FFF;">
-          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="margin-right:6px;">
-            <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
-            <polyline points="17 8 12 3 7 8"/>
-            <line x1="12" y1="3" x2="12" y2="15"/>
-          </svg>
-          Importer
-        </button>
-        <input type="file" id="file-import-input" accept=".json,.csv,.xlsx" style="display:none;">
-      </div>
-
-      <!-- In-App PWA Install Banner (When accessible in mobile browser) -->
-      <div id="pwa-install-banner" style="display:none; margin-top:14px; background:rgba(250,218,94,0.1); border:1px solid var(--c-yellow-royal); border-radius:12px; padding:12px 16px; align-items:center; justify-content:space-between;">
-        <div style="display:flex; align-items:center; gap:10px;">
-          <img src="assets/favicon_jic.png" style="width:32px; height:32px; border-radius:8px;">
-          <div style="font-size:0.78rem;">
-            <div style="font-weight:700; color:#FFF;">Installer l'Application GFMP</div>
-            <div style="color:var(--text-muted); font-size:0.7rem;">Accès direct avec icône sur l'écran d'accueil</div>
-          </div>
-        </div>
-        <button id="btn-pwa-install" class="btn-allouer" style="font-size:0.75rem; padding:6px 14px;">Installer</button>
-      </div>
+      <input type="file" id="file-import-input" accept=".json,.csv,.xlsx" style="display:none;">
     </section>
 
     <!-- =========================================================================
-         VUE 2 : GATEKEEPER SAISIE TRANSACTION (USF_Transaction)
+         VUE 2 : SAISIE DE TRANSACTION (CUTTING-EDGE LUXURY FORM)
          ========================================================================= -->
     <section id="view-transaction" class="view-panel" style="display:none;">
-      <button class="btn-back-tactile btn-nav-home">&lt; Hub Central</button>
+      <button class="btn-hub-central btn-nav-home" aria-label="Retour au Hub Central">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M19 12H5M12 19l-7-7 7-7"/>
+        </svg>
+        <span>Hub Central</span>
+      </button>
       
       <div class="form-card">
-        <h2 style="font-family: var(--font-display); color: var(--c-yellow-royal); font-size: 1.2rem; margin-bottom: 14px;">
-          SAISIE TRANSACTION (Gatekeeper)
+        <h2 id="lbl-tx-screen-title" style="font-family: var(--font-display); color: var(--c-yellow-royal); font-size: 1.2rem; margin-bottom: 16px; display:flex; align-items:center; gap:8px;">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+            <rect x="2" y="5" width="20" height="14" rx="2"/>
+            <line x1="2" y1="10" x2="22" y2="10"/>
+            <line x1="6" y1="15" x2="10" y2="15"/>
+          </svg>
+          SAISIE DE TRANSACTION
         </h2>
 
+        <!-- Segmented Type Selector -->
+        <div class="type-segmented-control" id="tx-type-selector">
+          <button type="button" class="type-segment-btn rev" data-type="REVENU">Revenu</button>
+          <button type="button" class="type-segment-btn active dep" data-type="DEPENSE">Dépense</button>
+          <button type="button" class="type-segment-btn tra" data-type="TRANSFERT">Virement</button>
+        </div>
+
         <form id="form-transaction">
+          <!-- Hero Amount Input -->
           <div class="form-group">
-            <label class="form-label">Date de l'opération</label>
+            <label class="form-label" id="lbl-form-montant">Montant</label>
+            <div class="hero-amount-box">
+              <input type="number" step="0.01" id="tx-montant" class="hero-amount-input" placeholder="0.00" required>
+              <select id="tx-devise" class="hero-amount-currency" style="border:none; cursor:pointer; outline:none;"></select>
+            </div>
+            <!-- Quick Amount Chips -->
+            <div class="quick-amount-row">
+              <button type="button" class="quick-amount-chip" data-add="1000">+1 000</button>
+              <button type="button" class="quick-amount-chip" data-add="5000">+5 000</button>
+              <button type="button" class="quick-amount-chip" data-add="10000">+10 000</button>
+              <button type="button" class="quick-amount-chip" data-add="50000">+50 000</button>
+            </div>
+          </div>
+
+          <div class="form-group">
+            <label class="form-label" id="lbl-form-date">Date de l'opération</label>
             <input type="date" id="tx-date" class="form-input" required>
           </div>
 
           <div class="form-group">
-            <label class="form-label">Compte Bancaire</label>
+            <div class="field-header-row">
+              <label class="form-label" id="lbl-form-compte">Actifs / Comptes</label>
+              <button type="button" class="btn-field-add" data-entity="compte" id="btn-add-compte-main" title="Créer un nouvel actif">+ Nouveau</button>
+            </div>
             <select id="tx-compte" class="form-select" required></select>
-            <input type="text" id="tx-new-compte" class="form-input" placeholder="Nouveau compte..." style="display:none; margin-top:6px;">
           </div>
 
           <div class="form-group">
-            <label class="form-label">Catégorie Budgétaire</label>
+            <div class="field-header-row">
+              <label class="form-label" id="lbl-form-categorie">Catégorie Budgétaire</label>
+              <button type="button" class="btn-field-add" data-entity="categorie" id="btn-add-cat-main" title="Créer une nouvelle catégorie">+ Nouvelle</button>
+            </div>
             <select id="tx-categorie" class="form-select" required></select>
-            <input type="text" id="tx-new-categorie" class="form-input" placeholder="Nouvelle catégorie..." style="display:none; margin-top:6px;">
           </div>
 
           <div class="form-group">
-            <label class="form-label">Tiers (Bénéficiaire / Émetteur)</label>
+            <div class="field-header-row">
+              <label class="form-label" id="lbl-form-tiers">Tiers (Bénéficiaire / Émetteur)</label>
+              <button type="button" class="btn-field-add" data-entity="tiers" id="btn-add-tiers-main" title="Créer un nouveau tiers">+ Nouveau</button>
+            </div>
             <select id="tx-tiers" class="form-select" required></select>
-            <input type="text" id="tx-new-tiers" class="form-input" placeholder="Nouveau tiers..." style="display:none; margin-top:6px;">
-          </div>
-
-          <div style="display:grid; grid-template-columns: 2fr 1fr; gap:10px;">
-            <div class="form-group">
-              <label class="form-label">Montant</label>
-              <input type="number" step="0.01" id="tx-montant" class="form-input" placeholder="0.00" required>
-            </div>
-            <div class="form-group">
-              <label class="form-label">Devise</label>
-              <select id="tx-devise" class="form-select"></select>
-            </div>
           </div>
 
           <div class="form-group">
-            <label class="form-label">Description / Notes</label>
+            <label class="form-label" id="lbl-form-notes">Description / Notes</label>
             <input type="text" id="tx-notes" class="form-input" placeholder="Notes (ex: Facture KIMYA ÉDITION)">
           </div>
 
-          <button type="submit" class="btn-submit-tx">VALIDER L'OPÉRATION</button>
+          <button type="submit" class="btn-submit-tx" id="btn-submit-tx-main">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+              <polyline points="20 6 9 17 4 12"/>
+            </svg>
+            <span id="lbl-btn-valider">VALIDER L'OPÉRATION</span>
+          </button>
         </form>
       </div>
     </section>
@@ -268,20 +341,25 @@
          VUE 3 : DASHBOARD CASHFLOW (MOD_04)
          ========================================================================= -->
     <section id="view-cashflow" class="view-panel" style="display:none;">
-      <button class="btn-back-tactile btn-nav-home">&lt; Hub Central</button>
+      <button class="btn-hub-central btn-nav-home" aria-label="Retour au Hub Central">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M19 12H5M12 19l-7-7 7-7"/>
+        </svg>
+        <span>Hub Central</span>
+      </button>
 
       <!-- 3 Solid Mini-Cards -->
       <div class="kpi-row">
         <div class="kpi-mini-card kpi-rev">
-          <div class="kpi-mini-label">REVENUS</div>
+          <div class="kpi-mini-label" id="lbl-kpi-rev">REVENUS</div>
           <div class="kpi-mini-value" id="kpi-cashflow-rev">0,00 Rs</div>
         </div>
         <div class="kpi-mini-card kpi-dep">
-          <div class="kpi-mini-label">DÉPENSES</div>
+          <div class="kpi-mini-label" id="lbl-kpi-dep">DÉPENSES</div>
           <div class="kpi-mini-value" id="kpi-cashflow-dep">0,00 Rs</div>
         </div>
         <div class="kpi-mini-card kpi-net" id="card-kpi-net">
-          <div class="kpi-mini-label">CASHFLOW NET</div>
+          <div class="kpi-mini-label" id="lbl-kpi-net">CASHFLOW NET</div>
           <div class="kpi-mini-value" id="kpi-cashflow-net">0,00 Rs</div>
         </div>
       </div>
@@ -289,8 +367,8 @@
       <!-- Graphique 1: Tendance Multi-Mois (SVG Interactif) -->
       <div class="chart-card">
         <div class="chart-header">
-          <h3>TENDANCE MULTI-MOIS (Revenus vs Dépenses)</h3>
-          <span style="font-size:0.7rem; color:var(--text-muted);">6 Derniers Mois</span>
+          <h3 id="cf-chart-trend-title">TENDANCE MULTI-MOIS (Revenus vs Dépenses)</h3>
+          <span style="font-size:0.7rem; color:var(--text-muted);" id="cf-chart-trend-sub">6 Derniers Mois</span>
         </div>
         <div class="svg-chart-container" id="svg-trend-chart-box">
           <!-- Dynamically rendered via app.js -->
@@ -300,13 +378,16 @@
       <!-- Graphique 2: Donut Répartition des Dépenses (SVG Interactif) -->
       <div class="chart-card">
         <div class="chart-header">
-          <h3>RÉPARTITION PAR CATÉGORIE</h3>
+          <h3 id="cf-chart-donut-title">RÉPARTITION PAR CATÉGORIE</h3>
           <span style="font-size:0.7rem; color:var(--c-yellow-royal);" id="donut-period-label">Période Active</span>
         </div>
         <div class="svg-donut-container" id="svg-donut-chart-box">
           <!-- Dynamically rendered via app.js -->
         </div>
       </div>
+
+      <!-- Active Filter Chip for Donut Click -->
+      <div id="cf-active-filter-badge" style="display:none;"></div>
 
       <!-- Recherche & Filtres Rapides -->
       <div class="search-filter-box">
@@ -320,26 +401,40 @@
           <input type="text" id="input-tx-search" class="search-input" placeholder="Rechercher catégorie, tiers, compte ou note...">
         </div>
         <div class="filter-chips-row">
-          <button class="filter-chip active" data-filter="ALL">Tous</button>
-          <button class="filter-chip" data-filter="REVENU">Revenus</button>
-          <button class="filter-chip" data-filter="DEPENSE">Dépenses</button>
-          <button class="filter-chip" data-filter="TRANSFERT">Virements</button>
+          <button class="filter-chip active" id="cf-chip-all" data-filter="ALL">Tous</button>
+          <button class="filter-chip" id="cf-chip-rev" data-filter="REVENU">Revenus</button>
+          <button class="filter-chip" id="cf-chip-dep" data-filter="DEPENSE">Dépenses</button>
+          <button class="filter-chip" id="cf-chip-tra" data-filter="TRANSFERT">Virements</button>
+        </div>
+        <div style="display:flex; justify-content:space-between; align-items:center; gap:8px;">
+          <select id="cf-account-filter" class="sort-select" style="flex:1;">
+            <option value="ALL">Tous les comptes</option>
+          </select>
+          <div class="sort-select-wrapper">
+            <span style="font-size:0.7rem; color:var(--text-muted);" id="lbl-cf-sort">Trier :</span>
+            <select id="cf-sort-select" class="sort-select">
+              <option value="date-desc">Date (récent)</option>
+              <option value="date-asc">Date (ancien)</option>
+              <option value="amount-desc">Montant (haut)</option>
+              <option value="amount-asc">Montant (bas)</option>
+            </select>
+          </div>
         </div>
       </div>
 
-      <!-- Tableau Violet Zebra -->
+      <!-- Tableau des Transactions -->
       <div class="table-card">
         <div class="table-header-title">
-          <h3>TRANSACTIONS CONSOLIDÉES (Violet Zebra)</h3>
+          <h3 id="lbl-cf-table-title">TRANSACTIONS CONSOLIDÉES</h3>
           <span style="font-size:0.75rem; color:var(--text-muted);" id="cashflow-count-label">0 flux</span>
         </div>
         <table class="violet-zebra-table">
           <thead>
             <tr>
-              <th>Date</th>
-              <th>Catégorie / Compte</th>
-              <th>Tiers</th>
-              <th style="text-align:right;">Montant</th>
+              <th id="cf-th-date">Date</th>
+              <th id="cf-th-cat">Catégorie / Compte</th>
+              <th id="cf-th-tiers">Tiers</th>
+              <th style="text-align:right;" id="cf-th-amt">Montant</th>
               <th style="width:34px; text-align:center;"></th>
             </tr>
           </thead>
@@ -354,18 +449,23 @@
          VUE 4 : BILAN PATRIMONIAL / NET WORTH (MOD_05)
          ========================================================================= -->
     <section id="view-networth" class="view-panel" style="display:none;">
-      <button class="btn-back-tactile btn-nav-home">&lt; Hub Central</button>
+      <button class="btn-hub-central btn-nav-home" aria-label="Retour au Hub Central">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M19 12H5M12 19l-7-7 7-7"/>
+        </svg>
+        <span>Hub Central</span>
+      </button>
 
       <div class="networth-hero" id="networth-hero-card">
-        <div class="networth-label">VALEUR NETTE PATRIMONIALE (SNAPSHOT)</div>
+        <div class="networth-label" id="lbl-networth-title">VALEUR NETTE PATRIMONIALE</div>
         <div class="networth-val" id="nw-hero-val">0,00 Rs</div>
         <div class="networth-breakdown">
           <div class="nw-sub-col">
-            <div class="nw-sub-label">Total Actifs</div>
+            <div class="nw-sub-label" id="lbl-nw-assets">Total Actifs</div>
             <div class="nw-sub-val assets" id="nw-hero-assets">0,00 Rs</div>
           </div>
           <div class="nw-sub-col">
-            <div class="nw-sub-label">Total Dettes</div>
+            <div class="nw-sub-label" id="lbl-nw-debts">Total Dettes</div>
             <div class="nw-sub-val liabilities" id="nw-hero-liabilities">0,00 Rs</div>
           </div>
         </div>
@@ -379,19 +479,27 @@
         </div>
       </div>
 
-      <!-- Tableau des Comptes Violet Zebra -->
+      <!-- Filtre par classe de compte -->
+      <div class="filter-chips-row" style="margin-bottom: 12px;" id="nw-class-chips">
+        <button class="filter-chip active" id="nw-chip-all" data-class="ALL">Tous</button>
+        <button class="filter-chip" id="nw-chip-liq" data-class="LIQUIDITE">Liquidités</button>
+        <button class="filter-chip" id="nw-chip-inv" data-class="INVESTISSEMENT">Investissements</button>
+        <button class="filter-chip" id="nw-chip-det" data-class="DETTE">Dettes</button>
+      </div>
+
+      <!-- Tableau des Comptes -->
       <div class="table-card">
         <div class="table-header-title">
-          <h3>INVENTAIRE DES COMPTES ET DETTES</h3>
-          <span style="font-size:0.75rem; color:var(--c-yellow-royal);">As of Date</span>
+          <h3 id="lbl-nw-table-title">INVENTAIRE DES COMPTES ET DETTES</h3>
+          <span id="lbl-as-of-date" style="font-size:0.75rem; color:var(--c-yellow-royal); font-weight:800;"></span>
         </div>
         <table class="violet-zebra-table">
           <thead>
             <tr>
-              <th>Compte</th>
-              <th>Classe</th>
-              <th>Solde Natif</th>
-              <th style="text-align:right;">Solde Converti</th>
+              <th id="nw-th-cpt">Compte</th>
+              <th id="nw-th-classe">Classe</th>
+              <th id="nw-th-native">Solde Natif</th>
+              <th style="text-align:right;" id="nw-th-conv">Solde Converti</th>
             </tr>
           </thead>
           <tbody id="networth-table-body">
@@ -402,39 +510,228 @@
     </section>
 
     <!-- =========================================================================
-         VUE 5 : PILOTAGE BUDGÉTAIRE ZBB (MOD_06)
+         VUE 5 : PILOTAGE BUDGÉTAIRE (MOD_06)
          ========================================================================= -->
     <section id="view-budget" class="view-panel" style="display:none;">
-      <button class="btn-back-tactile btn-nav-home">&lt; Hub Central</button>
+      <button class="btn-hub-central btn-nav-home" aria-label="Retour au Hub Central">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M19 12H5M12 19l-7-7 7-7"/>
+        </svg>
+        <span>Hub Central</span>
+      </button>
 
       <div class="budget-hero-card">
         <div>
-          <div style="font-size:0.72rem; color:var(--text-muted); text-transform:uppercase;">Enveloppe Globale ZBB</div>
+          <div style="font-size:0.72rem; color:var(--text-muted); text-transform:uppercase;" id="lbl-budget-envelope">Enveloppe Globale</div>
           <div style="font-size:1.4rem; font-weight:800;" id="budget-hero-total">0,00 Rs</div>
           <div style="font-size:0.75rem; color:var(--text-secondary);" id="budget-hero-sub">Consommé : 0,00 Rs</div>
         </div>
         <button class="btn-allouer" id="btn-open-alloc-modal">+ ALLOUER</button>
       </div>
 
-      <!-- Tableau Budgets Violet Zebra avec DataBars -->
+      <!-- Filtre de Statut Budgétaire -->
+      <div class="filter-chips-row" style="margin-bottom: 12px;" id="bg-status-chips">
+        <button class="filter-chip active" id="bg-chip-all" data-bstatus="ALL">Tous</button>
+        <button class="filter-chip" id="bg-chip-over" data-bstatus="OVER">Dépassé</button>
+        <button class="filter-chip" id="bg-chip-ok" data-bstatus="OK">Sous contrôle</button>
+      </div>
+
+      <!-- Tableau Budgets Violet Zebra avec Jauges Modernes (Ex-DataBars) -->
       <div class="table-card">
         <div class="table-header-title">
-          <h3>SUIVI DES ENVELOPPES (DataBars Jaunes)</h3>
+          <h3 id="lbl-budget-title">SUIVI DES ENVELOPPES BUDGÉTAIRES</h3>
           <span style="font-size:0.75rem; color:var(--c-yellow-royal);" id="budget-month-label">2026-02</span>
         </div>
         <table class="violet-zebra-table">
           <thead>
             <tr>
-              <th>Catégorie</th>
-              <th>Alloué</th>
-              <th>Réalisé</th>
-              <th style="text-align:right;">Consommation</th>
+              <th id="bg-th-cat">Catégorie</th>
+              <th id="bg-th-alloue">Alloué</th>
+              <th id="bg-th-consomme">Réalisé</th>
+              <th style="text-align:right;" id="bg-th-conso">Consommation</th>
             </tr>
           </thead>
           <tbody id="budget-table-body">
             <tr><td colspan="4" class="empty-state">Aucune enveloppe allouée</td></tr>
           </tbody>
         </table>
+      </div>
+    </section>
+
+    <!-- =========================================================================
+         VUE 6 : PARAMÈTRES & PERSONNALISATION (AVEC GESTION DE LA BASE DE DONNÉES)
+         ========================================================================= -->
+    <section id="view-settings" class="view-panel" style="display:none;">
+      <button class="btn-hub-central btn-nav-home" aria-label="Retour au Hub Central">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M19 12H5M12 19l-7-7 7-7"/>
+        </svg>
+        <span>Hub Central</span>
+      </button>
+
+      <div class="table-card" style="margin-bottom:16px;">
+        <div class="table-header-title">
+          <div style="display:flex; align-items:center; gap:8px;">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="var(--c-yellow-royal)" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+              <circle cx="12" cy="12" r="3"/>
+              <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"/>
+            </svg>
+            <h3 style="font-size:1.05rem;">PARAMÈTRES & PERSONNALISATION</h3>
+          </div>
+          <span style="font-size:0.75rem; color:var(--c-yellow-royal); font-weight:800;">SFP v1.0</span>
+        </div>
+      </div>
+
+      <!-- Setting Section 1: Thème Visuel -->
+      <div class="solid-card" style="margin-bottom:14px; cursor:default;">
+        <div class="card-header-inner">
+          <h2 class="card-title" style="font-size:0.95rem;">THÈME VISUEL & AMBIANCE</h2>
+          <span style="font-size:0.7rem; color:var(--text-muted);">Personnalisation instantanée</span>
+        </div>
+        <div class="settings-theme-grid" id="settings-theme-selector" style="display:grid; grid-template-columns:repeat(2, 1fr); gap:8px; margin-top:8px;">
+          <button type="button" class="theme-choice-btn active" data-theme="blue" style="display:flex; align-items:center; gap:8px; padding:10px; border-radius:10px; background:rgba(65,105,225,0.18); border:1.5px solid #4169E1; color:#FFF; font-weight:700; font-size:0.75rem; cursor:pointer;">
+            <span style="width:14px; height:14px; border-radius:50%; background:#4169E1; border:1.5px solid #FADA5E; flex-shrink:0;"></span>
+            <span>Bleu Royal (Défaut)</span>
+          </button>
+          <button type="button" class="theme-choice-btn" data-theme="gold" style="display:flex; align-items:center; gap:8px; padding:10px; border-radius:10px; background:rgba(250,218,94,0.1); border:1px solid rgba(250,218,94,0.3); color:#FFF; font-weight:700; font-size:0.75rem; cursor:pointer;">
+            <span style="width:14px; height:14px; border-radius:50%; background:#FADA5E; border:1px solid #FFF; flex-shrink:0;"></span>
+            <span>Or & Noir Impérial</span>
+          </button>
+          <button type="button" class="theme-choice-btn" data-theme="emerald" style="display:flex; align-items:center; gap:8px; padding:10px; border-radius:10px; background:rgba(16,185,129,0.1); border:1px solid rgba(16,185,129,0.3); color:#FFF; font-weight:700; font-size:0.75rem; cursor:pointer;">
+            <span style="width:14px; height:14px; border-radius:50%; background:#10B981; border:1px solid #FFF; flex-shrink:0;"></span>
+            <span>Émeraude Wealth</span>
+          </button>
+          <button type="button" class="theme-choice-btn" data-theme="amethyst" style="display:flex; align-items:center; gap:8px; padding:10px; border-radius:10px; background:rgba(120,81,169,0.1); border:1px solid rgba(120,81,169,0.3); color:#FFF; font-weight:700; font-size:0.75rem; cursor:pointer;">
+            <span style="width:14px; height:14px; border-radius:50%; background:#7851A9; border:1px solid #FFF; flex-shrink:0;"></span>
+            <span>Améthyste Royale</span>
+          </button>
+        </div>
+      </div>
+
+      <!-- Setting Section 2: Préférences Régionales -->
+      <div class="solid-card" style="margin-bottom:14px; cursor:default;">
+        <div class="card-header-inner">
+          <h2 class="card-title" style="font-size:0.95rem;">PRÉFÉRENCES RÉGIONALES & DEVISE</h2>
+        </div>
+        <div style="display:flex; flex-direction:column; gap:12px; margin-top:8px;">
+          <div>
+            <label class="form-label" style="margin-bottom:4px; font-size:0.75rem;">Devise Principale Active</label>
+            <select id="settings-currency-select" class="form-select" style="font-size:0.88rem; font-weight:700;">
+              <option value="MUR">MUR — Roupie Mauricienne (Rs)</option>
+              <option value="EUR">EUR — Euro (€)</option>
+              <option value="USD">USD — Dollar US ($)</option>
+              <option value="GBP">GBP — Livre Sterling (£)</option>
+              <option value="ZAR">ZAR — Rand Sud-Africain (R)</option>
+              <option value="XOF">XOF — Franc CFA (CFA)</option>
+            </select>
+          </div>
+          <div>
+            <label class="form-label" style="margin-bottom:4px; font-size:0.75rem;">Langue du Système</label>
+            <select id="settings-lang-select" class="form-select" style="font-size:0.88rem; font-weight:700;">
+              <option value="FR">Français (FR)</option>
+              <option value="EN">English (EN)</option>
+              <option value="ES">Español (ES)</option>
+              <option value="PT">Português (PT)</option>
+            </select>
+          </div>
+        </div>
+      </div>
+
+      <!-- Setting Section 3: Expérience Tactile & Haptique -->
+      <div class="solid-card" style="margin-bottom:14px; cursor:default;">
+        <div class="card-header-inner">
+          <h2 class="card-title" style="font-size:0.95rem;">ERGONOMIE & RETOUR TACTILE</h2>
+        </div>
+        <div style="display:flex; justify-content:space-between; align-items:center; padding:8px 0; border-bottom:1px solid rgba(255,255,255,0.06);">
+          <div>
+            <div style="font-weight:700; font-size:0.82rem; color:#FFF;">Vibrations Haptiques</div>
+            <div style="font-size:0.68rem; color:var(--text-muted);">Retour sensoriel au toucher sur les boutons</div>
+          </div>
+          <button type="button" id="btn-toggle-haptic" class="btn-allouer" style="padding:6px 14px; font-size:0.72rem;">ACTIVÉ</button>
+        </div>
+        <div style="display:flex; justify-content:space-between; align-items:center; padding:8px 0;">
+          <div>
+            <div style="font-weight:700; font-size:0.82rem; color:#FFF;">Format Chiffres Tabulaires</div>
+            <div style="font-size:0.68rem; color:var(--text-muted);">Alignement haute précision des montants</div>
+          </div>
+          <span style="font-size:0.75rem; color:var(--c-yellow-royal); font-weight:800;">ACTIF (tnum)</span>
+        </div>
+      </div>
+
+      <!-- Setting Section 4: Gestion Intégrale de la Base de Données -->
+      <div class="hub-db-section" style="margin-bottom:20px;">
+        <div class="hub-db-title">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="var(--c-yellow-royal)" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+            <ellipse cx="12" cy="5" rx="9" ry="3"/>
+            <path d="M21 12c0 1.66-4 3-9 3s-9-1.34-9-3"/>
+            <path d="M3 5v14c0 1.66 4 3 9 3s9-1.34 9-3V5"/>
+          </svg>
+          <span style="font-size:0.85rem;">ADMINISTRATION DE LA BASE DE DONNÉES</span>
+        </div>
+        <p style="font-size:0.72rem; color:var(--text-secondary); margin-bottom:14px; line-height:1.4;">
+          Contrôles d'intégrité de la base de données locale SFP. Toute modification est immédiatement tracée dans le journal d'audit.
+        </p>
+
+        <div class="hub-db-grid" style="grid-template-columns:repeat(2, 1fr); gap:10px;">
+          <button id="btn-set-init" class="db-action-btn btn-db-init" style="padding:14px 10px;">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M2.5 2v6h6M21.5 22v-6h-6"/>
+              <path d="M22 11.5A10 10 0 0 0 3.2 7.2M2 12.5a10 10 0 0 0 18.8 4.2"/>
+            </svg>
+            <span style="font-size:0.75rem;">Initialiser la Base</span>
+            <span style="font-size:0.6rem; opacity:0.8;">Données Usine SFP</span>
+          </button>
+
+          <button id="btn-set-refresh" class="db-action-btn btn-db-refresh" style="padding:14px 10px;">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M23 4v6h-6"/>
+              <path d="M1 20v-6h6"/>
+              <path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"/>
+            </svg>
+            <span style="font-size:0.75rem;">Rafraîchir Calculs</span>
+            <span style="font-size:0.6rem; opacity:0.8;">Recalcul & Caches</span>
+          </button>
+
+          <button id="btn-set-backup" class="db-action-btn btn-db-backup" style="padding:14px 10px;">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+              <polyline points="7 10 12 15 17 10"/>
+              <line x1="12" y1="15" x2="12" y2="3"/>
+            </svg>
+            <span style="font-size:0.75rem;">Sauvegarder (Backup)</span>
+            <span style="font-size:0.6rem; opacity:0.8;">Export JSON Horodaté</span>
+          </button>
+
+          <button id="btn-set-restore" class="db-action-btn btn-db-report" style="padding:14px 10px;">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+              <polyline points="17 8 12 3 7 8"/>
+              <line x1="12" y1="3" x2="12" y2="15"/>
+            </svg>
+            <span style="font-size:0.75rem;">Restaurer (Import)</span>
+            <span style="font-size:0.6rem; opacity:0.8;">Fichier JSON</span>
+          </button>
+
+          <button id="btn-set-purge" class="db-action-btn btn-db-purge" style="padding:14px 10px;">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+              <polyline points="3 6 5 6 21 6"/>
+              <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/>
+            </svg>
+            <span style="font-size:0.75rem;">Purger les Données</span>
+            <span style="font-size:0.6rem; opacity:0.8;">Transactions & Enveloppes</span>
+          </button>
+
+          <button id="btn-set-audit" class="db-action-btn btn-db-audit" style="padding:14px 10px;">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+              <circle cx="12" cy="12" r="10"/>
+              <polyline points="12 6 12 12 16 14"/>
+            </svg>
+            <span style="font-size:0.75rem;">Journal d'Audit</span>
+            <span style="font-size:0.6rem; opacity:0.8;">Historique Base</span>
+          </button>
+        </div>
+
+        <input type="file" id="settings-file-import" accept=".json" style="display:none;">
       </div>
     </section>
 
@@ -451,76 +748,199 @@
   </button>
 
   <!-- =========================================================================
-       MODAL BOTTOM SHEET : SAISIE EXPRESS PARTOUT (VIA FAB)
+       MODAL FULL-SCREEN IMMERSIF : SAISIE EXPRESS QUESTION-OPTIMISÉE (VIA FAB / HUB)
        ========================================================================= -->
-  <div class="modal-overlay" id="modal-bottom-sheet-tx">
-    <div class="bottom-sheet">
-      <div class="sheet-handle"></div>
-      <h3 class="modal-title">SAISIE EXPRESS TRANSACTION</h3>
-      <form id="form-express-tx">
-        <div class="form-group">
-          <label class="form-label">Date</label>
-          <input type="date" id="exp-tx-date" class="form-input" required>
+  <div class="modal-fullscreen" id="modal-bottom-sheet-tx">
+    <div class="modal-fullscreen-header">
+      <div style="display:flex; align-items:center; gap:8px;">
+        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="var(--c-yellow-royal)" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+          <circle cx="12" cy="12" r="10"/>
+          <line x1="12" y1="8" x2="12" y2="12"/>
+          <line x1="12" y1="16" x2="12.01" y2="16"/>
+        </svg>
+        <h2 id="lbl-express-modal-title">SAISIE EXPRESS TRANSACTION</h2>
+      </div>
+      <button type="button" class="modal-close-btn" id="btn-close-express-tx" aria-label="Fermer">✕</button>
+    </div>
+
+    <form id="form-express-tx" style="display:flex; flex-direction:column; flex:1; overflow:hidden;">
+      <div class="modal-fullscreen-body">
+        <!-- Question 1: Type & Montant -->
+        <div class="question-card">
+          <div class="question-title">
+            <span class="question-number">1</span>
+            <span id="q1-title">Quel est le type et le montant ?</span>
+          </div>
+          <div class="type-segmented-control" id="exp-type-selector">
+            <button type="button" class="type-segment-btn rev" data-type="REVENU">Revenu</button>
+            <button type="button" class="type-segment-btn active dep" data-type="DEPENSE">Dépense</button>
+            <button type="button" class="type-segment-btn tra" data-type="TRANSFERT">Virement</button>
+          </div>
+          <div class="hero-amount-box">
+            <input type="number" step="0.01" id="exp-tx-montant" class="hero-amount-input" placeholder="0.00" required>
+            <select id="exp-tx-devise" class="hero-amount-currency" style="border:none; cursor:pointer; outline:none;"></select>
+          </div>
+          <div class="quick-amount-row">
+            <button type="button" class="quick-amount-chip exp-chip" data-add="1000">+1 000</button>
+            <button type="button" class="quick-amount-chip exp-chip" data-add="5000">+5 000</button>
+            <button type="button" class="quick-amount-chip exp-chip" data-add="10000">+10 000</button>
+            <button type="button" class="quick-amount-chip exp-chip" data-add="50000">+50 000</button>
+          </div>
         </div>
-        <div class="form-group">
-          <label class="form-label">Compte</label>
+
+        <!-- Question 2: Actifs -->
+        <div class="question-card">
+          <div class="question-title" style="display:flex; justify-content:space-between; align-items:center;">
+            <div style="display:flex; align-items:center; gap:8px;">
+              <span class="question-number">2</span>
+              <span id="q2-title">Quel actif utiliser ?</span>
+            </div>
+            <button type="button" class="btn-field-add" data-entity="compte" id="btn-add-compte-exp" title="Créer un nouvel actif">+ Nouveau</button>
+          </div>
           <select id="exp-tx-compte" class="form-select" required></select>
         </div>
-        <div class="form-group">
-          <label class="form-label">Catégorie</label>
+
+        <!-- Question 3: Catégorie -->
+        <div class="question-card">
+          <div class="question-title" style="display:flex; justify-content:space-between; align-items:center;">
+            <div style="display:flex; align-items:center; gap:8px;">
+              <span class="question-number">3</span>
+              <span id="q3-title">Quelle est la catégorie ?</span>
+            </div>
+            <button type="button" class="btn-field-add" data-entity="categorie" id="btn-add-cat-exp" title="Créer une nouvelle catégorie">+ Nouvelle</button>
+          </div>
           <select id="exp-tx-categorie" class="form-select" required></select>
         </div>
-        <div class="form-group">
-          <label class="form-label">Tiers (Bénéficiaire/Émetteur)</label>
+
+        <!-- Question 4: Tiers (Bénéficiaire / Émetteur) -->
+        <div class="question-card">
+          <div class="question-title" style="display:flex; justify-content:space-between; align-items:center;">
+            <div style="display:flex; align-items:center; gap:8px;">
+              <span class="question-number">4</span>
+              <span id="q4-title">Qui est le tiers concerné ?</span>
+            </div>
+            <button type="button" class="btn-field-add" data-entity="tiers" id="btn-add-tiers-exp" title="Créer un nouveau tiers">+ Nouveau</button>
+          </div>
           <select id="exp-tx-tiers" class="form-select" required></select>
         </div>
-        <div style="display:grid; grid-template-columns: 2fr 1fr; gap:10px;">
-          <div class="form-group">
-            <label class="form-label">Montant</label>
-            <input type="number" step="0.01" id="exp-tx-montant" class="form-input" placeholder="0.00" required>
+
+        <!-- Question 5: Date & Description -->
+        <div class="question-card">
+          <div class="question-title">
+            <span class="question-number">5</span>
+            <span id="q5-title">Date & Notes complémentaires</span>
           </div>
-          <div class="form-group">
-            <label class="form-label">Devise</label>
-            <select id="exp-tx-devise" class="form-select"></select>
+          <div style="display:flex; flex-direction:column; gap:12px;">
+            <input type="date" id="exp-tx-date" class="form-input" required>
+            <input type="text" id="exp-tx-notes" class="form-input" placeholder="Notes (ex: Facture KIMYA ÉDITION, courses...)">
           </div>
         </div>
-        <div class="form-group">
-          <label class="form-label">Notes / Description</label>
-          <input type="text" id="exp-tx-notes" class="form-input" placeholder="Notes...">
-        </div>
-        <div style="display:flex; gap:10px; margin-top:16px;">
-          <button type="button" class="btn-back-tactile" id="btn-close-express-tx" style="flex:1; justify-content:center; background:#334155; color:#FFF;">Annuler</button>
-          <button type="submit" class="btn-submit-tx" style="flex:2;">Enregistrer</button>
-        </div>
-      </form>
-    </div>
+      </div>
+
+      <div class="modal-fullscreen-footer">
+        <button type="submit" class="btn-submit-tx" id="btn-save-express-tx">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+            <polyline points="20 6 9 17 4 12"/>
+          </svg>
+          <span id="lbl-btn-save-express">ENREGISTRER LA TRANSACTION</span>
+        </button>
+      </div>
+    </form>
   </div>
 
   <!-- =========================================================================
-       MODAL ALLOCATION BUDGÉTAIRE (USF_Budget)
+       MODAL FULL-SCREEN IMMERSIF : ALLOCATION BUDGÉTAIRE OPTIMISÉE PAR QUESTIONS
        ========================================================================= -->
-  <div class="modal-overlay" id="modal-budget-alloc">
-    <div class="bottom-sheet">
-      <div class="sheet-handle"></div>
-      <h3 class="modal-title">ALLOCATION BUDGÉTAIRE ZBB</h3>
-      <form id="form-budget-alloc">
-        <div class="form-group">
-          <label class="form-label">Mois Budgétaire (AAAA-MM)</label>
-          <input type="text" id="alloc-mois" class="form-input" value="2026-02" required>
+  <div class="modal-fullscreen" id="modal-budget-alloc">
+    <div class="modal-fullscreen-header">
+      <div style="display:flex; align-items:center; gap:8px;">
+        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="var(--c-yellow-royal)" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+          <circle cx="12" cy="12" r="10"/>
+          <circle cx="12" cy="12" r="6"/>
+          <circle cx="12" cy="12" r="2"/>
+        </svg>
+        <h2 id="lbl-alloc-modal-title">ALLOCATION BUDGÉTAIRE</h2>
+      </div>
+      <button type="button" class="modal-close-btn" id="btn-close-alloc" aria-label="Fermer">✕</button>
+    </div>
+
+    <form id="form-budget-alloc" style="display:flex; flex-direction:column; flex:1; overflow:hidden;">
+      <div class="modal-fullscreen-body">
+        <!-- Question 1: Mois Budgétaire -->
+        <div class="question-card">
+          <div class="question-title">
+            <span class="question-number">1</span>
+            <span id="q-alloc-1">Pour quel mois budgétaire ?</span>
+          </div>
+          <input type="month" id="alloc-mois" class="form-input" value="2026-02" required style="font-size:1rem; font-weight:700;">
+          <div id="alloc-mois-localized" style="font-size:0.85rem; font-weight:800; color:var(--c-yellow-royal); margin-top:6px;"></div>
         </div>
-        <div class="form-group">
-          <label class="form-label">Catégorie de Dépense</label>
+
+        <!-- Question 2: Catégorie de Dépense -->
+        <div class="question-card">
+          <div class="question-title" style="display:flex; justify-content:space-between; align-items:center;">
+            <div style="display:flex; align-items:center; gap:8px;">
+              <span class="question-number">2</span>
+              <span id="q-alloc-2">Quelle catégorie de dépense allouer ?</span>
+            </div>
+            <button type="button" class="btn-field-add" data-entity="categorie" id="btn-add-cat-alloc" title="Créer une nouvelle catégorie">+ Nouvelle</button>
+          </div>
           <select id="alloc-categorie" class="form-select" required></select>
         </div>
-        <div class="form-group">
-          <label class="form-label">Montant Alloué (Devise de Base)</label>
-          <input type="number" step="0.01" id="alloc-montant" class="form-input" placeholder="0.00" required>
+
+        <!-- Question 3: Montant alloué -->
+        <div class="question-card">
+          <div class="question-title">
+            <span class="question-number">3</span>
+            <span id="q-alloc-3">Quel montant allouer à cette enveloppe ?</span>
+          </div>
+          <div class="hero-amount-box">
+            <input type="number" step="0.01" id="alloc-montant" class="hero-amount-input" placeholder="0.00" required>
+            <span class="hero-amount-currency" id="alloc-currency-badge">MUR</span>
+          </div>
+          <div class="quick-amount-row">
+            <button type="button" class="quick-amount-chip alloc-chip" data-add="1000">+1 000</button>
+            <button type="button" class="quick-amount-chip alloc-chip" data-add="5000">+5 000</button>
+            <button type="button" class="quick-amount-chip alloc-chip" data-add="10000">+10 000</button>
+            <button type="button" class="quick-amount-chip alloc-chip" data-add="50000">+50 000</button>
+          </div>
         </div>
-        <div style="display:flex; gap:10px; margin-top:16px;">
-          <button type="button" class="btn-back-tactile" id="btn-close-alloc" style="flex:1; justify-content:center; background:#334155; color:#FFF;">Annuler</button>
-          <button type="submit" class="btn-allouer" style="flex:1;">Enregistrer</button>
-        </div>
-      </form>
+      </div>
+
+      <div class="modal-fullscreen-footer">
+        <button type="submit" class="btn-submit-tx" id="btn-save-alloc">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+            <polyline points="20 6 9 17 4 12"/>
+          </svg>
+          <span id="lbl-btn-save-alloc">VALIDER L'ALLOCATION</span>
+        </button>
+      </div>
+    </form>
+  </div>
+
+  <!-- =========================================================================
+       MODAL FULL-SCREEN IMMERSIF : JOURNAL D'AUDIT & HISTORIQUE BASE DE DONNÉES
+       ========================================================================= -->
+  <div class="modal-fullscreen" id="modal-audit-history">
+    <div class="modal-fullscreen-header">
+      <div style="display:flex; align-items:center; gap:8px;">
+        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="var(--c-yellow-royal)" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+          <circle cx="12" cy="12" r="10"/>
+          <polyline points="12 6 12 12 16 14"/>
+        </svg>
+        <h2 id="lbl-history-modal-title">JOURNAL D'AUDIT & HISTORIQUE</h2>
+      </div>
+      <button type="button" class="modal-close-btn" id="btn-close-history" aria-label="Fermer">✕</button>
+    </div>
+
+    <div class="modal-fullscreen-body" id="history-modal-timeline" style="padding:16px;">
+      <!-- Timeline cards injected via app.js -->
+    </div>
+
+    <div class="modal-fullscreen-footer">
+      <button type="button" class="btn-submit-tx" id="btn-close-history-footer" style="background:#334155;">
+        <span>FERMER LE JOURNAL</span>
+      </button>
     </div>
   </div>
 
@@ -530,7 +950,7 @@
   <div class="modal-overlay" id="modal-financial-report">
     <div class="bottom-sheet">
       <div class="sheet-handle"></div>
-      <h3 class="modal-title">RAPPORT FINANCIER EXÉCUTIF</h3>
+      <h3 class="modal-title" id="lbl-report-modal-title">RAPPORT FINANCIER EXÉCUTIF</h3>
       <div id="report-modal-body" style="font-size:0.85rem; color:var(--text-secondary); line-height:1.5;">
         <!-- Injected via app.js -->
       </div>
@@ -552,7 +972,7 @@
           <polyline points="9 22 9 12 15 12 15 22"/>
         </svg>
       </span>
-      <span>Hub</span>
+      <span id="tab-label-home">Hub</span>
     </button>
     <button class="nav-tab" data-view="transaction">
       <span class="tab-icon">
@@ -562,7 +982,7 @@
           <line x1="6" y1="15" x2="10" y2="15"/>
         </svg>
       </span>
-      <span>Saisie</span>
+      <span id="tab-label-transaction">Saisie</span>
     </button>
     <button class="nav-tab" data-view="cashflow">
       <span class="tab-icon">
@@ -573,7 +993,7 @@
           <polyline points="4 9 10 3 16 7 20 2"/>
         </svg>
       </span>
-      <span>Cashflow</span>
+      <span id="tab-label-cashflow">Cashflow</span>
     </button>
     <button class="nav-tab" data-view="networth">
       <span class="tab-icon">
@@ -581,7 +1001,7 @@
           <path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5"/>
         </svg>
       </span>
-      <span>Patrimoine</span>
+      <span id="tab-label-networth">Patrimoine</span>
     </button>
     <button class="nav-tab" data-view="budget">
       <span class="tab-icon">
@@ -591,14 +1011,234 @@
           <circle cx="12" cy="12" r="2"/>
         </svg>
       </span>
-      <span>Budget</span>
+      <span id="tab-label-budget">Budget</span>
+    </button>
+    <button class="nav-tab" data-view="settings">
+      <span class="tab-icon">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <circle cx="12" cy="12" r="3"/>
+          <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"/>
+        </svg>
+      </span>
+      <span id="tab-label-settings">Réglages</span>
     </button>
   </nav>
 
+  <!-- =========================================================================
+       MODALE PLEIN ÉCRAN : CONFIGURATION & INITIALISATION DU SYSTÈME (SFP v1.0)
+       ========================================================================= -->
+  <div id="modal-initialization" class="modal modal-fullscreen">
+    <div class="modal-content modal-fullscreen-content" style="max-width: 600px;">
+      <div class="modal-header">
+        <div style="display:flex; align-items:center; gap:10px;">
+          <div style="width:36px; height:36px; border-radius:10px; background:rgba(250,218,94,0.15); border:1.5px solid var(--c-yellow-royal); display:flex; align-items:center; justify-content:center; color:var(--c-yellow-royal);">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5"/>
+            </svg>
+          </div>
+          <div>
+            <h3 style="font-family: var(--font-display); color: #FFF; font-size:1.15rem; font-weight:800;">INITIALISATION DU SYSTÈME</h3>
+            <span style="font-size:0.72rem; color:var(--text-secondary);">Configuration initiale de votre Système Financier</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="modal-body" style="display:flex; flex-direction:column; gap:18px;">
+        <!-- Question 1: Langue -->
+        <div class="alloc-question-card">
+          <div class="alloc-question-badge">Étape 1</div>
+          <div class="alloc-question-title">Sélectionnez la langue du système</div>
+          <p style="font-size:0.75rem; color:var(--text-muted); margin-bottom:12px;">
+            L'ensemble de vos synthèses, rapports et interfaces s'adapteront immédiatement.
+          </p>
+          <div class="init-choice-grid" id="init-lang-grid" style="display:grid; grid-template-columns:repeat(2, 1fr); gap:10px;">
+            <button type="button" class="init-choice-card active" data-init-lang="FR">
+              <span class="init-choice-code" style="font-size:1.1rem; font-weight:800; color:var(--c-yellow-royal);">FR</span>
+              <span class="init-choice-name">Français</span>
+              <span class="init-choice-sub">Standard SFP</span>
+            </button>
+            <button type="button" class="init-choice-card" data-init-lang="EN">
+              <span class="init-choice-code" style="font-size:1.1rem; font-weight:800; color:#94A3B8;">EN</span>
+              <span class="init-choice-name">English</span>
+              <span class="init-choice-sub">International</span>
+            </button>
+            <button type="button" class="init-choice-card" data-init-lang="ES">
+              <span class="init-choice-code" style="font-size:1.1rem; font-weight:800; color:#94A3B8;">ES</span>
+              <span class="init-choice-name">Español</span>
+              <span class="init-choice-sub">Castellano</span>
+            </button>
+            <button type="button" class="init-choice-card" data-init-lang="PT">
+              <span class="init-choice-code" style="font-size:1.1rem; font-weight:800; color:#94A3B8;">PT</span>
+              <span class="init-choice-name">Português</span>
+              <span class="init-choice-sub">Global</span>
+            </button>
+          </div>
+        </div>
+
+        <!-- Question 2: Devise Principale -->
+        <div class="alloc-question-card">
+          <div class="alloc-question-badge">Étape 2</div>
+          <div class="alloc-question-title">Sélectionnez votre devise principale de référence</div>
+          <p style="font-size:0.75rem; color:var(--text-muted); margin-bottom:12px;">
+            Devise mère sur laquelle l'ensemble de votre patrimoine et flux seront indexés. Les taux seront synchronisés en direct via API.
+          </p>
+          <div class="init-choice-grid" id="init-curr-grid" style="display:grid; grid-template-columns:repeat(3, 1fr); gap:10px;">
+            <button type="button" class="init-choice-card active" data-init-curr="MUR">
+              <span class="init-choice-code" style="font-size:1.15rem; font-weight:800; color:var(--c-yellow-royal);">MUR</span>
+              <span class="init-choice-name">Roupie (Rs)</span>
+            </button>
+            <button type="button" class="init-choice-card" data-init-curr="EUR">
+              <span class="init-choice-code" style="font-size:1.15rem; font-weight:800; color:#94A3B8;">EUR</span>
+              <span class="init-choice-name">Euro (€)</span>
+            </button>
+            <button type="button" class="init-choice-card" data-init-curr="USD">
+              <span class="init-choice-code" style="font-size:1.15rem; font-weight:800; color:#94A3B8;">USD</span>
+              <span class="init-choice-name">Dollar ($)</span>
+            </button>
+            <button type="button" class="init-choice-card" data-init-curr="GBP">
+              <span class="init-choice-code" style="font-size:1.15rem; font-weight:800; color:#94A3B8;">GBP</span>
+              <span class="init-choice-name">Livre (£)</span>
+            </button>
+            <button type="button" class="init-choice-card" data-init-curr="ZAR">
+              <span class="init-choice-code" style="font-size:1.15rem; font-weight:800; color:#94A3B8;">ZAR</span>
+              <span class="init-choice-name">Rand (R)</span>
+            </button>
+            <button type="button" class="init-choice-card" data-init-curr="XOF">
+              <span class="init-choice-code" style="font-size:1.15rem; font-weight:800; color:#94A3B8;">XOF</span>
+              <span class="init-choice-name">CFA (XOF)</span>
+            </button>
+          </div>
+        </div>
+
+        <!-- Action Button -->
+        <button type="button" class="btn-primary-alloc" id="btn-confirm-init" style="padding:16px; font-size:0.95rem; font-weight:800; margin-top:8px;">
+          CONFIRMER & INITIALISER L'APPLICATION
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- =========================================================================
+       MODAL DE CRÉATION D'ENTITÉ DYNAMIQUE STANDARD GOLD (AUTO-APPRENANT SFP v1.0)
+       ========================================================================= -->
+  <dialog id="modal-add-entity-dialog" class="gfmp-confirm-dialog" closedby="any" aria-labelledby="add-entity-dialog-title">
+    <div class="confirm-dialog-container" style="text-align:left; align-items:stretch;">
+      <div style="display:flex; justify-content:space-between; align-items:center;">
+        <div style="display:flex; align-items:center; gap:10px;">
+          <div class="confirm-dialog-icon info" style="width:40px; height:40px;">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="var(--c-blue-royal)" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+              <line x1="12" y1="5" x2="12" y2="19"/>
+              <line x1="5" y1="12" x2="19" y2="12"/>
+            </svg>
+          </div>
+          <h3 class="confirm-dialog-title" id="add-entity-dialog-title" style="font-size:1.05rem;">NOUVEL ÉLÉMENT</h3>
+        </div>
+        <button type="button" class="modal-close-btn" id="btn-close-add-entity" style="width:30px; height:30px; font-size:1rem;" aria-label="Fermer">✕</button>
+      </div>
+
+      <!-- Entity Type Selector (Pills) -->
+      <div class="type-segmented-control" id="add-entity-type-selector" style="margin-top:4px;">
+        <button type="button" class="type-segment-btn active dep" data-entity-type="compte" id="pill-entity-compte">Actif / Compte</button>
+        <button type="button" class="type-segment-btn rev" data-entity-type="categorie" id="pill-entity-categorie">Catégorie</button>
+        <button type="button" class="type-segment-btn tra" data-entity-type="tiers" id="pill-entity-tiers">Tiers</button>
+      </div>
+
+      <form id="form-add-entity" style="display:flex; flex-direction:column; gap:14px; margin-top:4px;">
+        <!-- Name Input -->
+        <div class="form-group" style="margin-bottom:0;">
+          <label class="form-label" id="lbl-add-entity-name">Désignation / Nom *</label>
+          <input type="text" id="add-entity-name" class="form-input" required placeholder="Ex: Livret Développement Durable" autocomplete="off">
+        </div>
+
+        <!-- Specific for Compte -->
+        <div id="add-entity-fields-compte" class="add-entity-fields" style="display:flex; flex-direction:column; gap:12px;">
+          <div class="form-group" style="margin-bottom:0;">
+            <label class="form-label" id="lbl-add-entity-classe">Classe d'Actif</label>
+            <select id="add-entity-classe" class="form-select">
+              <option value="LIQUIDITE">Liquidité (Banque, Espèces)</option>
+              <option value="INVESTISSEMENT">Investissement (Actions, Crypto, Immo)</option>
+              <option value="DETTE">Dette &amp; Emprunt (Prêt, Différé)</option>
+            </select>
+          </div>
+          <div class="form-group" style="margin-bottom:0;">
+            <label class="form-label" id="lbl-add-entity-devise">Devise du Compte</label>
+            <select id="add-entity-devise" class="form-select">
+              <option value="MUR">MUR (Rs)</option>
+              <option value="EUR">EUR (€)</option>
+              <option value="USD">USD ($)</option>
+              <option value="GBP">GBP (£)</option>
+              <option value="ZAR">ZAR (R)</option>
+              <option value="XOF">XOF (CFA)</option>
+            </select>
+          </div>
+        </div>
+
+        <!-- Specific for Categorie -->
+        <div id="add-entity-fields-categorie" class="add-entity-fields" style="display:none; flex-direction:column; gap:12px;">
+          <div class="form-group" style="margin-bottom:0;">
+            <label class="form-label" id="lbl-add-entity-cat-type">Type Budgétaire</label>
+            <select id="add-entity-cat-type" class="form-select">
+              <option value="DEPENSE">Dépense (Consommation)</option>
+              <option value="REVENU">Revenu (Entrée)</option>
+              <option value="TRANSFERT">Transfert / Épargne</option>
+            </select>
+          </div>
+        </div>
+
+        <!-- Specific for Tiers -->
+        <div id="add-entity-fields-tiers" class="add-entity-fields" style="display:none; flex-direction:column; gap:12px;">
+          <div class="form-group" style="margin-bottom:0;">
+            <label class="form-label" id="lbl-add-entity-tiers-secteur">Secteur / Typologie</label>
+            <select id="add-entity-tiers-secteur" class="form-select">
+              <option value="COMMERCE">Commerce / Supermarché</option>
+              <option value="ENTREPRISE">Entreprise / Employeur</option>
+              <option value="FINANCE">Banque &amp; Finance</option>
+              <option value="INSTITUTION">Institution Publique</option>
+              <option value="IMMOBILIER">Immobilier / Propriétaire</option>
+              <option value="SANTE">Santé &amp; Pharmacie</option>
+              <option value="AUTRE">Autre Secteur</option>
+            </select>
+          </div>
+        </div>
+
+        <!-- Actions -->
+        <div class="confirm-dialog-actions" style="margin-top:6px;">
+          <button type="button" class="btn-confirm-cancel" id="btn-cancel-add-entity">Annuler</button>
+          <button type="submit" class="btn-confirm-action" id="btn-confirm-add-entity" style="background:var(--c-blue-royal); color:#FFF; font-weight:800; border:none;">
+            Ajouter &amp; Sélectionner
+          </button>
+        </div>
+      </form>
+    </div>
+  </dialog>
+
+  <!-- =========================================================================
+       MODAL DE CONFIRMATION STANDARD GOLD (ACCESSIBLE & NON-BLOQUANT)
+       ========================================================================= -->
+  <dialog id="modal-confirm-dialog" class="gfmp-confirm-dialog" closedby="any" aria-labelledby="confirm-dialog-title" aria-describedby="confirm-dialog-message">
+    <div class="confirm-dialog-container">
+      <div id="confirm-dialog-icon" class="confirm-dialog-icon warning" aria-hidden="true">
+        <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="#FADA5E" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+          <circle cx="12" cy="12" r="10"/>
+          <line x1="12" y1="8" x2="12" y2="12"/>
+          <line x1="12" y1="16" x2="12.01" y2="16"/>
+        </svg>
+      </div>
+      <div class="confirm-dialog-content">
+        <h3 id="confirm-dialog-title" class="confirm-dialog-title">Confirmation</h3>
+        <p id="confirm-dialog-message" class="confirm-dialog-message">Êtes-vous sûr de vouloir continuer ?</p>
+      </div>
+      <div class="confirm-dialog-actions">
+        <button type="button" id="confirm-dialog-btn-cancel" class="btn-confirm-cancel">Annuler</button>
+        <button type="button" id="confirm-dialog-btn-confirm" class="btn-confirm-action warning">Confirmer</button>
+      </div>
+    </div>
+  </dialog>
+
   <!-- Scripts: 1. Synchronous Baseline Data, 2. Analytics Engine, 3. App Controller -->
-  <script src="baseline_data.js"></script>
-  <script src="analytics-engine.js"></script>
-  <script src="app.js"></script>
+  <script src="baseline_data.js?v=4.0.0"></script>
+  <script src="analytics-engine.js?v=4.0.0"></script>
+  <script src="app.js?v=4.0.0"></script>
   <script>
     if ('serviceWorker' in navigator) {
       window.addEventListener('load', () => {
