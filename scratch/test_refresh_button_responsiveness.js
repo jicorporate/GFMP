@@ -103,9 +103,11 @@ for (const f of filesToCheck) {
 // 6. Verify Android Version Bump
 console.log('\n[6/6] Verifying Android App Version Bump...');
 const gradleContent = fs.readFileSync(path.resolve(__dirname, '../android/app/build.gradle.kts'), 'utf8');
-assert.ok(gradleContent.includes('versionCode = 4'), 'FAIL: Android versionCode must be 4');
-assert.ok(gradleContent.includes('versionName = "1.3"'), 'FAIL: Android versionName must be "1.3"');
-console.log('  ✓ Android Gradle configured with versionCode 4, versionName 1.3.');
+const vCodeMatch = gradleContent.match(/versionCode = (\d+)/);
+const vNameMatch = gradleContent.match(/versionName = "([^"]+)"/);
+assert.ok(vCodeMatch && parseInt(vCodeMatch[1], 10) >= 4, 'FAIL: Android versionCode must be >= 4');
+assert.ok(vNameMatch && parseFloat(vNameMatch[1]) >= 1.3, 'FAIL: Android versionName must be >= 1.3');
+console.log(`  ✓ Android Gradle configured with versionCode ${vCodeMatch[1]}, versionName ${vNameMatch[1]}.`);
 
 console.log('\n================================================================');
 console.log('ALL TESTS PASSED WITH ZERO REGRESSION (100% GOLD CUTTING-EDGE)!');

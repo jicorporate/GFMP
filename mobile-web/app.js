@@ -467,6 +467,115 @@ document.addEventListener('DOMContentLoaded', () => {
   let currentTargetSelect = null;
   let activeEntityType = 'compte'; // 'compte', 'categorie', 'tiers'
 
+  function updateAddEntityModalTranslations() {
+    // 1. Update Title
+    const titleElem = document.getElementById('add-entity-dialog-title');
+    if (titleElem) {
+      const titles = {
+        compte: engine.tr('PILL_ENTITY_COMPTE') || 'Actif / Compte',
+        categorie: engine.tr('PILL_ENTITY_CATEGORIE') || 'Catégorie',
+        tiers: engine.tr('PILL_ENTITY_TIERS') || 'Tiers'
+      };
+      const prefix = engine.tr('MODAL_ADD_ENTITY_TITLE') || 'NOUVEL ÉLÉMENT';
+      titleElem.textContent = `${prefix} — ${titles[activeEntityType] || ''}`.toUpperCase();
+    }
+
+    // 2. Segmented Pill Buttons
+    const pillCompte = document.getElementById('pill-entity-compte');
+    if (pillCompte) pillCompte.textContent = engine.tr('PILL_ENTITY_COMPTE') || 'Actif / Compte';
+    const pillCat = document.getElementById('pill-entity-categorie');
+    if (pillCat) pillCat.textContent = engine.tr('PILL_ENTITY_CATEGORIE') || 'Catégorie';
+    const pillTiers = document.getElementById('pill-entity-tiers');
+    if (pillTiers) pillTiers.textContent = engine.tr('PILL_ENTITY_TIERS') || 'Tiers';
+
+    // 3. Close Button
+    const btnClose = document.getElementById('btn-close-add-entity');
+    if (btnClose) btnClose.setAttribute('aria-label', engine.tr('BTN_CLOSE') || 'Fermer');
+
+    // 4. Form Labels
+    const lblName = document.getElementById('lbl-add-entity-name');
+    if (lblName) lblName.textContent = engine.tr('LBL_ADD_ENTITY_NAME') || 'Désignation / Nom *';
+    const lblClasse = document.getElementById('lbl-add-entity-classe');
+    if (lblClasse) lblClasse.textContent = engine.tr('LBL_ADD_ENTITY_CLASSE') || "Classe d'Actif";
+    const lblDevise = document.getElementById('lbl-add-entity-devise');
+    if (lblDevise) lblDevise.textContent = engine.tr('LBL_ADD_ENTITY_DEVISE') || 'Devise du Compte';
+    const lblCatType = document.getElementById('lbl-add-entity-cat-type');
+    if (lblCatType) lblCatType.textContent = engine.tr('LBL_ADD_ENTITY_CAT_TYPE') || 'Type Budgétaire';
+    const lblTiersSecteur = document.getElementById('lbl-add-entity-tiers-secteur');
+    if (lblTiersSecteur) lblTiersSecteur.textContent = engine.tr('LBL_ADD_ENTITY_TIERS_SECTEUR') || 'Secteur / Typologie';
+
+    // 5. Dynamic Contextual Placeholder for Name Input
+    const nameInput = document.getElementById('add-entity-name');
+    if (nameInput) {
+      if (activeEntityType === 'compte') {
+        nameInput.placeholder = engine.tr('PLACEHOLDER_NEW_COMPTE') || 'Ex: Livret A, Compte Titres...';
+      } else if (activeEntityType === 'categorie') {
+        nameInput.placeholder = engine.tr('PLACEHOLDER_NEW_CAT') || 'Ex: Abonnements Streaming...';
+      } else if (activeEntityType === 'tiers') {
+        nameInput.placeholder = engine.tr('PLACEHOLDER_NEW_TIERS') || 'Ex: Supermarché, Employeur...';
+      }
+    }
+
+    // 6. Dynamic Localized Options for Select Dropdowns (Preserves current selection)
+    const selClasse = document.getElementById('add-entity-classe');
+    if (selClasse) {
+      const curVal = selClasse.value || 'LIQUIDITE';
+      selClasse.innerHTML = `
+        <option value="LIQUIDITE">${engine.tr('OPT_CLASSE_LIQUIDITE') || 'Liquidité (Banque, Espèces)'}</option>
+        <option value="INVESTISSEMENT">${engine.tr('OPT_CLASSE_INVESTISSEMENT') || 'Investissement (Actions, Crypto, Immo)'}</option>
+        <option value="DETTE">${engine.tr('OPT_CLASSE_DETTE') || 'Dette & Emprunt (Prêt, Différé)'}</option>
+      `;
+      selClasse.value = curVal;
+    }
+
+    const selCatType = document.getElementById('add-entity-cat-type');
+    if (selCatType) {
+      const curVal = selCatType.value || 'DEPENSE';
+      selCatType.innerHTML = `
+        <option value="DEPENSE">${engine.tr('OPT_TYPE_DEPENSE') || 'Dépense (Consommation)'}</option>
+        <option value="REVENU">${engine.tr('OPT_TYPE_REVENU') || 'Revenu (Entrée)'}</option>
+        <option value="TRANSFERT">${engine.tr('OPT_TYPE_TRANSFERT') || 'Transfert / Épargne'}</option>
+      `;
+      selCatType.value = curVal;
+    }
+
+    const selSecteur = document.getElementById('add-entity-tiers-secteur');
+    if (selSecteur) {
+      const curVal = selSecteur.value || 'COMMERCE';
+      selSecteur.innerHTML = `
+        <option value="COMMERCE">${engine.tr('OPT_SECTEUR_COMMERCE') || 'Commerce / Supermarché'}</option>
+        <option value="ENTREPRISE">${engine.tr('OPT_SECTEUR_ENTREPRISE') || 'Entreprise / Employeur'}</option>
+        <option value="FINANCE">${engine.tr('OPT_SECTEUR_FINANCE') || 'Banque & Finance'}</option>
+        <option value="INSTITUTION">${engine.tr('OPT_SECTEUR_INSTITUTION') || 'Institution Publique'}</option>
+        <option value="IMMOBILIER">${engine.tr('OPT_SECTEUR_IMMOBILIER') || 'Immobilier / Propriétaire'}</option>
+        <option value="SANTE">${engine.tr('OPT_SECTEUR_SANTE') || 'Santé & Pharmacie'}</option>
+        <option value="AUTRE">${engine.tr('OPT_SECTEUR_AUTRE') || 'Autre Secteur'}</option>
+      `;
+      selSecteur.value = curVal;
+    }
+
+    // 7. Action Buttons
+    const btnCancel = document.getElementById('btn-cancel-add-entity');
+    if (btnCancel) btnCancel.textContent = engine.tr('BTN_CANCEL') || 'Annuler';
+    const btnConfirm = document.getElementById('btn-confirm-add-entity');
+    if (btnConfirm) btnConfirm.textContent = engine.tr('BTN_CONFIRM_ADD_ENTITY') || 'Ajouter & Sélectionner';
+  }
+
+  function updateFieldAddButtonsTranslations() {
+    const addText = engine.tr('BTN_FIELD_ADD') || '+ Nouveau';
+    document.querySelectorAll('.btn-field-add').forEach(btn => {
+      btn.textContent = addText;
+      const entity = btn.dataset.entity;
+      if (entity === 'compte') {
+        btn.title = engine.tr('TITLE_NEW_COMPTE') || 'Créer un nouvel actif';
+      } else if (entity === 'categorie') {
+        btn.title = engine.tr('TITLE_NEW_CAT') || 'Créer une nouvelle catégorie';
+      } else if (entity === 'tiers') {
+        btn.title = engine.tr('TITLE_NEW_TIERS') || 'Créer un nouveau tiers';
+      }
+    });
+  }
+
   function switchEntityType(type) {
     activeEntityType = type;
     document.querySelectorAll('#add-entity-type-selector .type-segment-btn').forEach(btn => {
@@ -481,23 +590,14 @@ document.addEventListener('DOMContentLoaded', () => {
     if (fieldsCat) fieldsCat.style.display = (type === 'categorie') ? 'flex' : 'none';
     if (fieldsTiers) fieldsTiers.style.display = (type === 'tiers') ? 'flex' : 'none';
 
-    // Update modal title
-    const titleElem = document.getElementById('add-entity-dialog-title');
-    if (titleElem) {
-      const titles = {
-        compte: engine.tr('PILL_ENTITY_COMPTE') || 'Actif / Compte',
-        categorie: engine.tr('PILL_ENTITY_CATEGORIE') || 'Catégorie',
-        tiers: engine.tr('PILL_ENTITY_TIERS') || 'Tiers / Bénéficiaire'
-      };
-      const prefix = engine.tr('MODAL_ADD_ENTITY_TITLE') || 'NOUVEL ÉLÉMENT';
-      titleElem.textContent = `${prefix} — ${titles[type] || ''}`.toUpperCase();
-    }
+    updateAddEntityModalTranslations();
   }
 
   function openAddEntityDialog(type = 'compte', targetSelect = null) {
     currentTargetSelect = targetSelect;
     triggerHaptic(15);
     switchEntityType(type);
+    updateAddEntityModalTranslations();
 
     const nameInput = document.getElementById('add-entity-name');
     if (nameInput) {
@@ -587,7 +687,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     const nameVal = document.getElementById('add-entity-name')?.value?.trim();
     if (!nameVal) {
-      showToast('Veuillez renseigner un nom valide', 'error');
+      showToast(engine.tr('ERR_NAME_REQUIRED') || 'Veuillez renseigner un nom valide.', 'error');
       return;
     }
 
@@ -1119,15 +1219,17 @@ document.addEventListener('DOMContentLoaded', () => {
     });
   }
 
-  // B. Category Expense Donut Chart (SVG, Interactive Click to filter table)
+  // B. Category Expense Donut Chart (SVG, Interactive Click to filter table & Golden Standard Styling)
   function renderDonutChart(containerId, breakdown, totalDepenses) {
     const container = document.getElementById(containerId);
     if (!container) return;
 
     if (!breakdown || breakdown.length === 0 || totalDepenses <= 0) {
+      const emptyMsg = engine.tr('NO_EXPENSE_PERIOD', { period: `${engine.getMonthLabel()} ${engine.year}` }) ||
+        `Aucune dépense enregistrée pour ${engine.getMonthLabel()} ${engine.year}`;
       container.innerHTML = `
         <div style="width:100%; text-align:center; padding:30px 10px; color:var(--text-muted); font-size:0.8rem;">
-          Aucune dépense enregistrée pour ${engine.getMonthLabel()} ${engine.year}
+          ${emptyMsg}
         </div>
       `;
       return;
@@ -1141,55 +1243,105 @@ document.addEventListener('DOMContentLoaded', () => {
 
     let accumPct = 0;
     let pathsHtml = '';
+    const gap = breakdown.length > 1 ? 2 : 0; // Modern slice gap
 
     breakdown.forEach(item => {
       const slicePct = item.pct / 100;
-      const strokeDash = `${slicePct * circ} ${circ}`;
+      const sliceLength = Math.max(0, (slicePct * circ) - gap);
+      const strokeDash = `${sliceLength} ${circ}`;
       const strokeOffset = -(accumPct * circ);
       accumPct += slicePct;
 
       const isSelected = (engine.selectedCategoryFilter === item.nom);
+      const catTraduit = item.nomTraduit || engine.trEntity(item.nom);
+      const titleText = `${catTraduit}: ${engine.formatMoney(item.montant)} (${Math.round(item.pct)}%) - ${engine.tr('CLICK_TO_FILTER') || 'Cliquer pour filtrer'}`;
 
       pathsHtml += `
         <circle cx="${center}" cy="${center}" r="${radius}"
           class="donut-slice ${isSelected ? 'active' : ''}"
           data-cat="${item.nom}"
+          data-amount="${item.montant}"
+          data-pct="${Math.round(item.pct)}"
+          data-color="${item.color}"
+          data-label="${catTraduit}"
           fill="transparent"
           stroke="${item.color}"
           stroke-width="${isSelected ? 20 : strokeW}"
           stroke-dasharray="${strokeDash}"
           stroke-dashoffset="${strokeOffset}"
           transform="rotate(-90 ${center} ${center})"
-          style="transition: all 0.3s ease; cursor:pointer;">
-          <title>${engine.trEntity(item.nom)}: ${engine.formatMoney(item.montant)} (${Math.round(item.pct)}%) - Cliquer pour filtrer</title>
+          tabindex="0"
+          role="graphics-symbol"
+          aria-label="${titleText}">
+          <title>${titleText}</title>
         </circle>
       `;
     });
 
-    // Top 4 items in legend with click-to-filter
-    const legendItemsHtml = breakdown.slice(0, 4).map(item => {
+    // Display top 5 categories in legend (or top 4 + others if > 5)
+    let legendItemsHtml = '';
+    const maxLegend = breakdown.length <= 5 ? 5 : 4;
+    const topItems = breakdown.slice(0, maxLegend);
+    const otherItems = breakdown.slice(maxLegend);
+
+    topItems.forEach(item => {
       const isSelected = (engine.selectedCategoryFilter === item.nom);
-      return `
-        <div class="legend-item" data-cat="${item.nom}" style="cursor:pointer; padding:2px 4px; border-radius:4px; ${isSelected ? 'background:rgba(250,218,94,0.15); border:1px solid #FADA5E;' : ''}">
-          <span style="display:flex; align-items:center; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; max-width:110px;">
-            <span class="legend-color-dot" style="background:${item.color};"></span>
-            <span style="${isSelected ? 'color:#FADA5E; font-weight:800;' : ''}">${engine.trEntity(item.nom)}</span>
+      const catTraduit = item.nomTraduit || engine.trEntity(item.nom);
+      legendItemsHtml += `
+        <div class="legend-item ${isSelected ? 'active' : ''}"
+             data-cat="${item.nom}"
+             data-amount="${item.montant}"
+             data-pct="${Math.round(item.pct)}"
+             data-color="${item.color}"
+             data-label="${catTraduit}"
+             tabindex="0"
+             role="button"
+             aria-pressed="${isSelected ? 'true' : 'false'}"
+             title="${catTraduit}: ${engine.formatMoney(item.montant)} (${Math.round(item.pct)}%)">
+          <span class="legend-label-wrap">
+            <span class="legend-color-dot" style="background:${item.color}; box-shadow: 0 0 6px ${item.color}88;"></span>
+            <span class="legend-text ${isSelected ? 'selected' : ''}">${catTraduit}</span>
           </span>
-          <span style="font-weight:700; color:#FFF;">${Math.round(item.pct)}%</span>
+          <span class="legend-pct">${Math.round(item.pct)}%</span>
         </div>
       `;
-    }).join('');
+    });
+
+    if (otherItems.length > 0) {
+      const otherTotal = otherItems.reduce((acc, it) => acc + it.montant, 0);
+      const otherPct = Math.round((otherTotal / totalDepenses) * 100);
+      const otherLabel = `+${otherItems.length} ${engine.tr('OTHERS') || 'Autres'}`;
+      legendItemsHtml += `
+        <div class="legend-item" style="opacity:0.75; cursor:default;" title="${otherLabel}: ${engine.formatMoney(otherTotal)} (${otherPct}%)">
+          <span class="legend-label-wrap">
+            <span class="legend-color-dot" style="background:#94A3B8; box-shadow: 0 0 4px #94A3B888;"></span>
+            <span class="legend-text">${otherLabel}</span>
+          </span>
+          <span class="legend-pct">${otherPct}%</span>
+        </div>
+      `;
+    }
+
+    const activeItem = breakdown.find(b => b.nom === engine.selectedCategoryFilter);
+    const initialLabel = activeItem ? (activeItem.nomTraduit || engine.trEntity(activeItem.nom)) : (engine.tr('TOTAL') || 'TOTAL');
+    const initialVal = activeItem ? engine.formatMoney(activeItem.montant) : engine.formatMoney(totalDepenses);
+    const initialPct = activeItem ? `${Math.round(activeItem.pct)}%` : '';
 
     container.innerHTML = `
       <div style="position:relative; width:${size}px; height:${size}px; flex-shrink:0;">
-        <svg width="${size}" height="${size}" viewBox="0 0 ${size} ${size}">
+        <svg width="${size}" height="${size}" viewBox="0 0 ${size} ${size}" role="img" aria-label="${engine.tr('HUB_DONUT_TITLE') || 'Répartition des dépenses par catégorie'}">
           <circle cx="${center}" cy="${center}" r="${radius}" fill="transparent" stroke="rgba(255,255,255,0.06)" stroke-width="${strokeW}" />
           ${pathsHtml}
         </svg>
-        <div style="position:absolute; top:0; left:0; width:100%; height:100%; display:flex; flex-direction:column; align-items:center; justify-content:center; pointer-events:none;">
-          <div style="font-size:0.6rem; color:var(--text-muted); text-transform:uppercase;">Total</div>
-          <div style="font-size:0.8rem; font-weight:800; color:var(--c-yellow-royal); max-width:90px; text-align:center; overflow:hidden; text-overflow:ellipsis;">
-            ${engine.formatMoney(totalDepenses)}
+        <div class="donut-center-box" id="${containerId}-center-box" style="position:absolute; top:0; left:0; width:100%; height:100%; display:flex; flex-direction:column; align-items:center; justify-content:center; pointer-events:none; padding:10px; text-align:center;">
+          <div class="donut-center-lbl" style="font-size:0.6rem; font-weight:700; color:var(--text-muted); text-transform:uppercase; letter-spacing:0.5px; max-width:85px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">
+            ${initialLabel}
+          </div>
+          <div class="donut-center-val" style="font-size:0.8rem; font-weight:900; color:var(--c-yellow-royal); max-width:92px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; font-feature-settings:'tnum'; margin-top:1px;">
+            ${initialVal}
+          </div>
+          <div class="donut-center-sub" style="font-size:0.62rem; font-weight:700; color:#93C5FD; margin-top:1px; ${initialPct ? '' : 'display:none;'}">
+            ${initialPct}
           </div>
         </div>
       </div>
@@ -1198,19 +1350,139 @@ document.addEventListener('DOMContentLoaded', () => {
       </div>
     `;
 
-    // Bind Donut slice and legend click to toggle category filter
-    container.querySelectorAll('.donut-slice, .legend-item').forEach(el => {
-      el.addEventListener('click', () => {
+    // Interactive Hover & Focus Linked Behavior
+    const centerBox = document.getElementById(`${containerId}-center-box`);
+    const lblEl = centerBox?.querySelector('.donut-center-lbl');
+    const valEl = centerBox?.querySelector('.donut-center-val');
+    const subEl = centerBox?.querySelector('.donut-center-sub');
+
+    const updateCenter = (label, value, pct) => {
+      if (!lblEl || !valEl) return;
+      lblEl.textContent = label;
+      valEl.textContent = value;
+      if (subEl) {
+        if (pct) {
+          subEl.textContent = `${pct}%`;
+          subEl.style.display = 'block';
+        } else {
+          subEl.textContent = '';
+          subEl.style.display = 'none';
+        }
+      }
+    };
+
+    const resetCenter = () => {
+      if (engine.selectedCategoryFilter) {
+        const curActive = breakdown.find(b => b.nom === engine.selectedCategoryFilter);
+        if (curActive) {
+          updateCenter(curActive.nomTraduit || engine.trEntity(curActive.nom), engine.formatMoney(curActive.montant), Math.round(curActive.pct));
+          return;
+        }
+      }
+      updateCenter(engine.tr('TOTAL') || 'TOTAL', engine.formatMoney(totalDepenses), '');
+    };
+
+    const slices = container.querySelectorAll('.donut-slice');
+    const legendItems = container.querySelectorAll('.legend-item[data-cat]');
+
+    const highlightCat = (catNom, isHover) => {
+      slices.forEach(s => {
+        if (s.dataset.cat === catNom) {
+          s.classList.toggle('hovered', isHover);
+          s.classList.remove('dimmed');
+        } else {
+          s.classList.remove('hovered');
+          s.classList.toggle('dimmed', isHover);
+        }
+      });
+      legendItems.forEach(li => {
+        if (li.dataset.cat === catNom) {
+          li.classList.toggle('hovered', isHover);
+        } else {
+          li.classList.remove('hovered');
+        }
+      });
+    };
+
+    // Bind Hover & Focus on Slices
+    slices.forEach(slice => {
+      const cat = slice.dataset.cat;
+      const amount = parseFloat(slice.dataset.amount);
+      const pct = slice.dataset.pct;
+      const label = slice.dataset.label;
+
+      slice.addEventListener('mouseenter', () => {
+        highlightCat(cat, true);
+        updateCenter(label, engine.formatMoney(amount), pct);
+      });
+      slice.addEventListener('mouseleave', () => {
+        highlightCat(cat, false);
+        resetCenter();
+      });
+      slice.addEventListener('focus', () => {
+        highlightCat(cat, true);
+        updateCenter(label, engine.formatMoney(amount), pct);
+      });
+      slice.addEventListener('blur', () => {
+        highlightCat(cat, false);
+        resetCenter();
+      });
+    });
+
+    // Bind Hover & Focus on Legend Items
+    legendItems.forEach(li => {
+      const cat = li.dataset.cat;
+      const amount = parseFloat(li.dataset.amount);
+      const pct = li.dataset.pct;
+      const label = li.dataset.label;
+
+      li.addEventListener('mouseenter', () => {
+        highlightCat(cat, true);
+        updateCenter(label, engine.formatMoney(amount), pct);
+      });
+      li.addEventListener('mouseleave', () => {
+        highlightCat(cat, false);
+        resetCenter();
+      });
+      li.addEventListener('focus', () => {
+        highlightCat(cat, true);
+        updateCenter(label, engine.formatMoney(amount), pct);
+      });
+      li.addEventListener('blur', () => {
+        highlightCat(cat, false);
+        resetCenter();
+      });
+    });
+
+    // Bind Click to Toggle Category Filter
+    container.querySelectorAll('.donut-slice, .legend-item[data-cat]').forEach(el => {
+      const clickHandler = () => {
         triggerHaptic(20);
         const cat = el.dataset.cat;
         if (engine.selectedCategoryFilter === cat) {
           engine.selectedCategoryFilter = null; // Clear filter
-          showToast('Filtre de catégorie effacé', 'info');
+          showToast(engine.tr('FILTER_CLEARED') || 'Filtre de catégorie effacé', 'info');
         } else {
           engine.selectedCategoryFilter = cat; // Apply filter
-          showToast(`Filtre actif : ${cat}`, 'info');
+          const catTrad = engine.trEntity(cat);
+          showToast(`${engine.tr('FILTER_ACTIVE') || 'Filtre actif'} : ${catTrad}`, 'info');
         }
-        renderCashflowView();
+
+        if (engine.currentView === 'home') {
+          renderHomeView();
+        } else if (engine.currentView === 'cashflow') {
+          renderCashflowView();
+        } else {
+          renderCurrentView();
+        }
+      };
+
+      el.addEventListener('click', clickHandler);
+      el.addEventListener('keydown', (e) => {
+        if (e.key === 'Enter' || e.key === ' ') {
+          e.preventDefault();
+          clickHandler();
+        }
       });
     });
   }
@@ -1527,9 +1799,10 @@ document.addEventListener('DOMContentLoaded', () => {
     populateSelects();
 
     // 17.6 Update all .btn-field-add buttons to active language
-    document.querySelectorAll('.btn-field-add').forEach(btn => {
-      btn.textContent = engine.tr('BTN_FIELD_ADD') || '+ Nouveau';
-    });
+    updateFieldAddButtonsTranslations();
+
+    // 17.65 Update Dynamic Entity Extension Gatekeeper Modal to active language
+    updateAddEntityModalTranslations();
 
     // 17.7 Update Live Rates Refresh Button Tooltip & Accessibility
     updateLiveRatesDisplay();

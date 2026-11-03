@@ -219,6 +219,80 @@ Un contrôle d'empreintes numériques a validé l'alignement strict entre le por
     - `versionCode = 4`, `versionName = "1.3"` dans `build.gradle.kts`.
     - `BUILD SUCCESSFUL in 1m 25s` (`assembleDebug`, 34 tâches, 0 erreur). Nouvel APK autonome `GFMP-v1.0.apk` généré (2.46 Mo, SHA-256 `D65A85A4EAC6285CE6B18D9895A47AD68E98A5DD8C36DC99B77B665033B5A116`).
 
+### 9. Traduction Dynamique Multilingue Intégrale du Formulaire de Création d'Entités & Auto-Extension (Gold Standard)
+- **Diagnostic Initial & Problématique Soulevée (Capture Utilisateur)** :
+  - La boîte de dialogue modale d'extension de la base de données (`#modal-add-entity-dialog`), déclenchée pour ajouter à la volée un nouvel actif, une nouvelle catégorie ou un nouveau tiers, présentait un défaut critique d'internationalisation :
+    - Titre hybride partiellement traduit (`NEW ELEMENT — CATEGORY`).
+    - Boutons segmentés de sélection d'entité restaient figés en français (`Actif / Compte`, `Catégorie`, `Tiers`).
+    - Libellés de formulaire non réactifs (`DÉSIGNATION / NOM *`, `TYPE BUDGÉTAIRE`, etc.).
+    - Placeholder statique inadapté (`Ex: Livret Développement Durable` s'affichait même lors de l'ajout d'une catégorie ou d'un tiers, et restait en français).
+    - Options des listes déroulantes (`<select>`) codées en dur en français (`Dépense (Consommation)`, `Liquidité (Banque, Espèces)`, `Commerce / Supermarché`, etc.).
+    - Boutons d'action (`Annuler`, `Ajouter & Sélectionner`) et boutons déclencheurs de formulaires (`+ Nouveau`) non réactifs aux changements de langue dans le header.
+- **Architecture Technique & Principes Modern Web Guidance (`dialogs`, `forms`, `i18n`, `accessibility`)** :
+  - **Localisation Dynamique Centralisée de la Modale (`updateAddEntityModalTranslations`)** :
+    - Traduction du titre combinant préfixe et type actif : `${MODAL_ADD_ENTITY_TITLE} — ${titles[activeEntityType]}` en majuscules.
+    - Traduction des pills segmentés (`PILL_ENTITY_COMPTE`, `PILL_ENTITY_CATEGORIE`, `PILL_ENTITY_TIERS`).
+    - Traduction de tous les labels de formulaire (`LBL_ADD_ENTITY_NAME`, `LBL_ADD_ENTITY_CLASSE`, `LBL_ADD_ENTITY_DEVISE`, `LBL_ADD_ENTITY_CAT_TYPE`, `LBL_ADD_ENTITY_TIERS_SECTEUR`).
+    - Placeholder contextuel auto-adaptatif selon l'entité et la langue active (`PLACEHOLDER_NEW_COMPTE`, `PLACEHOLDER_NEW_CAT`, `PLACEHOLDER_NEW_TIERS`).
+    - Options localisées pour les listes déroulantes (`#add-entity-classe`, `#add-entity-cat-type`, `#add-entity-tiers-secteur`) tout en préservant scrupuleusement la sélection en cours de l'utilisateur.
+    - Boutons d'action traduits (`BTN_CANCEL`, `BTN_CONFIRM_ADD_ENTITY`, et `aria-label` de fermeture `BTN_CLOSE`).
+  - **Localisation des Déclencheurs de Formulaires (`updateFieldAddButtonsTranslations`)** :
+    - Tous les boutons `.btn-field-add` (7 boutons à travers les formulaires principal, express et budget) affichent le texte traduit (`BTN_FIELD_ADD`) ainsi que des infobulles descriptives (`TITLE_NEW_COMPTE`, `TITLE_NEW_CAT`, `TITLE_NEW_TIERS`).
+  - **Auto-Traduction Bidirectionnelle & Déduplication Quadrilingue en Base (`GFMPEngine`)** :
+    - Création de la table de correspondance inverse insensible à la casse `GFMP_DB_LOOKUP` à partir du dictionnaire maître de 120+ entités financières.
+    - Méthode `trEntity(name, lang)` avec quadruple repli : recherche directe, recherche dans `this.data.dictionary`, recherche inversée dans `GFMP_DB_LOOKUP`, et recherche nettoyée.
+    - Méthode `existeDeja(collection, nom)` quadrilingue : contrôle d'unicité croisé sur l'ensemble des 4 langues (`FR`, `EN`, `ES`, `PT`) évitant les doublons de traduction.
+    - Enregistrement automatique de toute nouvelle entité dans `this.data.dictionary` via `registerEntityTranslations(name)`.
+- **Validation Automatisée & Parité Cryptographique (SHA-256)** :
+  - **Suite de tests dédiée (`scratch/test_entity_modal_translations.js`)** : 5/5 étapes validées avec succès (vérification de la structure HTML, intégrité des 32 clés de dictionnaire dans les 4 langues, mise à jour dynamique des éléments du DOM, déduplication et enregistrement quadrilingue, réactivité des écouteurs).
+  - **Régression Zéro Validée** : Les suites de tests de rafraîchissement des taux (`test_refresh_button_responsiveness.js`), d'interactivité du header (`test_header_interactivity.js`), de défilement vertical (`test_scroll_responsiveness.js`) et de traduction dimensionnelle (`test_db_translation_and_extension.js`) s'exécutent avec 0 erreur.
+  - **Synchronisation & Parité des Empreintes (SHA-256)** :
+    - `index.html`, `styles.css`, `app.js`, `analytics-engine.js`, `sw.js` (version `gfmp-mobile-v5.3.0`) 100% identiques entre `mobile-web/` et `android/app/src/main/assets/`.
+  - **Compilation Gradle Android & Versioning (v1.4 / Code 5)** :
+    - `versionCode = 5`, `versionName = "1.4"` dans `build.gradle.kts`.
+    - `BUILD SUCCESSFUL in 54s` (`assembleDebug`, 34 tâches, 0 erreur). Nouvel APK autonome `GFMP-v1.0.apk` généré (2.58 Mo).
+
+### 10. Harmonie et Concordance Haute Joaillerie SFP v1.0 du Donut des Dépenses par Catégorie & Visualisation Cutting-Edge
+- **Diagnostic Initial & Défauts Visuels Constatés** :
+  - **Incohérence des Couleurs & Dérive Chromatique** : Les tranches du graphique en anneau (donut) et les éléments de la légende étaient colorés dynamiquement selon une boucle d'indexation incrémentale aléatoire (`palette[colorIdx++]`). Une même catégorie (ex: *Logement*) changeait de couleur d'un mois à l'autre ou présentait des teintes différentes entre la carte du Hub d'accueil et celle du Cashflow.
+  - **Disparition Complète des Pastilles de Légende (`.legend-color-dot`)** : Les puces circulaires colorées étaient écrasées à 0 px de largeur par le moteur de rendu flexbox en l'absence de `flex-shrink: 0;`, aggravé par une largeur maximale rigide `max-width: 110px` sur les conteneurs de légende.
+  - **Défaut d'Alignement du Conteneur Hub** : `#hub-donut-chart-box` ne portait pas la classe `.svg-donut-container`, provoquant une rupture de disposition entre la carte du Hub et celle du Cashflow.
+  - **Anomalie SVG Critique de Translation d'Origine (Tranches Invisibles)** : La règle CSS `.donut-slice { transform-origin: center; }` écrasait l'attribut natif SVG `transform="rotate(-90 65 65)"`. Les cercles `stroke-dasharray` tournaient autour de leur boîte englobante locale de contour au lieu du centre du cercle `(65, 65)`, propulsant les segments hors du `viewBox` SVG et affichant un anneau vide et sombre.
+
+- **Architecture Technique & Principes Modern Web Guidance (`svg-charts`, `data-visualization`, `accessibility`, `color-systems`)** :
+  - **Système de Couleurs Déterministe Haute Joaillerie (`analytics-engine.js`)** :
+    - `GFMP_LUXURY_PALETTE` : Palette royale de 15 nuances joaillières sélectionnées pour leur lisibilité et leur éclat sur fond sombre Haute Joaillerie (Saphir Royal `#3B82F6`, Émeraude Pure `#10B981`, Ambre Impérial `#F59E0B`, Rubis Rose `#EC4899`, Améthyste Vibrante `#8B5CF6`, Topaze Orange `#F97316`, etc.).
+    - `GFMP_CATEGORY_COLORS` : Table de correspondance canonique liant de façon fixe chaque catégorie standard (dans les 4 langues `FR`, `EN`, `ES`, `PT`) à sa couleur signature.
+    - Méthode `getCategoryColor(categoryName)` : résolution instantanée avec repli multilingue par mots-clés et hachage déterministe $O(1)$ (`djb2`) pour toute catégorie personnalisée ajoutée dynamiquement par l'utilisateur.
+    - Injection de la couleur fixe dans la méthode `computeCashflow()` et `getHomeDashboardData()`.
+  - **Correction SVG & Styling Cutting-Edge (`styles.css` & `index.html`)** :
+    - Suppression de `transform-origin: center;` sur `.donut-slice`, restaurant instantanément la géométrie SVG à son centre exact `(65, 65)`.
+    - Espacement esthétique des segments (`gap = 2`) conférant au donut un look aéré, moderne et haut de gamme.
+    - Fiabilisation des pastilles de légende : `width: 10px; height: 10px; min-width: 10px; min-height: 10px; border-radius: 50%; flex-shrink: 0; margin-right: 8px; box-shadow: 0 0 6px currentColor;`.
+    - Structuration unifiée `.svg-donut-container` et `.donut-chart-wrapper` (`display: flex; align-items: center; justify-content: space-between; gap: 16px; width: 100%;`).
+  - **Interactivité Rétroactive Liée & Affichage Dynamique au Centre (`app.js`)** :
+    - **Liaison Tranche-Légende** : Le survol ou le focus clavier (`tabindex="0"`) d'une tranche SVG ou d'un élément de légende illumine simultanément la tranche correspondante avec un halo lumineux `drop-shadow(0 0 8px currentColor)`, met en exergue la ligne de légende, et atténue les autres tranches à `opacity: 0.35`.
+    - **Afficheur Central Dynamique** : Le centre du donut remplace instantanément l'affichage global (*"TOTAL / 552,83 €"*) par les détails de la catégorie survolée (*Nom de la catégorie / Montant formaté / Pourcentage du total*).
+    - **Filtrage Interactif par Clic** : Cliquer sur une tranche ou un élément de légende active/désactive le filtrage des dépenses par cette catégorie avec retour haptique (`navigator.vibrate(15)`), toast de notification traduit (`FILTER_ACTIVE` / `FILTER_CLEARED`), et mise à jour réactive des tableaux de bord.
+    - **Accessibilité & Sémantique ARIA** : Attribution des rôles `role="graphics-symbol"`, `role="button"`, et étiquettes `aria-label` complètes.
+
+- **Validation Automatisée, Preuves Visuelles & Parité Cryptographique (SHA-256)** :
+  - **Suite de tests dédiée (`scratch/test_category_donut_colors.js`)** : 7/7 tests réussis (Palette luxe, couleurs standard, détection multilingue, déterminisme des catégories sur-mesure, calcul du breakdown, concordance Hub/Cashflow, conformité CSS/JS).
+  - **Régression Zéro Validée** : Les suites de tests de rafraîchissement des taux (`test_refresh_button_responsiveness.js`), de modal d'entités (`test_entity_modal_translations.js`), d'interactivité du header (`test_header_interactivity.js`), et de défilement vertical (`test_scroll_responsiveness.js`) passent à 100%.
+  - **Preuves Visuelles Relevées par Browser Subagent** :
+    - Donut Hub avec Concordance Parfaite des 5 Couleurs & Légende : `hub_card_donut_1793698887730.png`
+    - Donut Cashflow avec Affichage Central du Total & Halo Haute Joaillerie : `cashflow_card_donut_svg_1793698964374.png`
+    - Interactivité Tranche-Légende avec Détail Central Dynamique : `hub_card_donut_hover_1793698900524.png`
+  - **Parité d'Empreintes Numériques (SHA-256)** :
+    - `index.html` : `674E33133B75EFA1A2B7FD3DE4779F5FB6461DCB5A3C2B6929FA293374DD57E1` (100% identique entre `mobile-web/` et `android/app/src/main/assets/`)
+    - `styles.css` : `304CCAF8BA56A70EEA7A360A13C4EF2387FD75323D72CE93EC25281B37600837` (100% identique)
+    - `app.js` : `235C143A909924E000311750D1EA9325D891C0BED5D6DBC7FC08BCEF655A4ED6` (100% identique)
+    - `analytics-engine.js` : `8C699D1C16370D19A89025A70289F69FA25BE6C7C6DDCEC96A186CFC9845BF2F` (100% identique)
+    - `sw.js` : `A1060D72D8B23237ECFE63F5B18C63E2541A46C4BD577AF881D300368168141A` (100% identique, version `gfmp-mobile-v5.4.0`)
+  - **Compilation Gradle Android & Versioning (v1.5 / Code 6)** :
+    - `versionCode = 6`, `versionName = "1.5"` dans `build.gradle.kts`.
+    - `BUILD SUCCESSFUL in 52s` (`assembleDebug`, 34 tâches, 0 erreur). Nouvel APK autonome `GFMP-v1.0.apk` généré (2.47 Mo, SHA-256 `054C86802E188A221035758A93D86830A404C2A11ED6A60AF48E9028B4B7DBB5`).
+
 ---
 
 ## 📚 Documents de Référence Produits

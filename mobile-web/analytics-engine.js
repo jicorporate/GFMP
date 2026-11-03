@@ -612,6 +612,124 @@ const GFMP_DB_TRANSLATIONS = {
   }
 };
 
+// Build complete case-insensitive bidirectional lookup table for instant O(1) multilingual translation
+const GFMP_DB_LOOKUP = {};
+Object.keys(GFMP_DB_TRANSLATIONS).forEach(primaryKey => {
+  const translations = GFMP_DB_TRANSLATIONS[primaryKey];
+  GFMP_DB_LOOKUP[primaryKey.toLowerCase().trim()] = translations;
+  Object.values(translations).forEach(val => {
+    if (val && typeof val === 'string') {
+      GFMP_DB_LOOKUP[val.toLowerCase().trim()] = translations;
+    }
+  });
+});
+
+// Haute Joaillerie SFP v1.0 Categorical Color Palette
+const GFMP_LUXURY_PALETTE = [
+  '#3B82F6', // Royal Sapphire Blue (Logement / Housing)
+  '#F59E0B', // Imperial Amber Gold (Alimentation / Food)
+  '#8B5CF6', // Vibrant Amethyst Violet (Transports / Auto)
+  '#10B981', // Pure Emerald Green (Santé / Health)
+  '#EC4899', // Radiant Ruby Rose (Loisirs / Entertainment)
+  '#F97316', // Deep Topaz Orange (Impôts / Taxes)
+  '#06B6D4', // Electric Cyan (Abonnements / Subscriptions)
+  '#6366F1', // Royal Indigo (Formation / Education)
+  '#14B8A6', // Persian Teal (Habillement / Shopping)
+  '#E11D48', // Crimson Garnet (Cadeaux / Gifts)
+  '#A855F7', // Rich Lavender (Équipement / Home)
+  '#84CC16', // Peridot Lime (Projets)
+  '#D946EF', // Fuchsia Tourmaline
+  '#0284C7', // Oceanic Blue
+  '#94A3B8'  // Platinum Slate (Autre / Misc)
+];
+
+// Fixed Semantic Category Color Mapping for all baseline & standard categories
+const GFMP_CATEGORY_COLORS = {
+  // Standard French Keys
+  'logement (loyer/prêt/charges)': '#3B82F6',
+  'logement': '#3B82F6',
+  'alimentation & supermarché': '#F59E0B',
+  'alimentation': '#F59E0B',
+  'transports (essence/assurance)': '#8B5CF6',
+  'transports': '#8B5CF6',
+  'transport': '#8B5CF6',
+  'santé & mutuelle': '#10B981',
+  'santé': '#10B981',
+  'sante': '#10B981',
+  'loisirs, sorties & vacances': '#EC4899',
+  'loisirs': '#EC4899',
+  'impôts & taxes': '#F97316',
+  'impôts': '#F97316',
+  'impots': '#F97316',
+  'abonnements & services': '#06B6D4',
+  'abonnements': '#06B6D4',
+  'abonnements streaming': '#06B6D4',
+  'éducation & formation': '#6366F1',
+  'formation': '#6366F1',
+  'education': '#6366F1',
+  'habillement & mode': '#14B8A6',
+  'habillement': '#14B8A6',
+  'cadeaux & dons': '#E11D48',
+  'cadeaux': '#E11D48',
+  'équipement & maison': '#A855F7',
+  'autre (préciser...)': '#94A3B8',
+  'autre': '#94A3B8',
+
+  // Multilingual Canonical Keys (EN)
+  'housing (rent/loan/charges)': '#3B82F6',
+  'housing': '#3B82F6',
+  'food & supermarket': '#F59E0B',
+  'food': '#F59E0B',
+  'groceries': '#F59E0B',
+  'transport (fuel/insurance)': '#8B5CF6',
+  'transportation': '#8B5CF6',
+  'health & insurance': '#10B981',
+  'health': '#10B981',
+  'leisure, outings & holidays': '#EC4899',
+  'leisure & entertainment': '#EC4899',
+  'leisure': '#EC4899',
+  'taxes & duties': '#F97316',
+  'taxes': '#F97316',
+  'subscriptions': '#06B6D4',
+  'other': '#94A3B8',
+
+  // Multilingual Canonical Keys (ES)
+  'vivienda (alquiler/hipoteca/gastos)': '#3B82F6',
+  'vivienda': '#3B82F6',
+  'alimentación y supermercado': '#F59E0B',
+  'alimentacion y supermercado': '#F59E0B',
+  'alimentación': '#F59E0B',
+  'transporte (gasolina/seguro)': '#8B5CF6',
+  'transporte': '#8B5CF6',
+  'salud y mutua': '#10B981',
+  'salud': '#10B981',
+  'ocio, salidas y vacaciones': '#EC4899',
+  'ocio': '#EC4899',
+  'impuestos y tasas': '#F97316',
+  'impuestos': '#F97316',
+  'suscripciones': '#06B6D4',
+  'otro': '#94A3B8',
+
+  // Multilingual Canonical Keys (PT)
+  'habitação (renda/empréstimo/despesas)': '#3B82F6',
+  'habitação': '#3B82F6',
+  'habitacao': '#3B82F6',
+  'alimentação & supermercado': '#F59E0B',
+  'alimentacao & supermercado': '#F59E0B',
+  'alimentação': '#F59E0B',
+  'transportes (combustível/seguro)': '#8B5CF6',
+  'transportes': '#8B5CF6',
+  'saúde & seguro': '#10B981',
+  'saúde': '#10B981',
+  'saude': '#10B981',
+  'lazer, saídas e férias': '#EC4899',
+  'lazer': '#EC4899',
+  'impostos & taxas': '#F97316',
+  'impostos': '#F97316',
+  'assinaturas': '#06B6D4',
+  'outro': '#94A3B8'
+};
+
 class GFMPEngine {
   constructor() {
     this.data = null;
@@ -632,7 +750,7 @@ class GFMPEngine {
     this.listeners = [];
   }
 
-    cleanText(str) {
+  cleanText(str) {
     if (!str) return '';
     return String(str).replace(/\s+/g, ' ').trim();
   }
@@ -641,21 +759,41 @@ class GFMPEngine {
     if (!name) return '';
     const clean = this.cleanText(name);
     const targetLang = (lang && ['FR', 'EN', 'ES', 'PT'].includes(lang)) ? lang : 'FR';
-    
-    // Direct lookup
+    const cleanLower = clean.toLowerCase();
+
+    // 1. Direct primary key lookup
     if (GFMP_DB_TRANSLATIONS[clean] && GFMP_DB_TRANSLATIONS[clean][targetLang]) {
       return GFMP_DB_TRANSLATIONS[clean][targetLang];
     }
-    
-    // Stripped lookup without parenthesized suffixes
+
+    // 2. Dynamic database custom dictionary lookup
+    if (this.data && this.data.dictionary && this.data.dictionary[clean]) {
+      const dictEntry = this.data.dictionary[clean];
+      if (dictEntry[targetLang]) return dictEntry[targetLang];
+      if (dictEntry['FR']) return dictEntry['FR'];
+    }
+
+    // 3. Bidirectional multilingual reverse lookup
+    if (GFMP_DB_LOOKUP[cleanLower] && GFMP_DB_LOOKUP[cleanLower][targetLang]) {
+      return GFMP_DB_LOOKUP[cleanLower][targetLang];
+    }
+
+    // 4. Stripped lookup without parenthesized suffixes
     const stripped = clean.replace(/\s*\([A-Z]{3,4}\)/g, '')
                           .replace(/\s*\(Préciser\.\.\.\)/i, '')
                           .replace(/\s*\(Différé\)/i, '')
                           .trim();
+    const strippedLower = stripped.toLowerCase();
     if (GFMP_DB_TRANSLATIONS[stripped] && GFMP_DB_TRANSLATIONS[stripped][targetLang]) {
       return GFMP_DB_TRANSLATIONS[stripped][targetLang];
     }
-    
+    if (GFMP_DB_LOOKUP[strippedLower] && GFMP_DB_LOOKUP[strippedLower][targetLang]) {
+      return GFMP_DB_LOOKUP[strippedLower][targetLang];
+    }
+    if (this.data && this.data.dictionary && this.data.dictionary[stripped] && this.data.dictionary[stripped][targetLang]) {
+      return this.data.dictionary[stripped][targetLang];
+    }
+
     return clean;
   }
 
@@ -663,6 +801,61 @@ class GFMPEngine {
     if (!name) return '';
     const cleaned = String(name).replace(/\s*\([A-Z]{3,4}\)/g, '').replace(/\s*\(Préciser\.\.\.\)/i, '').trim();
     return this.trEntity(cleaned);
+  }
+
+  getCategoryColor(categoryName) {
+    if (!categoryName) return GFMP_LUXURY_PALETTE[0];
+    const raw = String(categoryName).trim();
+    const clean = raw.toLowerCase();
+
+    // 1. Direct dictionary match
+    if (GFMP_CATEGORY_COLORS[clean]) {
+      return GFMP_CATEGORY_COLORS[clean];
+    }
+
+    // 2. Keyword heuristic search for cross-language consistency
+    if (clean.includes('logement') || clean.includes('loyer') || clean.includes('hous') || clean.includes('rent') || clean.includes('vivien') || clean.includes('alquil') || clean.includes('habit') || clean.includes('mora')) {
+      return '#3B82F6';
+    }
+    if (clean.includes('aliment') || clean.includes('superm') || clean.includes('food') || clean.includes('groc') || clean.includes('comid') || clean.includes('restau')) {
+      return '#F59E0B';
+    }
+    if (clean.includes('transport') || clean.includes('essenc') || clean.includes('fuel') || clean.includes('gas') || clean.includes('auto') || clean.includes('combust') || clean.includes('veíc')) {
+      return '#8B5CF6';
+    }
+    if (clean.includes('sant') || clean.includes('mutuel') || clean.includes('health') || clean.includes('medic') || clean.includes('salud') || clean.includes('saúd') || clean.includes('pharma')) {
+      return '#10B981';
+    }
+    if (clean.includes('loisir') || clean.includes('sorti') || clean.includes('vacan') || clean.includes('leisur') || clean.includes('entert') || clean.includes('ocio') || clean.includes('lazer') || clean.includes('voyag') || clean.includes('holi')) {
+      return '#EC4899';
+    }
+    if (clean.includes('impot') || clean.includes('impôt') || clean.includes('tax') || clean.includes('impuest') || clean.includes('tribut') || clean.includes('fisc')) {
+      return '#F97316';
+    }
+    if (clean.includes('abonn') || clean.includes('subscri') || clean.includes('stream') || clean.includes('assin')) {
+      return '#06B6D4';
+    }
+    if (clean.includes('educ') || clean.includes('format') || clean.includes('school') || clean.includes('cours') || clean.includes('ensin')) {
+      return '#6366F1';
+    }
+    if (clean.includes('habil') || clean.includes('vetem') || clean.includes('cloth') || clean.includes('fash') || clean.includes('ropa') || clean.includes('vest')) {
+      return '#14B8A6';
+    }
+    if (clean.includes('cadeau') || clean.includes('don') || clean.includes('gift') || clean.includes('regal') || clean.includes('presen')) {
+      return '#E11D48';
+    }
+    if (clean.includes('autre') || clean.includes('other') || clean.includes('otro') || clean.includes('outro')) {
+      return '#94A3B8';
+    }
+
+    // 3. Deterministic hash for custom user categories
+    let hash = 0;
+    for (let i = 0; i < raw.length; i++) {
+      hash = ((hash << 5) - hash) + raw.charCodeAt(i);
+      hash |= 0;
+    }
+    const idx = Math.abs(hash) % GFMP_LUXURY_PALETTE.length;
+    return GFMP_LUXURY_PALETTE[idx];
   }
 
   genererNouvelId(collection) {
@@ -677,10 +870,13 @@ class GFMPEngine {
   existeDeja(collection, nom) {
     if (!Array.isArray(collection) || !nom) return null;
     const target = this.cleanText(nom).toLowerCase();
+    const targetTrs = ['FR', 'EN', 'ES', 'PT'].map(l => this.cleanText(this.trEntity(nom, l)).toLowerCase());
+
     return collection.find(item => {
       const rawNom = this.cleanText(item.nom).toLowerCase();
-      const trNom = this.cleanText(this.trEntity(item.nom)).toLowerCase();
-      return rawNom === target || trNom === target;
+      if (rawNom === target || targetTrs.includes(rawNom)) return true;
+      const itemTrs = ['FR', 'EN', 'ES', 'PT'].map(l => this.cleanText(this.trEntity(item.nom, l)).toLowerCase());
+      return itemTrs.some(tr => tr === target || targetTrs.includes(tr));
     }) || null;
   }
 
@@ -909,6 +1105,11 @@ class GFMPEngine {
       'NO_ASSETS': { FR: 'Aucun actif enregistré', EN: 'No assets recorded', ES: 'Ningún activo registrado', PT: 'Nenhum ativo registrado' },
       'NO_ACCOUNT_MATCH': { FR: 'Aucun compte correspondant', EN: 'No matching account', ES: 'Ninguna cuenta coincidente', PT: 'Nenhuma conta correspondente' },
       'NO_DEPENSE_PERIOD': { FR: 'Aucune dépense pour cette période', EN: 'No expenses for this period', ES: 'Sin gastos para este período', PT: 'Sem despesas para este período' },
+      'TOTAL': { FR: 'Total', EN: 'Total', ES: 'Total', PT: 'Total' },
+      'NO_EXPENSE_PERIOD': { FR: 'Aucune dépense enregistrée pour {period}', EN: 'No expenses recorded for {period}', ES: 'Ningún gasto registrado para {period}', PT: 'Nenhuma despesa registrada para {period}' },
+      'FILTER_ACTIVE': { FR: 'Filtre actif', EN: 'Active filter', ES: 'Filtro activo', PT: 'Filtro ativo' },
+      'FILTER_CLEARED': { FR: 'Filtre de catégorie effacé', EN: 'Category filter cleared', ES: 'Filtro de categoría eliminado', PT: 'Filtro de categoria limpo' },
+      'CLICK_TO_FILTER': { FR: 'Cliquer pour filtrer', EN: 'Click to filter', ES: 'Clic para filtrar', PT: 'Clique para filtrar' },
 
       // Saisie View & Modals
       'SAISIE_T': { FR: 'SAISIE TRANSACTION', EN: 'TRANSACTION ENTRY', ES: 'ENTRADA DE TRANSACCIÓN', PT: 'ENTRADA DE TRANSAÇÃO' },
@@ -1087,14 +1288,144 @@ class GFMPEngine {
             'MODAL_ADD_ENTITY_TITLE': { FR: 'NOUVEL ÉLÉMENT', EN: 'NEW ELEMENT', ES: 'NUEVO ELEMENTO', PT: 'NOVO ELEMENTO' },
       'PILL_ENTITY_COMPTE': { FR: 'Actif / Compte', EN: 'Asset / Account', ES: 'Activo / Cuenta', PT: 'Ativo / Conta' },
       'PILL_ENTITY_CATEGORIE': { FR: 'Catégorie', EN: 'Category', ES: 'Categoría', PT: 'Categoria' },
-      'PILL_ENTITY_TIERS': { FR: 'Tiers / Bénéficiaire', EN: 'Third-Party / Payee', ES: 'Tercero / Beneficiario', PT: 'Terceiro / Beneficiário' },
+      'PILL_ENTITY_TIERS': { FR: 'Tiers', EN: 'Third Party', ES: 'Tercero', PT: 'Terceiro' },
       'LBL_ADD_ENTITY_NAME': { FR: 'Désignation / Nom *', EN: 'Name / Designation *', ES: 'Nombre / Designación *', PT: 'Nome / Designação *' },
       'LBL_ADD_ENTITY_CLASSE': { FR: 'Classe d\'Actif', EN: 'Asset Class', ES: 'Clase de Activo', PT: 'Classe de Ativo' },
       'LBL_ADD_ENTITY_DEVISE': { FR: 'Devise du Compte', EN: 'Account Currency', ES: 'Moneda de la Cuenta', PT: 'Moeda da Conta' },
-      'LBL_ADD_ENTITY_CAT_TYPE': { FR: 'Type Budgétaire', EN: 'Budgetary Type', ES: 'Tipo Presupuestario', PT: 'Tipo Orçamentário' },
-      'LBL_ADD_ENTITY_TIERS_SECTEUR': { FR: 'Secteur d\'Activité', EN: 'Industry Sector', ES: 'Sector de Actividad', PT: 'Setor de Atividade' },
-      'BTN_CONFIRM_ADD_ENTITY': { FR: 'Ajouter & Sélectionner', EN: 'Add & Select', ES: 'Agregar y Seleccionar', PT: 'Adicionar e Selecionar' },
-      'BTN_CANCEL': { FR: 'Annuler', EN: 'Cancel', ES: 'Cancelar', PT: 'Cancelar' },
+      'LBL_ADD_ENTITY_CAT_TYPE': { FR: 'Type Budgétaire', EN: 'Budget Type', ES: 'Tipo de Presupuesto', PT: 'Tipo de Orçamento' },
+      'LBL_ADD_ENTITY_TIERS_SECTEUR': { FR: 'Secteur / Typologie', EN: 'Sector / Type', ES: 'Sector / Tipología', PT: 'Setor / Tipologia' },
+      'PLACEHOLDER_NEW_COMPTE': {
+        FR: 'Ex: Livret A, Compte Titres, Wallet Crypto...',
+        EN: 'Ex: Savings Account, Brokerage, Crypto Wallet...',
+        ES: 'Ej: Cuenta de Ahorro, Cartera de Inversión...',
+        PT: 'Ex: Conta Poupança, Carteira de Investimentos...'
+      },
+      'PLACEHOLDER_NEW_CAT': {
+        FR: 'Ex: Abonnements Streaming, Formations Pro...',
+        EN: 'Ex: Streaming Subscriptions, Pro Courses...',
+        ES: 'Ej: Suscripciones, Cursos Profesionales...',
+        PT: 'Ex: Assinaturas de Streaming, Cursos Pro...'
+      },
+      'PLACEHOLDER_NEW_TIERS': {
+        FR: 'Ex: Netflix, Super U, Propriétaire, Employeur...',
+        EN: 'Ex: Netflix, Supermarket, Landlord, Employer...',
+        ES: 'Ej: Netflix, Supermercado, Propietario, Empleador...',
+        PT: 'Ex: Netflix, Supermercado, Senhorio, Empregador...'
+      },
+      'OPT_CLASSE_LIQUIDITE': {
+        FR: 'Liquidité (Banque, Espèces)',
+        EN: 'Liquidity (Bank, Cash)',
+        ES: 'Liquidez (Banco, Efectivo)',
+        PT: 'Liquidez (Banco, Dinheiro)'
+      },
+      'OPT_CLASSE_INVESTISSEMENT': {
+        FR: 'Investissement (Actions, Crypto, Immo)',
+        EN: 'Investment (Stocks, Crypto, Real Estate)',
+        ES: 'Inversión (Acciones, Cripto, Inmuebles)',
+        PT: 'Investimento (Ações, Cripto, Imóveis)'
+      },
+      'OPT_CLASSE_DETTE': {
+        FR: 'Dette & Emprunt (Prêt, Différé)',
+        EN: 'Debt & Liability (Loan, Deferred)',
+        ES: 'Deuda & Pasivo (Préstamo, Diferido)',
+        PT: 'Dívida & Passivo (Empréstimo, Diferido)'
+      },
+      'OPT_TYPE_DEPENSE': {
+        FR: 'Dépense (Consommation)',
+        EN: 'Expense (Consumption)',
+        ES: 'Gasto (Consumo)',
+        PT: 'Despesa (Consumo)'
+      },
+      'OPT_TYPE_REVENU': {
+        FR: 'Revenu (Entrée)',
+        EN: 'Income (Revenue)',
+        ES: 'Ingreso (Entrada)',
+        PT: 'Receita (Entrada)'
+      },
+      'OPT_TYPE_TRANSFERT': {
+        FR: 'Transfert / Épargne',
+        EN: 'Transfer / Savings',
+        ES: 'Transferencia / Ahorro',
+        PT: 'Transferência / Poupança'
+      },
+      'OPT_SECTEUR_COMMERCE': {
+        FR: 'Commerce / Supermarché',
+        EN: 'Retail / Supermarket',
+        ES: 'Comercio / Supermercado',
+        PT: 'Comércio / Supermercado'
+      },
+      'OPT_SECTEUR_ENTREPRISE': {
+        FR: 'Entreprise / Employeur',
+        EN: 'Corporate / Employer',
+        ES: 'Empresa / Empleador',
+        PT: 'Empresa / Empregador'
+      },
+      'OPT_SECTEUR_FINANCE': {
+        FR: 'Banque & Finance',
+        EN: 'Banking & Finance',
+        ES: 'Banca & Finanzas',
+        PT: 'Banco & Finanças'
+      },
+      'OPT_SECTEUR_INSTITUTION': {
+        FR: 'Institution Publique',
+        EN: 'Public Institution',
+        ES: 'Institución Pública',
+        PT: 'Instituição Pública'
+      },
+      'OPT_SECTEUR_IMMOBILIER': {
+        FR: 'Immobilier / Propriétaire',
+        EN: 'Real Estate / Landlord',
+        ES: 'Inmobiliaria / Propietario',
+        PT: 'Imobiliário / Proprietário'
+      },
+      'OPT_SECTEUR_SANTE': {
+        FR: 'Santé & Pharmacie',
+        EN: 'Healthcare & Pharmacy',
+        ES: 'Salud & Farmacia',
+        PT: 'Saúde & Farmácia'
+      },
+      'OPT_SECTEUR_AUTRE': {
+        FR: 'Autre Secteur',
+        EN: 'Other Sector',
+        ES: 'Otro Sector',
+        PT: 'Outro Setor'
+      },
+      'BTN_CONFIRM_ADD_ENTITY': {
+        FR: 'Ajouter & Sélectionner',
+        EN: 'Add & Select',
+        ES: 'Agregar y Seleccionar',
+        PT: 'Adicionar e Selecionar'
+      },
+      'BTN_CANCEL': {
+        FR: 'Annuler',
+        EN: 'Cancel',
+        ES: 'Cancelar',
+        PT: 'Cancelar'
+      },
+      'ERR_NAME_REQUIRED': {
+        FR: 'Veuillez renseigner un nom valide.',
+        EN: 'Please enter a valid name.',
+        ES: 'Por favor, ingrese un nombre válido.',
+        PT: 'Por favor, insira um nome válido.'
+      },
+      'TITLE_NEW_COMPTE': {
+        FR: 'Créer un nouvel actif',
+        EN: 'Create a new asset',
+        ES: 'Crear un nuevo activo',
+        PT: 'Criar um novo ativo'
+      },
+      'TITLE_NEW_CAT': {
+        FR: 'Créer une nouvelle catégorie',
+        EN: 'Create a new category',
+        ES: 'Crear una nueva categoría',
+        PT: 'Criar uma nova categoria'
+      },
+      'TITLE_NEW_TIERS': {
+        FR: 'Créer un nouveau tiers',
+        EN: 'Create a new third party',
+        ES: 'Crear un nuevo tercero',
+        PT: 'Criar um novo terceiro'
+      },
       'AJOUTER_NOUVEAU': { FR: 'Ajouter nouveau', EN: 'Add new', ES: 'Agregar nuevo', PT: 'Adicionar novo' },
       'BTN_FIELD_ADD': { FR: '+ Nouveau', EN: '+ New', ES: '+ Nuevo', PT: '+ Novo' },
       'ENTITY_ADDED_SUCCESS': { FR: 'Élément ajouté et sélectionné avec succès !', EN: 'Item successfully added and selected!', ES: '¡Elemento agregado y seleccionado con éxito!', PT: 'Item adicionado e selecionado com sucesso!' },
@@ -1438,14 +1769,10 @@ class GFMPEngine {
       return (this.sortDir === 'asc') ? a.date.localeCompare(b.date) : b.date.localeCompare(a.date);
     });
 
-    // Color palette for category breakdown (SFP v1.0 Strict)
-    const palette = ['#4169E1', '#FADA5E', '#7851A9', '#10B981', '#F43F5E', '#8B5CF6', '#06B6D4', '#F97316'];
-    let colorIdx = 0;
-
+    // Category expense breakdown with deterministic Haute Joaillerie SFP v1.0 Palette
     const breakdown = Object.entries(catBreakdown).map(([nom, montant]) => {
       const pct = totalDepenses > 0 ? (montant / totalDepenses) * 100 : 0;
-      const color = palette[colorIdx % palette.length];
-      colorIdx++;
+      const color = this.getCategoryColor(nom);
       return {
         nom,
         nomTraduit: this.trEntity(nom),
@@ -1760,13 +2087,31 @@ class GFMPEngine {
     return true;
   }
 
-    addAccount(nom, classe = 'LIQUIDITE', devise = this.currency) {
+  registerEntityTranslations(name) {
+    if (!this.data) return;
+    if (!this.data.dictionary) this.data.dictionary = {};
+    const cleanNom = this.cleanText(name);
+    const lower = cleanNom.toLowerCase();
+    if (GFMP_DB_LOOKUP[lower]) {
+      this.data.dictionary[cleanNom] = { ...GFMP_DB_LOOKUP[lower] };
+    } else if (!this.data.dictionary[cleanNom]) {
+      this.data.dictionary[cleanNom] = {
+        FR: cleanNom,
+        EN: cleanNom,
+        ES: cleanNom,
+        PT: cleanNom
+      };
+    }
+  }
+
+  addAccount(nom, classe = 'LIQUIDITE', devise = this.currency) {
     if (!this.data.comptes) this.data.comptes = [];
     const cleanNom = this.cleanText(nom);
     const existing = this.existeDeja(this.data.comptes, cleanNom);
     if (existing) {
       return { ...existing, isNew: false };
     }
+    this.registerEntityTranslations(cleanNom);
     const nextId = this.genererNouvelId(this.data.comptes);
     const newCpt = { id: nextId, nom: cleanNom, classe, devise, actif: 'OUI' };
     this.data.comptes.push(newCpt);
@@ -1783,6 +2128,7 @@ class GFMPEngine {
     if (existing) {
       return { ...existing, isNew: false };
     }
+    this.registerEntityTranslations(cleanNom);
     const nextId = this.genererNouvelId(this.data.categories);
     const newCat = { id: nextId, nom: cleanNom, type };
     this.data.categories.push(newCat);
@@ -1799,6 +2145,7 @@ class GFMPEngine {
     if (existing) {
       return { ...existing, isNew: false };
     }
+    this.registerEntityTranslations(cleanNom);
     const nextId = this.genererNouvelId(this.data.tiers);
     const newTiers = { id: nextId, nom: cleanNom, type };
     this.data.tiers.push(newTiers);

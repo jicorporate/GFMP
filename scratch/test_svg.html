@@ -1,0 +1,40 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <link rel="stylesheet" href="../mobile-web/styles.css">
+  <style>
+    body { background: #0B1120; color: white; padding: 20px; }
+  </style>
+</head>
+<body>
+  <h2>Test 1: As in app.js right now</h2>
+  <div style="position:relative; width:130px; height:130px;">
+    <svg width="130" height="130" viewBox="0 0 130 130">
+      <circle cx="65" cy="65" r="57" fill="transparent" stroke="rgba(255,255,255,0.06)" stroke-width="16" />
+      <circle cx="65" cy="65" r="57" class="donut-slice" fill="transparent" stroke="#10B981" stroke-width="16" stroke-dasharray="130.86 358.14" stroke-dashoffset="0.00" transform="rotate(-90 65 65)" style="transition: all 0.3s ease; cursor:pointer;" />
+      <circle cx="65" cy="65" r="57" class="donut-slice" fill="transparent" stroke="#4169E1" stroke-width="16" stroke-dasharray="80.22 358.14" stroke-dashoffset="-130.86" transform="rotate(-90 65 65)" style="transition: all 0.3s ease; cursor:pointer;" />
+      <circle cx="65" cy="65" r="57" class="donut-slice" fill="transparent" stroke="#8B5CF6" stroke-width="16" stroke-dasharray="53.48 358.14" stroke-dashoffset="-211.08" transform="rotate(-90 65 65)" style="transition: all 0.3s ease; cursor:pointer;" />
+    </svg>
+  </div>
+
+  <h2>Test 2: Without .donut-slice class</h2>
+  <div style="position:relative; width:130px; height:130px;">
+    <svg width="130" height="130" viewBox="0 0 130 130">
+      <circle cx="65" cy="65" r="57" fill="transparent" stroke="rgba(255,255,255,0.06)" stroke-width="16" />
+      <circle cx="65" cy="65" r="57" fill="transparent" stroke="#10B981" stroke-width="16" stroke-dasharray="130.86 358.14" stroke-dashoffset="0.00" transform="rotate(-90 65 65)" />
+      <circle cx="65" cy="65" r="57" fill="transparent" stroke="#4169E1" stroke-width="16" stroke-dasharray="80.22 358.14" stroke-dashoffset="-130.86" transform="rotate(-90 65 65)" />
+      <circle cx="65" cy="65" r="57" fill="transparent" stroke="#8B5CF6" stroke-width="16" stroke-dasharray="53.48 358.14" stroke-dashoffset="-211.08" transform="rotate(-90 65 65)" />
+    </svg>
+  </div>
+
+  <h2>Test 3: Standard Positive Stroke Dashoffset</h2>
+  <div style="position:relative; width:130px; height:130px;">
+    <svg width="130" height="130" viewBox="0 0 130 130">
+      <circle cx="65" cy="65" r="57" fill="transparent" stroke="rgba(255,255,255,0.06)" stroke-width="16" />
+      <circle cx="65" cy="65" r="57" fill="transparent" stroke="#10B981" stroke-width="16" stroke-dasharray="130.86 358.14" stroke-dashoffset="0" transform="rotate(-90 65 65)" />
+      <circle cx="65" cy="65" r="57" fill="transparent" stroke="#4169E1" stroke-width="16" stroke-dasharray="80.22 358.14" stroke-dashoffset="227.28" transform="rotate(-90 65 65)" />
+      <circle cx="65" cy="65" r="57" fill="transparent" stroke="#8B5CF6" stroke-width="16" stroke-dasharray="53.48 358.14" stroke-dashoffset="147.06" transform="rotate(-90 65 65)" />
+    </svg>
+  </div>
+</body>
+</html>
