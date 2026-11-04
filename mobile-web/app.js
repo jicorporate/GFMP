@@ -1008,19 +1008,39 @@ document.addEventListener('DOMContentLoaded', () => {
     if (rep.topExpenses && rep.topExpenses.length > 0) {
       topExpHtml = rep.topExpenses.map(e => `
         <div style="display:flex; justify-content:space-between; font-size:0.78rem; padding:4px 0; border-bottom:1px solid rgba(255,255,255,0.06);">
-          <span>${engine.trEntity(e.nom)}</span>
-          <span style="font-weight:700; color:var(--c-yellow-royal); font-feature-settings:'tnum';">${e.montant} (${e.pct})</span>
+          <span>${escapeHTML(engine.trEntity(e.nom))}</span>
+          <span style="font-weight:700; color:var(--c-yellow-royal); font-feature-settings:'tnum';">${escapeHTML(e.montant)} (${escapeHTML(e.pct)})</span>
         </div>
       `).join('');
     } else {
-      topExpHtml = `<div style="font-size:0.75rem; color:var(--text-muted); padding:4px 0;">${engine.tr('NO_DEPENSE_PERIOD')}</div>`;
+      topExpHtml = `
+        <div class="empty-state-rich" style="padding:14px 12px; margin-top:4px;">
+          <div class="empty-state-title">${escapeHTML(engine.tr('NO_DEPENSE_PERIOD'))}</div>
+          <p class="empty-state-desc">${escapeHTML(engine.tr('DONUT_EMPTY_HINT'))}</p>
+          <div class="empty-state-actions">
+            <button type="button" class="btn-empty-cta" data-empty-action="add-exp">${escapeHTML(engine.tr('EMPTY_CTA_ADD_EXP'))}</button>
+            ${engine.month !== '00' ? `<button type="button" class="btn-empty-cta secondary" data-empty-action="view-full-year">${escapeHTML(engine.tr('EMPTY_CTA_FULL_YEAR'))}</button>` : ''}
+          </div>
+        </div>
+      `;
     }
+
+    const emptyDiagnosticHtml = !rep.hasData ? `
+      <div class="empty-state-rich" style="margin-bottom:12px; padding:14px 12px; border-color:rgba(250,218,94,0.35); background:rgba(250,218,94,0.05);">
+        <div class="empty-state-icon-box" aria-hidden="true">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+        </div>
+        <div class="empty-state-title">${escapeHTML(engine.tr('REPORT_EMPTY_DIAG_TITLE'))}</div>
+        <p class="empty-state-desc">${escapeHTML(engine.tr('REPORT_EMPTY_DIAG_DESC'))}</p>
+      </div>
+    ` : '';
 
     bodyEl.innerHTML = `
       <div style="background:rgba(255,255,255,0.05); padding:12px; border-radius:10px; margin-bottom:12px; border:1px solid rgba(250,218,94,0.3);">
         <div style="font-weight:800; color:var(--c-yellow-royal); font-size:1.05rem;">${summaryLabel}</div>
         <div style="font-size:0.75rem; color:var(--text-muted);">${consolCurrLabel}</div>
       </div>
+      ${emptyDiagnosticHtml}
       <div style="display:grid; grid-template-columns:1fr 1fr; gap:8px; margin-bottom:12px;">
         <div style="background:rgba(16,185,129,0.1); border-left:3px solid #10B981; padding:8px; border-radius:6px;">
           <div style="font-size:0.7rem; color:#A7F3D0;">${engine.tr('REPORT_TOT_REV')}</div>
@@ -1140,19 +1160,29 @@ document.addEventListener('DOMContentLoaded', () => {
 
   // --- 12. INTERACTIVE SVG CHART GENERATORS (BIDIRECTIONAL CROSS-FILTERING) ---
 
-  // A. Cashflow Multi-Month Trend Chart (6 Months SVG, Interactive Click to switch Month)
+  // A. Cashflow Multi-Month Trend Chart (6 Months SVG, Interactive Click to switch Month & Resilient Zero-State)
   function renderTrendChart(containerId) {
     const container = document.getElementById(containerId);
     if (!container) return;
 
     const trend = engine.computeCashflowTrend(6);
     if (!trend || trend.length === 0) {
-      container.innerHTML = '<div style="color:var(--text-muted); font-size:0.8rem; text-align:center; padding-top:60px;">Aucune donnée de tendance</div>';
+      container.innerHTML = `
+        <div class="empty-state-rich">
+          <div class="empty-state-title">${escapeHTML(engine.tr('TREND_EMPTY_TITLE'))}</div>
+          <p class="empty-state-desc">${escapeHTML(engine.tr('TREND_EMPTY_SUB'))}</p>
+          <div class="empty-state-actions">
+            <button type="button" class="btn-empty-cta" data-empty-action="add-tx">${escapeHTML(engine.tr('EMPTY_CTA_ADD_TX'))}</button>
+          </div>
+        </div>
+      `;
       return;
     }
 
     let maxVal = 0;
+    let hasAnyTrendFlux = false;
     trend.forEach(t => {
+      if (t.revenus > 0 || t.depenses > 0) hasAnyTrendFlux = true;
       if (t.revenus > maxVal) maxVal = t.revenus;
       if (t.depenses > maxVal) maxVal = t.depenses;
     });
@@ -1170,8 +1200,8 @@ document.addEventListener('DOMContentLoaded', () => {
     let barsHtml = '';
     trend.forEach((t, i) => {
       const centerX = padX + i * step + step / 2;
-      const hRev = Math.max(3, (t.revenus / maxVal) * chartHeight);
-      const hDep = Math.max(3, (t.depenses / maxVal) * chartHeight);
+      const hRev = t.revenus > 0 ? Math.max(4, (t.revenus / maxVal) * chartHeight) : 3;
+      const hDep = t.depenses > 0 ? Math.max(4, (t.depenses / maxVal) * chartHeight) : 3;
 
       const yRev = height - padBottom - hRev;
       const yDep = height - padBottom - hDep;
@@ -1180,17 +1210,19 @@ document.addEventListener('DOMContentLoaded', () => {
       const xDep = centerX + 1.5;
 
       const isCurrentMonth = t.yearMonth === `${engine.year}-${engine.month}`;
+      const revFill = t.revenus > 0 ? '#10B981' : 'rgba(16,185,129,0.28)';
+      const depFill = t.depenses > 0 ? '#EF4444' : 'rgba(239,68,68,0.28)';
 
       barsHtml += `
         <!-- Month ${t.label} Group (Clickable to switch active month) -->
         <g class="chart-bar-group ${isCurrentMonth ? 'active' : ''}" data-ym="${t.yearMonth}" data-label="${t.label}" style="cursor:pointer;">
           ${isCurrentMonth ? `<rect x="${centerX - step / 2 + 2}" y="${padTop - 8}" width="${step - 4}" height="${chartHeight + 14}" rx="8" fill="rgba(250,218,94,0.12)" stroke="#FADA5E" stroke-width="1.5" />` : ''}
           <!-- Revenus (Vert) -->
-          <rect x="${xRev}" y="${yRev}" width="${barW}" height="${hRev}" rx="3" fill="#10B981" filter="drop-shadow(0 2px 4px rgba(16,185,129,0.3))">
+          <rect x="${xRev}" y="${yRev}" width="${barW}" height="${hRev}" rx="3" fill="${revFill}" filter="drop-shadow(0 2px 4px rgba(16,185,129,0.3))">
             <title>${t.label} Revenus : ${engine.formatMoney(t.revenus)}</title>
           </rect>
           <!-- Dépenses (Rouge) -->
-          <rect x="${xDep}" y="${yDep}" width="${barW}" height="${hDep}" rx="3" fill="#EF4444" filter="drop-shadow(0 2px 4px rgba(239,68,68,0.3))">
+          <rect x="${xDep}" y="${yDep}" width="${barW}" height="${hDep}" rx="3" fill="${depFill}" filter="drop-shadow(0 2px 4px rgba(239,68,68,0.3))">
             <title>${t.label} Dépenses : ${engine.formatMoney(t.depenses)}</title>
           </rect>
           <!-- Label Mois -->
@@ -1198,6 +1230,16 @@ document.addEventListener('DOMContentLoaded', () => {
         </g>
       `;
     });
+
+    const zeroTrendCallout = !hasAnyTrendFlux ? `
+      <div class="trend-empty-callout">
+        <div style="text-align:left; flex:1; min-width:180px;">
+          <div style="font-size:0.76rem; font-weight:800; color:#FFF;">${escapeHTML(engine.tr('TREND_EMPTY_TITLE'))}</div>
+          <div style="font-size:0.68rem; color:var(--text-secondary); margin-top:2px;">${escapeHTML(engine.tr('TREND_EMPTY_SUB'))}</div>
+        </div>
+        <button type="button" class="btn-empty-cta" data-empty-action="add-tx">${escapeHTML(engine.tr('EMPTY_CTA_ADD_TX'))}</button>
+      </div>
+    ` : '';
 
     container.innerHTML = `
       <svg viewBox="0 0 ${width} ${height}" style="width:100%; height:100%; overflow:visible;">
@@ -1210,9 +1252,10 @@ document.addEventListener('DOMContentLoaded', () => {
         ${barsHtml}
       </svg>
       <div style="display:flex; justify-content:center; gap:16px; margin-top:6px; font-size:0.7rem;">
-        <span style="display:inline-flex; align-items:center; gap:5px; color:#A7F3D0;"><span style="width:8px; height:8px; border-radius:2px; background:#10B981;"></span> Revenus</span>
-        <span style="display:inline-flex; align-items:center; gap:5px; color:#FECACA;"><span style="width:8px; height:8px; border-radius:2px; background:#EF4444;"></span> Dépenses</span>
+        <span style="display:inline-flex; align-items:center; gap:5px; color:#A7F3D0;"><span style="width:8px; height:8px; border-radius:2px; background:#10B981;"></span> ${escapeHTML(engine.tr('REVENUES') || 'Revenus')}</span>
+        <span style="display:inline-flex; align-items:center; gap:5px; color:#FECACA;"><span style="width:8px; height:8px; border-radius:2px; background:#EF4444;"></span> ${escapeHTML(engine.tr('DEPENSES') || 'Dépenses')}</span>
       </div>
+      ${zeroTrendCallout}
     `;
 
     // Bind Bar Click -> Switch Active Month Bidirectionally
@@ -1238,9 +1281,31 @@ document.addEventListener('DOMContentLoaded', () => {
     if (!breakdown || breakdown.length === 0 || totalDepenses <= 0) {
       const emptyMsg = engine.tr('NO_EXPENSE_PERIOD', { period: `${engine.getMonthLabel()} ${engine.year}` }) ||
         `Aucune dépense enregistrée pour ${engine.getMonthLabel()} ${engine.year}`;
+      const emptyHint = engine.tr('DONUT_EMPTY_HINT');
+      const size = 124;
+      const strokeW = 14;
+      const radius = (size - strokeW) / 2;
+      const center = size / 2;
       container.innerHTML = `
-        <div style="width:100%; text-align:center; padding:30px 10px; color:var(--text-muted); font-size:0.8rem;">
-          ${emptyMsg}
+        <div class="empty-state-donut-wrap">
+          <div class="donut-ring-box" style="position:relative; width:${size}px; height:${size}px; flex-shrink:0;">
+            <svg width="${size}" height="${size}" viewBox="0 0 ${size} ${size}" role="img" aria-label="${escapeHTML(emptyMsg)}">
+              <circle cx="${center}" cy="${center}" r="${radius}" fill="transparent" stroke="rgba(255,255,255,0.06)" stroke-width="${strokeW}" />
+              <circle cx="${center}" cy="${center}" r="${radius}" fill="transparent" stroke="rgba(250,218,94,0.22)" stroke-width="2" stroke-dasharray="5 5" />
+            </svg>
+            <div class="donut-center-box" style="position:absolute; top:0; left:0; width:100%; height:100%; display:flex; flex-direction:column; align-items:center; justify-content:center; pointer-events:none; padding:8px; text-align:center;">
+              <div class="donut-center-lbl" style="font-size:0.58rem; font-weight:700; color:var(--text-muted); text-transform:uppercase;">${escapeHTML(engine.tr('TOTAL') || 'TOTAL')}</div>
+              <div class="donut-center-val" style="font-size:0.76rem; font-weight:900; color:var(--text-secondary); font-feature-settings:'tnum'; margin-top:2px;">${escapeHTML(engine.formatMoney(0))}</div>
+            </div>
+          </div>
+          <div class="empty-state-rich" style="flex:1; min-width:200px; padding:14px 12px; margin:0;">
+            <div class="empty-state-title">${escapeHTML(emptyMsg)}</div>
+            <p class="empty-state-desc">${escapeHTML(emptyHint)}</p>
+            <div class="empty-state-actions">
+              <button type="button" class="btn-empty-cta" data-empty-action="add-exp">${escapeHTML(engine.tr('EMPTY_CTA_ADD_EXP'))}</button>
+              ${engine.month !== '00' ? `<button type="button" class="btn-empty-cta secondary" data-empty-action="view-full-year">${escapeHTML(engine.tr('EMPTY_CTA_FULL_YEAR'))}</button>` : ''}
+            </div>
+          </div>
         </div>
       `;
       return;
@@ -1845,6 +1910,36 @@ document.addEventListener('DOMContentLoaded', () => {
       else chip.classList.remove('active');
     });
 
+    // Contextual Data Mode Banner (Demo Dataset vs Blank Personal Portfolio)
+    const bannerEl = document.getElementById('hub-datamode-banner');
+    if (bannerEl) {
+      const isEmptyMode = (data.dataMode === 'EMPTY');
+      bannerEl.className = `hub-datamode-banner ${isEmptyMode ? 'is-empty-mode' : ''}`;
+      if (isEmptyMode) {
+        bannerEl.innerHTML = `
+          <div class="hub-dm-info">
+            <span class="hub-dm-dot" aria-hidden="true"></span>
+            <span>${escapeHTML(engine.tr('BANNER_EMPTY_ACTIVE'))}</span>
+          </div>
+          <div class="hub-dm-actions">
+            <button type="button" class="hub-dm-btn primary-cta" data-empty-action="add-tx">${escapeHTML(engine.tr('EMPTY_CTA_ADD_TX'))}</button>
+            <button type="button" class="hub-dm-btn" data-empty-action="load-demo">${escapeHTML(engine.tr('EMPTY_CTA_LOAD_DEMO'))}</button>
+          </div>
+        `;
+      } else {
+        bannerEl.innerHTML = `
+          <div class="hub-dm-info">
+            <span class="hub-dm-dot" aria-hidden="true"></span>
+            <span>${escapeHTML(engine.tr('BANNER_DEMO_ACTIVE'))}</span>
+          </div>
+          <div class="hub-dm-actions">
+            <button type="button" class="hub-dm-btn" data-empty-action="switch-empty">${escapeHTML(engine.tr('EMPTY_CTA_SWITCH_EMPTY'))}</button>
+            <button type="button" class="hub-dm-btn primary-cta" data-empty-action="add-tx">${escapeHTML(engine.tr('EMPTY_CTA_ADD_TX'))}</button>
+          </div>
+        `;
+      }
+    }
+
     // Consolidated Portfolio Hero Card
     const heroNw = document.getElementById('hub-hero-networth');
     if (heroNw) heroNw.textContent = engine.formatMoney(data.netWorth);
@@ -1873,7 +1968,11 @@ document.addEventListener('DOMContentLoaded', () => {
     const solvencyEl = document.getElementById('hub-solvency-ratio');
     if (solvencyEl) {
       const sol = data.totalAssets > 0 ? Math.max(0, 100 - data.debtRatio) : (data.totalLiabilities > 0 ? 0 : 100);
-      solvencyEl.textContent = engine.tr('SOLVENCY_SCORE', { sol, score: data.healthScore });
+      if (!data.hasData && data.totalAssets === 0 && data.totalLiabilities === 0) {
+        solvencyEl.textContent = `${engine.tr('SOLVENCY_SCORE', { sol, score: data.healthScore })} • ${engine.tr('SOLVENCY_EMPTY')}`;
+      } else {
+        solvencyEl.textContent = engine.tr('SOLVENCY_SCORE', { sol, score: data.healthScore });
+      }
     }
 
     // Mini stack bar: Actifs vs Dettes
@@ -1980,7 +2079,19 @@ document.addEventListener('DOMContentLoaded', () => {
     const topAssetsList = document.getElementById('hub-top-assets-list');
     if (topAssetsList) {
       if (!data.topAssets || data.topAssets.length === 0) {
-        topAssetsList.innerHTML = `<div style="font-size:0.75rem; color:var(--text-muted); text-align:center; padding:12px;">${engine.tr('NO_ASSETS')}</div>`;
+        topAssetsList.innerHTML = `
+          <div class="empty-state-rich">
+            <div class="empty-state-icon-box" aria-hidden="true">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2L2 7l10 5 10-5-10-5z"/><path d="M2 17l10 5 10-5"/><path d="M2 12l10 5 10-5"/></svg>
+            </div>
+            <div class="empty-state-title">${escapeHTML(engine.tr('NO_ASSETS'))}</div>
+            <p class="empty-state-desc">${escapeHTML(engine.tr('EMPTY_PATRIMOINE_SUB'))}</p>
+            <div class="empty-state-actions">
+              <button type="button" class="btn-empty-cta" data-empty-action="add-tx">${escapeHTML(engine.tr('EMPTY_CTA_ADD_TX'))}</button>
+              <button type="button" class="btn-empty-cta secondary" data-empty-action="add-account">${escapeHTML(engine.tr('EMPTY_CTA_ADD_ACC'))}</button>
+            </div>
+          </div>
+        `;
       } else {
         topAssetsList.innerHTML = data.topAssets.map(ast => `
           <div class="hub-asset-row" style="display:flex; justify-content:space-between; align-items:center; background:rgba(255,255,255,0.03); border:1px solid rgba(255,255,255,0.07); border-radius:8px; padding:8px 12px;">
@@ -2004,7 +2115,19 @@ document.addEventListener('DOMContentLoaded', () => {
     const budgetGaugesBox = document.getElementById('hub-budget-gauges-box');
     if (budgetGaugesBox) {
       if (!data.topBudgetCategories || data.topBudgetCategories.length === 0) {
-        budgetGaugesBox.innerHTML = `<div style="font-size:0.75rem; color:var(--text-muted); text-align:center; padding:12px;">${engine.tr('NO_BUDGET_PERIOD')}</div>`;
+        budgetGaugesBox.innerHTML = `
+          <div class="empty-state-rich">
+            <div class="empty-state-icon-box" aria-hidden="true">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="6"/><circle cx="12" cy="12" r="2"/></svg>
+            </div>
+            <div class="empty-state-title">${escapeHTML(engine.tr('NO_BUDGET_PERIOD'))}</div>
+            <p class="empty-state-desc">${escapeHTML(engine.tr('EMPTY_BUDGET_SUB'))}</p>
+            <div class="empty-state-actions">
+              <button type="button" class="btn-empty-cta" data-empty-action="open-alloc">${escapeHTML(engine.tr('EMPTY_CTA_ALLOC_BG'))}</button>
+              ${engine.month !== '00' ? `<button type="button" class="btn-empty-cta secondary" data-empty-action="view-full-year">${escapeHTML(engine.tr('EMPTY_CTA_FULL_YEAR'))}</button>` : ''}
+            </div>
+          </div>
+        `;
       } else {
         budgetGaugesBox.innerHTML = data.topBudgetCategories.map(bg => {
           const color = bg.rawPct > 100 ? '#EF4444' : bg.rawPct >= 80 ? '#F59E0B' : '#10B981';
@@ -2013,15 +2136,15 @@ document.addEventListener('DOMContentLoaded', () => {
           return `
             <div class="hub-budget-row" style="background:rgba(255,255,255,0.02); border:1px solid rgba(255,255,255,0.06); border-radius:10px; padding:10px 12px;">
               <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:6px;">
-                <span style="font-size:0.8rem; font-weight:700; color:#FFF;">${engine.trEntity(bg.nom)}</span>
-                <span class="badge-status ${badgeClass}" style="font-size:0.62rem; padding:2px 8px;">${badgeText} (${Math.round(bg.rawPct)}%)</span>
+                <span style="font-size:0.8rem; font-weight:700; color:#FFF;">${escapeHTML(engine.trEntity(bg.nom))}</span>
+                <span class="badge-status ${badgeClass}" style="font-size:0.62rem; padding:2px 8px;">${escapeHTML(badgeText)} (${Math.round(bg.rawPct)}%)</span>
               </div>
               <div style="height:6px; background:rgba(255,255,255,0.08); border-radius:3px; overflow:hidden; margin-bottom:6px;">
                 <div style="width:${Math.min(100, bg.rawPct)}%; height:100%; background:${color}; transition:width 0.4s ease;"></div>
               </div>
               <div style="display:flex; justify-content:space-between; font-size:0.68rem; color:var(--text-secondary);">
-                <span>${engine.tr('CONSUMED')} <strong style="color:#FFF; font-feature-settings:'tnum';">${engine.formatMoney(bg.consomme)}</strong></span>
-                <span>${engine.tr('ALLOCATED')} <strong style="color:var(--c-yellow-royal); font-feature-settings:'tnum';">${engine.formatMoney(bg.alloue)}</strong></span>
+                <span>${escapeHTML(engine.tr('CONSUMED'))} <strong style="color:#FFF; font-feature-settings:'tnum';">${escapeHTML(engine.formatMoney(bg.consomme))}</strong></span>
+                <span>${escapeHTML(engine.tr('ALLOCATED'))} <strong style="color:var(--c-yellow-royal); font-feature-settings:'tnum';">${escapeHTML(engine.formatMoney(bg.alloue))}</strong></span>
               </div>
             </div>
           `;
@@ -2033,7 +2156,25 @@ document.addEventListener('DOMContentLoaded', () => {
     const recentTxBody = document.getElementById('hub-recent-tx-body');
     if (recentTxBody) {
       if (!data.recentTransactions || data.recentTransactions.length === 0) {
-        recentTxBody.innerHTML = `<tr><td colspan="3" class="empty-state">${engine.tr('NO_TX')}</td></tr>`;
+        const isCatFiltered = Boolean(engine.selectedCategoryFilter);
+        recentTxBody.innerHTML = `
+          <tr>
+            <td colspan="3" class="empty-state">
+              <div class="empty-state-rich">
+                <div class="empty-state-icon-box" aria-hidden="true">
+                  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+                </div>
+                <div class="empty-state-title">${escapeHTML(engine.tr('NO_TX'))}</div>
+                <p class="empty-state-desc">${escapeHTML(engine.tr('EMPTY_TX_SUB'))}</p>
+                <div class="empty-state-actions">
+                  <button type="button" class="btn-empty-cta" data-empty-action="add-tx">${escapeHTML(engine.tr('EMPTY_CTA_ADD_TX'))}</button>
+                  ${isCatFiltered ? `<button type="button" class="btn-empty-cta secondary" data-empty-action="reset-cf-filters">${escapeHTML(engine.tr('EMPTY_CTA_RESET_FILTER'))}</button>` : ''}
+                  ${data.dataMode === 'EMPTY' ? `<button type="button" class="btn-empty-cta secondary" data-empty-action="load-demo">${escapeHTML(engine.tr('EMPTY_CTA_LOAD_DEMO'))}</button>` : ''}
+                </div>
+              </div>
+            </td>
+          </tr>
+        `;
       } else {
         recentTxBody.innerHTML = data.recentTransactions.map(tx => {
           const color = tx.type === 'REVENU' ? '#10B981' : tx.type === 'VIREMENT' ? '#60A5FA' : '#EF4444';
@@ -2110,7 +2251,25 @@ document.addEventListener('DOMContentLoaded', () => {
     // Render Modern Table
     const tbody = document.getElementById('cashflow-table-body');
     if (cf.transactions.length === 0) {
-      tbody.innerHTML = `<tr><td colspan="5" class="empty-state">${engine.tr('EMPTY_TX_FILTER')}</td></tr>`;
+      const hasActiveFilters = Boolean(engine.searchTerm || engine.fluxFilter !== 'ALL' || engine.selectedCategoryFilter || engine.accountFilter !== 'ALL');
+      tbody.innerHTML = `
+        <tr>
+          <td colspan="5" class="empty-state">
+            <div class="empty-state-rich">
+              <div class="empty-state-icon-box" aria-hidden="true">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+              </div>
+              <div class="empty-state-title">${escapeHTML(engine.tr('EMPTY_TX_FILTER'))}</div>
+              <p class="empty-state-desc">${escapeHTML(engine.tr('EMPTY_TX_SUB'))}</p>
+              <div class="empty-state-actions">
+                <button type="button" class="btn-empty-cta" data-empty-action="add-tx">${escapeHTML(engine.tr('EMPTY_CTA_ADD_TX'))}</button>
+                ${hasActiveFilters ? `<button type="button" class="btn-empty-cta secondary" data-empty-action="reset-cf-filters">${escapeHTML(engine.tr('EMPTY_CTA_RESET_FILTER'))}</button>` : ''}
+                ${engine.month !== '00' ? `<button type="button" class="btn-empty-cta secondary" data-empty-action="view-full-year">${escapeHTML(engine.tr('EMPTY_CTA_FULL_YEAR'))}</button>` : ''}
+              </div>
+            </div>
+          </td>
+        </tr>
+      `;
       return;
     }
 
@@ -2214,13 +2373,37 @@ document.addEventListener('DOMContentLoaded', () => {
       }
     } else if (stackBar) {
       stackBar.innerHTML = `<div class="stack-segment" style="width:100%; background:rgba(255,255,255,0.1);"></div>`;
-      if (stackLegend) stackLegend.innerHTML = `<span>${engine.tr('NO_ASSETS')}</span>`;
+      if (stackLegend) {
+        stackLegend.innerHTML = `
+          <span style="display:inline-flex; align-items:center; gap:8px; flex-wrap:wrap;">
+            <span>${escapeHTML(engine.tr('NO_ASSETS'))} — ${escapeHTML(engine.tr('EMPTY_PATRIMOINE_SUB'))}</span>
+            <button type="button" class="btn-empty-cta" style="padding:4px 10px; font-size:0.66rem;" data-empty-action="add-tx">${escapeHTML(engine.tr('EMPTY_CTA_ADD_TX'))}</button>
+          </span>
+        `;
+      }
     }
 
     // Accounts Modern Table
     const tbody = document.getElementById('networth-table-body');
     if (nw.accounts.length === 0) {
-      tbody.innerHTML = `<tr><td colspan="4" class="empty-state">${engine.tr('NO_ACCOUNT_MATCH')}</td></tr>`;
+      const hasClassFilter = (engine.patrimoineClassFilter && engine.patrimoineClassFilter !== 'ALL');
+      tbody.innerHTML = `
+        <tr>
+          <td colspan="4" class="empty-state">
+            <div class="empty-state-rich">
+              <div class="empty-state-icon-box" aria-hidden="true">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2L2 7l10 5 10-5-10-5z"/><path d="M2 17l10 5 10-5"/><path d="M2 12l10 5 10-5"/></svg>
+              </div>
+              <div class="empty-state-title">${escapeHTML(engine.tr('NO_ACCOUNT_MATCH'))}</div>
+              <p class="empty-state-desc">${escapeHTML(engine.tr('EMPTY_PATRIMOINE_SUB'))}</p>
+              <div class="empty-state-actions">
+                <button type="button" class="btn-empty-cta" data-empty-action="add-account">${escapeHTML(engine.tr('EMPTY_CTA_ADD_ACC'))}</button>
+                ${hasClassFilter ? `<button type="button" class="btn-empty-cta secondary" data-empty-action="reset-nw-filters">${escapeHTML(engine.tr('EMPTY_CTA_RESET_FILTER'))}</button>` : ''}
+              </div>
+            </div>
+          </td>
+        </tr>
+      `;
       return;
     }
 
@@ -2252,7 +2435,25 @@ document.addEventListener('DOMContentLoaded', () => {
 
     const tbody = document.getElementById('budget-table-body');
     if (bg.categories.length === 0) {
-      tbody.innerHTML = `<tr><td colspan="4" class="empty-state">${engine.tr('NO_BUDGET_MONTH')}</td></tr>`;
+      const hasStatusFilter = (engine.budgetStatusFilter && engine.budgetStatusFilter !== 'ALL');
+      tbody.innerHTML = `
+        <tr>
+          <td colspan="4" class="empty-state">
+            <div class="empty-state-rich">
+              <div class="empty-state-icon-box" aria-hidden="true">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="6"/><circle cx="12" cy="12" r="2"/></svg>
+              </div>
+              <div class="empty-state-title">${escapeHTML(engine.tr('NO_BUDGET_MONTH'))}</div>
+              <p class="empty-state-desc">${escapeHTML(engine.tr('EMPTY_BUDGET_SUB'))}</p>
+              <div class="empty-state-actions">
+                <button type="button" class="btn-empty-cta" data-empty-action="open-alloc">${escapeHTML(engine.tr('EMPTY_CTA_ALLOC_BG'))}</button>
+                ${hasStatusFilter ? `<button type="button" class="btn-empty-cta secondary" data-empty-action="reset-bg-filters">${escapeHTML(engine.tr('EMPTY_CTA_RESET_FILTER'))}</button>` : ''}
+                ${engine.month !== '00' ? `<button type="button" class="btn-empty-cta secondary" data-empty-action="view-full-year">${escapeHTML(engine.tr('EMPTY_CTA_FULL_YEAR'))}</button>` : ''}
+              </div>
+            </div>
+          </td>
+        </tr>
+      `;
       return;
     }
 
@@ -2348,7 +2549,127 @@ document.addEventListener('DOMContentLoaded', () => {
       hapticBtn.textContent = hapticOn ? 'ACTIVÉ' : 'DÉSACTIVÉ';
       hapticBtn.style.background = hapticOn ? '#10B981' : '#64748B';
     }
+
+    // Data Mode Switcher (Demo vs Blank Personal Portfolio)
+    const curMode = engine.getDataMode();
+    const dmTitle = document.getElementById('lbl-settings-datamode-title');
+    if (dmTitle) dmTitle.textContent = engine.tr('SETTINGS_DATAMODE_TITLE');
+    const dmDesc = document.getElementById('lbl-settings-datamode-desc');
+    if (dmDesc) dmDesc.textContent = engine.tr('SETTINGS_DATAMODE_DESC');
+    const dmBadge = document.getElementById('settings-datamode-badge');
+    if (dmBadge) {
+      dmBadge.textContent = (curMode === 'EMPTY') ? engine.tr('DATA_MODE_EMPTY_BADGE') : engine.tr('DATA_MODE_DEMO_BADGE');
+      dmBadge.style.color = (curMode === 'EMPTY') ? '#34D399' : 'var(--c-yellow-royal)';
+      dmBadge.style.borderColor = (curMode === 'EMPTY') ? 'rgba(16,185,129,0.4)' : 'rgba(250,218,94,0.35)';
+    }
+
+    const setDmTxt = (id, key) => {
+      const el = document.getElementById(id);
+      if (el) el.textContent = engine.tr(key);
+    };
+    setDmTxt('lbl-set-dm-demo-badge', 'DATA_MODE_DEMO_BADGE');
+    setDmTxt('lbl-set-dm-demo-title', 'DATA_MODE_DEMO_TITLE');
+    setDmTxt('lbl-set-dm-demo-sub', 'DATA_MODE_DEMO_SUB');
+    setDmTxt('lbl-set-dm-empty-badge', 'DATA_MODE_EMPTY_BADGE');
+    setDmTxt('lbl-set-dm-empty-title', 'DATA_MODE_EMPTY_TITLE');
+    setDmTxt('lbl-set-dm-empty-sub', 'DATA_MODE_EMPTY_SUB');
+
+    const btnDmDemo = document.getElementById('btn-datamode-demo');
+    const btnDmEmpty = document.getElementById('btn-datamode-empty');
+    if (btnDmDemo) {
+      const isDemo = (curMode === 'DEMO');
+      btnDmDemo.classList.toggle('active', isDemo);
+      btnDmDemo.setAttribute('aria-pressed', isDemo ? 'true' : 'false');
+    }
+    if (btnDmEmpty) {
+      const isEmpty = (curMode === 'EMPTY');
+      btnDmEmpty.classList.toggle('active', isEmpty);
+      btnDmEmpty.setAttribute('aria-pressed', isEmpty ? 'true' : 'false');
+    }
   }
+
+  // Settings Data Mode Selector Buttons
+  document.getElementById('btn-datamode-demo')?.addEventListener('click', () => {
+    triggerHaptic(20);
+    engine.setDataMode('DEMO');
+    populateSelects();
+    renderSettingsView();
+    renderCurrentView();
+    showToast(engine.tr('BANNER_DEMO_ACTIVE'), 'success');
+  });
+
+  document.getElementById('btn-datamode-empty')?.addEventListener('click', () => {
+    triggerHaptic(20);
+    engine.setDataMode('EMPTY');
+    populateSelects();
+    renderSettingsView();
+    renderCurrentView();
+    showToast(engine.tr('BANNER_EMPTY_ACTIVE'), 'info');
+  });
+
+  // Delegated Click Handler for Rich Empty States & Contextual Data Mode Banner CTAs ([data-empty-action])
+  document.addEventListener('click', (e) => {
+    const btn = e.target.closest('[data-empty-action]');
+    if (!btn) return;
+    triggerHaptic(18);
+    const action = btn.getAttribute('data-empty-action');
+
+    if (action === 'add-tx') {
+      modalReport?.classList.remove('open');
+      openExpressModal();
+    } else if (action === 'add-exp') {
+      modalReport?.classList.remove('open');
+      activeExpType = 'DEPENSE';
+      document.querySelectorAll('#exp-type-selector .type-segment-btn').forEach(b => {
+        b.classList.toggle('active', b.dataset.type === 'DEPENSE');
+      });
+      filterCategories('exp-tx-categorie', 'DEPENSE');
+      openExpressModal();
+    } else if (action === 'open-alloc') {
+      document.getElementById('btn-open-alloc-modal')?.click();
+    } else if (action === 'add-account') {
+      openAddEntityDialog('compte');
+    } else if (action === 'reset-cf-filters') {
+      engine.searchTerm = '';
+      engine.fluxFilter = 'ALL';
+      engine.selectedCategoryFilter = null;
+      engine.accountFilter = 'ALL';
+      const searchIn = document.getElementById('input-tx-search');
+      if (searchIn) searchIn.value = '';
+      const accSel = document.getElementById('cf-account-filter');
+      if (accSel) accSel.value = 'ALL';
+      document.querySelectorAll('.search-filter-box .filter-chip[data-filter]').forEach(c => {
+        c.classList.toggle('active', c.dataset.filter === 'ALL');
+      });
+      renderCurrentView();
+      showToast(engine.tr('FILTER_CLEARED'), 'info');
+    } else if (action === 'reset-nw-filters') {
+      engine.patrimoineClassFilter = 'ALL';
+      document.querySelectorAll('#nw-class-chips .filter-chip').forEach(c => {
+        c.classList.toggle('active', c.dataset.class === 'ALL');
+      });
+      renderNetWorthView();
+    } else if (action === 'reset-bg-filters') {
+      engine.budgetStatusFilter = 'ALL';
+      document.querySelectorAll('#bg-status-chips .filter-chip').forEach(c => {
+        c.classList.toggle('active', c.dataset.bstatus === 'ALL');
+      });
+      renderBudgetView();
+    } else if (action === 'view-full-year') {
+      engine.setMonth('00');
+      showToast(engine.tr('FULL_YEAR', { year: engine.year }), 'info');
+    } else if (action === 'switch-empty') {
+      engine.setDataMode('EMPTY');
+      populateSelects();
+      renderCurrentView();
+      showToast(engine.tr('BANNER_EMPTY_ACTIVE'), 'info');
+    } else if (action === 'load-demo') {
+      engine.setDataMode('DEMO');
+      populateSelects();
+      renderCurrentView();
+      showToast(engine.tr('BANNER_DEMO_ACTIVE'), 'success');
+    }
+  });
 
   // Theme selector
   document.querySelectorAll('#settings-theme-selector .theme-choice-btn').forEach(btn => {
@@ -2401,6 +2722,7 @@ document.addEventListener('DOMContentLoaded', () => {
     selectedInitYear = engine.year || '2026';
     selectedInitMonth = engine.month || '02';
     selectedInitTheme = localStorage.getItem('gfmp_theme') || engine.theme || 'blue';
+    selectedInitDataMode = (engine.getDataMode() === 'EMPTY') ? 'empty' : 'demo';
     modalInit?.classList.add('open');
     updateInitModalUI();
   });
@@ -2498,7 +2820,7 @@ document.addEventListener('DOMContentLoaded', () => {
     reader.readAsText(file);
   });
 
-  // --- 16. FULLSCREEN INITIALIZATION MODAL (4-STEP GOLD-STANDARD SYSTEM ONBOARDING & CONFIG) ---
+  // --- 16. FULLSCREEN INITIALIZATION MODAL (5-STEP GOLD-STANDARD SYSTEM ONBOARDING & CONFIG) ---
   const modalInit = document.getElementById('modal-initialization');
   let selectedInitLang = engine.lang || 'FR';
   let selectedInitCurr = engine.currency || 'MUR';
@@ -2506,6 +2828,7 @@ document.addEventListener('DOMContentLoaded', () => {
   let selectedInitYear = engine.year || '2026';
   let selectedInitMonth = engine.month || '02';
   let selectedInitTheme = localStorage.getItem('gfmp_theme') || engine.theme || 'blue';
+  let selectedInitDataMode = (engine.getDataMode() === 'EMPTY') ? 'empty' : 'demo';
 
   function trInit(key, params = {}) {
     return engine.tr(key, params, selectedInitLang);
@@ -2549,7 +2872,14 @@ document.addEventListener('DOMContentLoaded', () => {
       if (code) code.style.color = isSel ? 'var(--c-yellow-royal)' : '#94A3B8';
     });
 
-    // 4. Live Quadrilingual Translation of All 4 Steps
+    // 3.5. Data Mode Cards Active State (Demo vs Blank Portfolio)
+    document.querySelectorAll('#init-datamode-grid .init-choice-card').forEach(card => {
+      const isSel = (card.dataset.initDatamode === selectedInitDataMode);
+      card.classList.toggle('active', isSel);
+      card.setAttribute('aria-pressed', isSel ? 'true' : 'false');
+    });
+
+    // 4. Live Quadrilingual Translation of All 5 Steps
     const setTxt = (id, key) => {
       const el = document.getElementById(id);
       if (el) el.textContent = trInit(key);
@@ -2569,6 +2899,15 @@ document.addEventListener('DOMContentLoaded', () => {
     setTxt('init-step4-badge', 'INIT_STEP4_BADGE');
     setTxt('init-step4-title', 'INIT_STEP4_TITLE');
     setTxt('init-step4-desc', 'INIT_STEP4_DESC');
+    setTxt('init-step5-badge', 'INIT_STEP5_BADGE');
+    setTxt('init-step5-title', 'INIT_STEP5_TITLE');
+    setTxt('init-step5-desc', 'INIT_STEP5_DESC');
+    setTxt('init-dm-demo-badge', 'DATA_MODE_DEMO_BADGE');
+    setTxt('init-dm-demo-title', 'DATA_MODE_DEMO_TITLE');
+    setTxt('init-dm-demo-sub', 'DATA_MODE_DEMO_SUB');
+    setTxt('init-dm-empty-badge', 'DATA_MODE_EMPTY_BADGE');
+    setTxt('init-dm-empty-title', 'DATA_MODE_EMPTY_TITLE');
+    setTxt('init-dm-empty-sub', 'DATA_MODE_EMPTY_SUB');
     setTxt('lbl-init-date-picker', 'INIT_DATE_LABEL');
     setTxt('lbl-init-month-picker', 'INIT_MONTH_LABEL');
     setTxt('lbl-init-year-picker', 'INIT_YEAR_LABEL');
@@ -2632,7 +2971,7 @@ document.addEventListener('DOMContentLoaded', () => {
     if (demoChip) demoChip.classList.toggle('active', selectedInitDate === '2026-02-27' && selectedInitMonth === '02' && selectedInitYear === '2026');
     if (todayChip) todayChip.classList.toggle('active', selectedInitDate === realToday);
 
-    // 8. Update Live Summary Pill (All 4 Pillars: Language • Currency • Period • Theme)
+    // 8. Update Live Summary Pill (All 5 Pillars: Language • Currency • Period • Theme • Data Mode)
     const langLabels = { FR: 'Français (FR)', EN: 'English (EN)', ES: 'Español (ES)', PT: 'Português (PT)' };
     const summaryText = document.getElementById('init-summary-text');
     if (summaryText) {
@@ -2643,7 +2982,10 @@ document.addEventListener('DOMContentLoaded', () => {
       const periodLabel = (selectedInitMonth === '00')
         ? trInit('FULL_YEAR', { year: selectedInitYear })
         : `${(mNames[mIdx] || selectedInitMonth)} ${selectedInitYear}`;
-      summaryText.innerHTML = `${prefix} <strong>${langLabels[selectedInitLang] || selectedInitLang}</strong> • <strong>${selectedInitCurr}</strong> • <strong>${periodLabel}</strong> • <strong>${themeLabel}</strong>`;
+      const modeLabel = (selectedInitDataMode === 'empty')
+        ? trInit('DATA_MODE_EMPTY_TITLE')
+        : trInit('DATA_MODE_DEMO_TITLE');
+      summaryText.innerHTML = `${prefix} <strong>${langLabels[selectedInitLang] || selectedInitLang}</strong> • <strong>${selectedInitCurr}</strong> • <strong>${periodLabel}</strong> • <strong>${themeLabel}</strong> • <strong>${modeLabel}</strong>`;
     }
   }
 
@@ -2731,16 +3073,27 @@ document.addEventListener('DOMContentLoaded', () => {
     });
   });
 
+  // Step 5: Data Mode Card Click (Demo Dataset vs Blank Personal Portfolio)
+  document.querySelectorAll('#init-datamode-grid .init-choice-card').forEach(card => {
+    card.addEventListener('click', () => {
+      triggerHaptic(15);
+      selectedInitDataMode = card.dataset.initDatamode || 'demo';
+      updateInitModalUI();
+    });
+  });
+
   // Confirm Initialization Button
   document.getElementById('btn-confirm-init')?.addEventListener('click', () => {
     triggerHaptic(25);
+    const useDemo = (selectedInitDataMode !== 'empty');
     engine.initializeSystem(
       selectedInitCurr,
       selectedInitLang,
       selectedInitDate,
       selectedInitTheme,
       selectedInitYear,
-      selectedInitMonth
+      selectedInitMonth,
+      useDemo
     );
     document.body.className = (selectedInitTheme === 'blue') ? '' : `theme-${selectedInitTheme}`;
     localStorage.setItem('gfmp_theme', selectedInitTheme);

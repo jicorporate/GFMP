@@ -739,6 +739,7 @@ class GFMPEngine {
     this.month = '02'; // '00' = Année entière
     this.referenceDate = '2026-02-27';
     this.theme = 'blue';
+    this.dataMode = 'DEMO'; // 'DEMO' or 'EMPTY'
     this.currentView = 'home';
     this.hubFilter = 'ALL'; // 'ALL', 'CASHFLOW', 'PATRIMOINE', 'BUDGET'
     this.searchTerm = '';
@@ -927,18 +928,25 @@ class GFMPEngine {
 
   init(customData = null) {
     const storage = this.getStorage();
+    let isExplicitEmpty = false;
 
     if (customData && typeof customData === 'object' && Array.isArray(customData.transactions)) {
       this.data = JSON.parse(JSON.stringify(customData));
+      isExplicitEmpty = (this.data.dataMode === 'EMPTY') || Boolean(this.data.config && this.data.config.SYS_DATA_MODE === 'EMPTY');
     } else {
       try {
+        const storedMode = storage ? storage.getItem('gfmp_data_mode') : null;
+        if (storedMode === 'EMPTY') isExplicitEmpty = true;
+
         // 1. Try reading saved dataset from phone storage
         const stored = storage ? storage.getItem('gfmp_dataset_v3') : null;
         if (stored) {
           const parsed = JSON.parse(stored);
-          if (parsed && Array.isArray(parsed.transactions) && parsed.transactions.length > 0) {
+          const parsedEmpty = parsed && (parsed.dataMode === 'EMPTY' || (parsed.config && parsed.config.SYS_DATA_MODE === 'EMPTY') || isExplicitEmpty);
+          if (parsed && Array.isArray(parsed.transactions) && (parsed.transactions.length > 0 || parsedEmpty)) {
             this.data = parsed;
-            console.log('[GFMPEngine] Loaded dataset from phone storage:', this.data.transactions.length, 'transactions');
+            isExplicitEmpty = Boolean(parsedEmpty && parsed.transactions.length === 0);
+            console.log('[GFMPEngine] Loaded dataset from phone storage:', this.data.transactions.length, 'transactions (mode:', isExplicitEmpty ? 'EMPTY' : 'DEMO', ')');
           }
         }
       } catch (e) {
@@ -946,15 +954,25 @@ class GFMPEngine {
       }
     }
 
-    // 2. Synchronous & bulletproof fallback to embedded baseline data
-    if (!this.data || !Array.isArray(this.data.transactions) || this.data.transactions.length === 0) {
+    // 2. Synchronous & bulletproof fallback to embedded baseline data (unless user explicitly chose EMPTY portfolio)
+    if (!this.data || !Array.isArray(this.data.transactions) || (this.data.transactions.length === 0 && !isExplicitEmpty)) {
       if (typeof window !== 'undefined' && window.GFMP_BASELINE) {
         this.data = JSON.parse(JSON.stringify(window.GFMP_BASELINE));
+        if (isExplicitEmpty) {
+          this.data.transactions = [];
+          this.data.budgets = [];
+          this.data.dataMode = 'EMPTY';
+          if (this.data.config) this.data.config.SYS_DATA_MODE = 'EMPTY';
+        } else {
+          this.data.dataMode = 'DEMO';
+          if (this.data.config) this.data.config.SYS_DATA_MODE = 'DEMO';
+        }
         console.log('[GFMPEngine] Initialized from embedded baseline data:', this.data.transactions.length, 'transactions');
         this.save();
       } else {
         this.data = {
           app_name: 'GFMP',
+          dataMode: isExplicitEmpty ? 'EMPTY' : 'DEMO',
           comptes: [
             { id: '1', nom: 'Compte Courant Principal', classe: 'LIQUIDITE', devise: 'MUR', actif: 'OUI' },
             { id: '2', nom: 'Livret d\'Épargne', classe: 'LIQUIDITE', devise: 'MUR', actif: 'OUI' },
@@ -977,7 +995,7 @@ class GFMPEngine {
             { id: '4', nom: 'Supermarché / Alimentaire', type: 'COMMERCE' },
             { id: '5', nom: 'Propriétaire / Syndic', type: 'IMMOBILIER' }
           ],
-          transactions: [
+          transactions: isExplicitEmpty ? [] : [
             { id: 1, date: '2026-02-05', id_compte: '1', id_categorie: '4', id_tiers: '5', montant: 12000, devise: 'MUR', notes: 'Loyer Résidence KIMYA' },
             { id: 2, date: '2026-02-12', id_compte: '5', id_categorie: '2', id_tiers: '2', montant: 4500, devise: 'MUR', notes: 'Dividendes Portefeuille PEA' },
             { id: 3, date: '2026-02-15', id_compte: '1', id_categorie: '6', id_tiers: '4', montant: 2800, devise: 'MUR', notes: 'Assurance & Entretien Auto' },
@@ -986,7 +1004,7 @@ class GFMPEngine {
             { id: 6, date: '2026-02-23', id_compte: '4', id_categorie: '7', id_tiers: '2', montant: 7000, devise: 'MUR', notes: 'Santé & Mutuelle Famille' },
             { id: 7, date: '2026-02-23', id_compte: '3', id_categorie: '5', id_tiers: '4', montant: 4000, devise: 'MUR', notes: 'Courses Hebdomadaires' }
           ],
-          budgets: [
+          budgets: isExplicitEmpty ? [] : [
             { id: 1, mois: '2026-02', id_categorie: '4', montant: 12000 },
             { id: 2, mois: '2026-02', id_categorie: '5', montant: 8000 },
             { id: 3, mois: '2026-02', id_categorie: '6', montant: 4000 },
@@ -995,10 +1013,20 @@ class GFMPEngine {
           ],
           devises: { MUR: 12.2243, EUR: 656.168, USD: 567.5369, GBP: 757.0023, ZAR: 33.2723, XOF: 1 },
           dictionary: {},
-          config: { LANGUE_UI: 'FR', SYS_DEVISE_BASE: 'MUR' }
+          config: { LANGUE_UI: 'FR', SYS_DEVISE_BASE: 'MUR', SYS_DATA_MODE: isExplicitEmpty ? 'EMPTY' : 'DEMO' }
         };
         this.save();
       }
+    }
+
+    if (this.data) {
+      const resolvedMode = isExplicitEmpty
+        ? 'EMPTY'
+        : ((this.data.dataMode === 'EMPTY' || (this.data.config && this.data.config.SYS_DATA_MODE === 'EMPTY')) ? 'EMPTY' : 'DEMO');
+      this.dataMode = resolvedMode;
+      this.data.dataMode = resolvedMode;
+      if (!this.data.config) this.data.config = {};
+      this.data.config.SYS_DATA_MODE = resolvedMode;
     }
 
     if (this.data && !this.data.devises) {
@@ -1060,11 +1088,86 @@ class GFMPEngine {
     try {
       const storage = this.getStorage();
       if (this.data && storage) {
+        this.data.dataMode = this.dataMode || this.data.dataMode || 'DEMO';
+        if (this.data.config) {
+          this.data.config.SYS_DATA_MODE = this.data.dataMode;
+        }
         storage.setItem('gfmp_dataset_v3', JSON.stringify(this.data));
+        storage.setItem('gfmp_data_mode', this.data.dataMode);
       }
     } catch (e) {
       console.warn('[GFMPEngine] Save failed:', e);
     }
+  }
+
+  getDataMode() {
+    return this.dataMode === 'EMPTY' ? 'EMPTY' : 'DEMO';
+  }
+
+  hasFinancialData(period = null) {
+    if (!this.data) return false;
+    if (!period) {
+      const hasTx = Array.isArray(this.data.transactions) && this.data.transactions.length > 0;
+      const hasBg = Array.isArray(this.data.budgets) && this.data.budgets.length > 0;
+      return hasTx || hasBg;
+    }
+    const { year: targetYear, month: targetMonth } = this.resolvePeriod(period);
+    const isAllYear = (targetMonth === '00');
+    const prefix = isAllYear ? `${targetYear}-` : `${targetYear}-${targetMonth}`;
+    const hasTxPeriod = Array.isArray(this.data.transactions) && this.data.transactions.some(tx => tx.date && tx.date.startsWith(prefix));
+    const hasBgPeriod = Array.isArray(this.data.budgets) && this.data.budgets.some(b => {
+      const bm = b.mois || b.mois_annee || '';
+      return isAllYear ? bm.startsWith(`${targetYear}-`) : bm === `${targetYear}-${targetMonth}`;
+    });
+    return hasTxPeriod || hasBgPeriod;
+  }
+
+  setDataMode(mode = 'DEMO') {
+    const cleanMode = (String(mode).trim().toUpperCase() === 'EMPTY' || mode === false) ? 'EMPTY' : 'DEMO';
+    this.dataMode = cleanMode;
+    this.selectedCategoryFilter = null;
+
+    if (!this.data) {
+      this.init();
+    }
+
+    if (cleanMode === 'EMPTY') {
+      const prevCount = Array.isArray(this.data.transactions) ? this.data.transactions.length : 0;
+      this.data.transactions = [];
+      this.data.budgets = [];
+      this.data.dataMode = 'EMPTY';
+      if (!this.data.config) this.data.config = {};
+      this.data.config.SYS_DATA_MODE = 'EMPTY';
+      this.logHistory('DATA_MODE_EMPTY', 'database', 'system', `Activation du Portefeuille Personnel Vierge (${prevCount} opérations de test retirées)`);
+    } else {
+      const baseline = (typeof window !== 'undefined' && window.GFMP_BASELINE) ? JSON.parse(JSON.stringify(window.GFMP_BASELINE)) : null;
+      if (baseline) {
+        this.data.transactions = Array.isArray(baseline.transactions) ? baseline.transactions : [];
+        this.data.budgets = Array.isArray(baseline.budgets) ? baseline.budgets : [];
+        if (!Array.isArray(this.data.comptes) || this.data.comptes.length === 0) {
+          this.data.comptes = baseline.comptes || [];
+        }
+        if (!Array.isArray(this.data.categories) || this.data.categories.length === 0) {
+          this.data.categories = baseline.categories || [];
+        }
+        if (!Array.isArray(this.data.tiers) || this.data.tiers.length === 0) {
+          this.data.tiers = baseline.tiers || [];
+        }
+      }
+      this.data.dataMode = 'DEMO';
+      if (!this.data.config) this.data.config = {};
+      this.data.config.SYS_DATA_MODE = 'DEMO';
+      this.logHistory('DATA_MODE_DEMO', 'database', 'system', `Activation des Données de Test & Démo (${this.data.transactions.length} opérations chargées)`);
+    }
+
+    this.save();
+    this.notify();
+    return {
+      success: true,
+      dataMode: this.dataMode,
+      txCount: Array.isArray(this.data.transactions) ? this.data.transactions.length : 0,
+      budgetCount: Array.isArray(this.data.budgets) ? this.data.budgets.length : 0
+    };
   }
 
   subscribe(listener) {
@@ -1162,7 +1265,7 @@ class GFMPEngine {
       'INIT_TRUST_1': { FR: '100% Hors-Ligne & Privé', EN: '100% Offline & Private', ES: '100% Sin Conexión y Privado', PT: '100% Offline e Privado' },
       'INIT_TRUST_2': { FR: 'Multi-Devises Live API', EN: 'Live Multi-Currency API', ES: 'API Multidivisa en Vivo', PT: 'API Multimoeda ao Vivo' },
       'INIT_TRUST_3': { FR: 'Architecture ZBB & Audit', EN: 'ZBB & Audit Architecture', ES: 'Arquitectura ZBB y Auditoría', PT: 'Arquitetura ZBB e Auditoria' },
-      'INIT_STEP1_BADGE': { FR: 'ÉTAPE 01 / 04', EN: 'STEP 01 / 04', ES: 'PASO 01 / 04', PT: 'PASSO 01 / 04' },
+      'INIT_STEP1_BADGE': { FR: 'ÉTAPE 01 / 05', EN: 'STEP 01 / 05', ES: 'PASO 01 / 05', PT: 'PASSO 01 / 05' },
       'INIT_STEP1_TITLE': { FR: 'Sélectionnez la langue du système', EN: 'Select your system language', ES: 'Seleccione el idioma del sistema', PT: 'Selecione o idioma do sistema' },
       'INIT_STEP1_DESC': {
         FR: 'L\'ensemble de vos synthèses, rapports et interfaces s\'adapteront immédiatement.',
@@ -1170,7 +1273,7 @@ class GFMPEngine {
         ES: 'Todos sus paneles, informes financieros e interfaces se adaptarán de inmediato.',
         PT: 'Todos os seus painéis, relatórios financeiros e interfaces adaptar-se-ão imediatamente.'
       },
-      'INIT_STEP2_BADGE': { FR: 'ÉTAPE 02 / 04', EN: 'STEP 02 / 04', ES: 'PASO 02 / 04', PT: 'PASSO 02 / 04' },
+      'INIT_STEP2_BADGE': { FR: 'ÉTAPE 02 / 05', EN: 'STEP 02 / 05', ES: 'PASO 02 / 05', PT: 'PASSO 02 / 05' },
       'INIT_STEP2_TITLE': { FR: 'Sélectionnez votre devise de référence', EN: 'Select your primary reference currency', ES: 'Seleccione su divisa principal de referencia', PT: 'Selecione a sua moeda principal de referência' },
       'INIT_STEP2_DESC': {
         FR: 'Devise mère sur laquelle l\'ensemble de votre patrimoine et flux seront consolidés.',
@@ -1178,7 +1281,7 @@ class GFMPEngine {
         ES: 'Divisa base en la que se consolidarán todo su patrimonio, activos y flujos.',
         PT: 'Moeda base na qual todo o seu patrimônio, ativos e fluxos serão consolidados.'
       },
-      'INIT_STEP3_BADGE': { FR: 'ÉTAPE 03 / 04', EN: 'STEP 03 / 04', ES: 'PASO 03 / 04', PT: 'PASSO 03 / 04' },
+      'INIT_STEP3_BADGE': { FR: 'ÉTAPE 03 / 05', EN: 'STEP 03 / 05', ES: 'PASO 03 / 05', PT: 'PASSO 03 / 05' },
       'INIT_STEP3_TITLE': { FR: 'Configurez la date et la période financière', EN: 'Configure date & active financial period', ES: 'Configure la fecha y el período financiero', PT: 'Configure a data e o período financeiro' },
       'INIT_STEP3_DESC': {
         FR: 'Définissez la date système par défaut pour vos saisies et le mois/année d\'ouverture du tableau de bord.',
@@ -1191,13 +1294,118 @@ class GFMPEngine {
       'INIT_YEAR_LABEL': { FR: 'Exercice (Année)', EN: 'Fiscal year', ES: 'Ejercicio (Año)', PT: 'Exercício (Ano)' },
       'INIT_BTN_TODAY': { FR: 'Aujourd\'hui', EN: 'Today', ES: 'Hoy', PT: 'Hoje' },
       'INIT_BTN_DEMO': { FR: 'Période Démo SFP (Fév 2026)', EN: 'SFP Demo Period (Feb 2026)', ES: 'Período Demo SFP (Feb 2026)', PT: 'Período Demo SFP (Fev 2026)' },
-      'INIT_STEP4_BADGE': { FR: 'ÉTAPE 04 / 04', EN: 'STEP 04 / 04', ES: 'PASO 04 / 04', PT: 'PASSO 04 / 04' },
+      'INIT_STEP4_BADGE': { FR: 'ÉTAPE 04 / 05', EN: 'STEP 04 / 05', ES: 'PASO 04 / 05', PT: 'PASSO 04 / 05' },
       'INIT_STEP4_TITLE': { FR: 'Choisissez le thème visuel de l\'application', EN: 'Choose the application visual theme', ES: 'Elija el tema visual de la aplicación', PT: 'Escolha o tema visual da aplicação' },
       'INIT_STEP4_DESC': {
         FR: 'Personnalisez l\'ambiance Haute Joaillerie de votre interface avec aperçu instantané en direct.',
         EN: 'Customize the Haute Joaillerie ambiance of your interface with instant live preview.',
         ES: 'Personalice el ambiente de Alta Joyería de su interfaz con vista previa instantánea en vivo.',
         PT: 'Personalize o ambiente de Alta Joalharia da sua interface com pré-visualização instantânea ao vivo.'
+      },
+      'INIT_STEP5_BADGE': { FR: 'ÉTAPE 05 / 05', EN: 'STEP 05 / 05', ES: 'PASO 05 / 05', PT: 'PASSO 05 / 05' },
+      'INIT_STEP5_TITLE': { FR: 'Choisissez le mode de données financières', EN: 'Choose your financial data mode', ES: 'Elija el modo de datos financieros', PT: 'Escolha o modo de dados financeiros' },
+      'INIT_STEP5_DESC': {
+        FR: 'Explorez l\'application avec le portefeuille de test complet ou démarrez avec un portefeuille vierge prêt pour vos saisies.',
+        EN: 'Explore the application with the full test portfolio or start with a blank portfolio ready for your entries.',
+        ES: 'Explore la aplicación con la cartera de prueba completa o comience con una cartera en blanco lista para sus registros.',
+        PT: 'Explore a aplicação com a carteira de teste completa ou comece com uma carteira em branco pronta para os seus lançamentos.'
+      },
+      'DATA_MODE_DEMO_BADGE': { FR: '60 OPÉRATIONS • 17 BUDGETS', EN: '60 TRANSACTIONS • 17 BUDGETS', ES: '60 OPERACIONES • 17 PRESUPUESTOS', PT: '60 TRANSAÇÕES • 17 ORÇAMENTOS' },
+      'DATA_MODE_DEMO_TITLE': { FR: 'Données de Test & Démo SFP', EN: 'SFP Test & Demo Dataset', ES: 'Datos de Prueba y Demo SFP', PT: 'Dados de Teste e Demo SFP' },
+      'DATA_MODE_DEMO_SUB': {
+        FR: 'Portefeuille d\'exemple pré-rempli (Jan–Mar 2026) pour tester les graphiques, rapports et analyses.',
+        EN: 'Pre-filled sample portfolio (Jan–Mar 2026) to explore charts, reports, and analytics.',
+        ES: 'Cartera de ejemplo precargada (Ene–Mar 2026) para explorar gráficos, informes y análisis.',
+        PT: 'Carteira de exemplo pré-preenchida (Jan–Mar 2026) para explorar gráficos, relatórios e análises.'
+      },
+      'DATA_MODE_EMPTY_BADGE': { FR: 'DÉMARRAGE À ZÉRO • 0,00', EN: 'CLEAN SLATE • 0.00', ES: 'DESDE CERO • 0,00', PT: 'DO ZERO • 0,00' },
+      'DATA_MODE_EMPTY_TITLE': { FR: 'Portefeuille Personnel Vierge', EN: 'Blank Personal Portfolio', ES: 'Cartera Personal en Blanco', PT: 'Carteira Pessoal em Branco' },
+      'DATA_MODE_EMPTY_SUB': {
+        FR: 'Aucune transaction ni budget de test. Comptes, catégories et devises prêts pour vos propres opérations.',
+        EN: 'Zero test transactions or budgets. Accounts, categories, and currencies ready for your own entries.',
+        ES: 'Sin transacciones ni presupuestos de prueba. Cuentas, categorías y divisas listas para sus propios datos.',
+        PT: 'Sem transações nem orçamentos de teste. Contas, categorias e moedas prontas para os seus próprios dados.'
+      },
+      'SOLVENCY_EMPTY': {
+        FR: 'Portefeuille vierge • Aucune opération enregistrée sur cette période',
+        EN: 'Blank portfolio • No transactions recorded for this period',
+        ES: 'Cartera en blanco • Ninguna operación registrada en este período',
+        PT: 'Carteira em branco • Nenhuma transação registrada neste período'
+      },
+      'TREND_EMPTY_TITLE': {
+        FR: 'Aucun flux de trésorerie sur les 6 derniers mois',
+        EN: 'No cashflow recorded over the last 6 months',
+        ES: 'Sin flujos de tesorería en los últimos 6 meses',
+        PT: 'Sem fluxos de caixa nos últimos 6 meses'
+      },
+      'TREND_EMPTY_SUB': {
+        FR: 'Saisissez votre premier revenu ou dépense pour activer la courbe d\'évolution mensuelle.',
+        EN: 'Record your first income or expense to activate the monthly trend chart.',
+        ES: 'Registre su primer ingreso o gasto para activar el gráfico de evolución mensual.',
+        PT: 'Registe a sua primeira receita ou despesa para ativar o gráfico de evolução mensal.'
+      },
+      'DONUT_EMPTY_HINT': {
+        FR: 'Enregistrez une dépense sur cette période ou changez de mois pour visualiser la répartition.',
+        EN: 'Record an expense for this period or switch months to visualize the breakdown.',
+        ES: 'Registre un gasto en este período o cambie de mes para visualizar la distribución.',
+        PT: 'Registe uma despesa neste período ou mude de mês para visualizar a distribuição.'
+      },
+      'EMPTY_PATRIMOINE_SUB': {
+        FR: 'Tous vos comptes affichent un solde de 0,00. Saisissez un revenu ou apport initial pour valoriser votre patrimoine.',
+        EN: 'All accounts currently have a 0.00 balance. Record an income or initial deposit to value your net worth.',
+        ES: 'Todas sus cuentas muestran un saldo de 0,00. Registre un ingreso o aporte inicial para valorar su patrimonio.',
+        PT: 'Todas as suas contas apresentam saldo de 0,00. Registe uma receita ou aporte inicial para valorizar o seu patrimônio.'
+      },
+      'EMPTY_BUDGET_SUB': {
+        FR: 'Définissez vos enveloppes budgétaires mensuelles (ZBB) pour suivre vos plafonds de dépenses en temps réel.',
+        EN: 'Define your monthly budget envelopes (ZBB) to track your spending limits in real time.',
+        ES: 'Defina sus sobres presupuestarios mensuales (ZBB) para controlar sus límites de gasto en tiempo real.',
+        PT: 'Defina os seus envelopes orçamentários mensais (ZBB) para acompanhar os seus limites de gastos em tempo real.'
+      },
+      'EMPTY_TX_SUB': {
+        FR: 'Votre journal d\'opérations est vierge pour cette sélection. Ajoutez une opération ou ajustez la période.',
+        EN: 'Your transaction log is empty for this selection. Add a transaction or adjust the active period.',
+        ES: 'Su registro de operaciones está vacío para esta selección. Añada una operación o ajuste el período.',
+        PT: 'O seu registo de transações está vazio para esta seleção. Adicione uma transação ou ajuste o período.'
+      },
+      'EMPTY_CTA_ADD_TX': { FR: '+ Saisir une opération', EN: '+ Add transaction', ES: '+ Registrar operación', PT: '+ Inserir transação' },
+      'EMPTY_CTA_ADD_EXP': { FR: '+ Saisir une dépense', EN: '+ Add expense', ES: '+ Registrar gasto', PT: '+ Inserir despesa' },
+      'EMPTY_CTA_ALLOC_BG': { FR: '+ Allouer un budget', EN: '+ Allocate budget', ES: '+ Asignar presupuesto', PT: '+ Alocar orçamento' },
+      'EMPTY_CTA_ADD_ACC': { FR: '+ Créer un compte', EN: '+ Create account', ES: '+ Crear cuenta', PT: '+ Criar conta' },
+      'EMPTY_CTA_RESET_FILTER': { FR: 'Réinitialiser les filtres', EN: 'Reset filters', ES: 'Restablecer filtros', PT: 'Repor filtros' },
+      'EMPTY_CTA_FULL_YEAR': { FR: 'Voir toute l\'année', EN: 'View full year', ES: 'Ver año completo', PT: 'Ver ano inteiro' },
+      'EMPTY_CTA_LOAD_DEMO': { FR: 'Charger les données de test', EN: 'Load test dataset', ES: 'Cargar datos de prueba', PT: 'Carregar dados de teste' },
+      'EMPTY_CTA_SWITCH_EMPTY': { FR: 'Vider les données de test', EN: 'Clear test data (Start at 0)', ES: 'Vaciar datos de prueba', PT: 'Limpar dados de teste' },
+      'BANNER_DEMO_ACTIVE': {
+        FR: 'Mode Données de Test & Démo actif (60 opérations d\'exemple)',
+        EN: 'Test & Demo Dataset Mode active (60 sample transactions)',
+        ES: 'Modo Datos de Prueba y Demo activo (60 operaciones de ejemplo)',
+        PT: 'Modo Dados de Teste e Demo ativo (60 transações de exemplo)'
+      },
+      'BANNER_EMPTY_ACTIVE': {
+        FR: 'Portefeuille Personnel Vierge actif — Prêt pour vos opérations',
+        EN: 'Blank Personal Portfolio active — Ready for your transactions',
+        ES: 'Cartera Personal en Blanco activa — Lista para sus operaciones',
+        PT: 'Carteira Pessoal em Branco ativa — Pronta para as suas transações'
+      },
+      'SETTINGS_DATAMODE_TITLE': { FR: 'MODE DE DONNÉES FINANCIÈRES', EN: 'FINANCIAL DATA MODE', ES: 'MODO DE DATOS FINANCIEROS', PT: 'MODO DE DADOS FINANCEIROS' },
+      'SETTINGS_DATAMODE_DESC': {
+        FR: 'Basculez librement entre les données de test SFP et un portefeuille personnel vierge sans perdre vos comptes ni vos catégories.',
+        EN: 'Switch freely between the SFP test dataset and a blank personal portfolio without losing your accounts or categories.',
+        ES: 'Cambie libremente entre los datos de prueba SFP y una cartera personal en blanco sin perder sus cuentas ni categorías.',
+        PT: 'Alterne livremente entre os dados de teste SFP e uma carteira pessoal em branco sem perder as suas contas ou categorias.'
+      },
+      'REPORT_EMPTY_DIAG_TITLE': {
+        FR: 'DIAGNOSTIC EXÉCUTIF : AUCUNE OPÉRATION SUR LA PÉRIODE',
+        EN: 'EXECUTIVE DIAGNOSTIC: NO OPERATIONS FOR THIS PERIOD',
+        ES: 'DIAGNÓSTICO EJECUTIVO: SIN OPERACIONES EN EL PERÍODO',
+        PT: 'DIAGNÓSTICO EXECUTIVO: SEM TRANSAÇÕES NO PERÍODO'
+      },
+      'REPORT_EMPTY_DIAG_DESC': {
+        FR: 'Aucun flux de revenus, de dépenses ou d\'enveloppe budgétaire n\'est enregistré pour cette période. Saisissez vos opérations ou sélectionnez l\'année entière pour générer une synthèse financière complète.',
+        EN: 'No income, expense, or budget envelope is recorded for this period. Enter transactions or select the full year to generate a complete financial executive summary.',
+        ES: 'No se han registrado ingresos, gastos ni presupuestos en este período. Registre operaciones o seleccione el año completo para generar un informe ejecutivo completo.',
+        PT: 'Nenhuma receita, despesa ou orçamento foi registado neste período. Insira transações ou selecione o ano inteiro para gerar um relatório executivo completo.'
       },
       'THEME_NAME_BLUE': { FR: 'Bleu Royal', EN: 'Royal Blue', ES: 'Azul Real', PT: 'Azul Real' },
       'THEME_SUB_BLUE': { FR: 'Standard SFP • Or & Saphir', EN: 'SFP Standard • Gold & Sapphire', ES: 'Estándar SFP • Oro y Zafiro', PT: 'Padrão SFP • Ouro e Safira' },
@@ -1688,17 +1896,21 @@ class GFMPEngine {
   }
 
   // --- APP INITIALIZATION & RECONFIGURATION ---
-  initializeSystem(defaultCurrency = 'MUR', defaultLanguage = 'FR', defaultDate = null, defaultTheme = null, defaultYear = null, defaultMonth = null) {
+  initializeSystem(defaultCurrency = 'MUR', defaultLanguage = 'FR', defaultDate = null, defaultTheme = null, defaultYear = null, defaultMonth = null, useDemoData = true) {
     const sanitizedCurrency = (typeof defaultCurrency === 'string') ? defaultCurrency.trim().toUpperCase() : 'MUR';
     const sanitizedLanguage = (typeof defaultLanguage === 'string') ? defaultLanguage.trim().toUpperCase() : 'FR';
     const validThemes = ['blue', 'gold', 'emerald', 'amethyst'];
     const sanitizedTheme = (typeof defaultTheme === 'string' && validThemes.includes(defaultTheme.trim().toLowerCase()))
       ? defaultTheme.trim().toLowerCase()
       : (this.theme || 'blue');
+    const isDemo = !(useDemoData === false || String(useDemoData).trim().toUpperCase() === 'EMPTY');
+    const resolvedMode = isDemo ? 'DEMO' : 'EMPTY';
 
     this.lang = sanitizedLanguage;
     this.currency = sanitizedCurrency;
     this.theme = sanitizedTheme;
+    this.dataMode = resolvedMode;
+    this.selectedCategoryFilter = null;
 
     if (defaultDate && /^\d{4}-\d{2}-\d{2}$/.test(String(defaultDate).trim())) {
       this.referenceDate = String(defaultDate).trim();
@@ -1719,13 +1931,20 @@ class GFMPEngine {
       this.data.devises = { MUR: 12.2243, EUR: 656.168, USD: 567.5369, GBP: 757.0023, ZAR: 33.2723, XOF: 1 };
     }
 
-    if (this.data && this.data.config) {
+    if (this.data) {
+      this.data.dataMode = resolvedMode;
+      if (!isDemo) {
+        this.data.transactions = [];
+        this.data.budgets = [];
+      }
+      if (!this.data.config) this.data.config = {};
       this.data.config.SYS_DEVISE_BASE = sanitizedCurrency;
       this.data.config.LANGUE_UI = sanitizedLanguage;
       this.data.config.SYS_DATE_REF = this.referenceDate;
       this.data.config.SYS_YEAR = this.year;
       this.data.config.SYS_MONTH = this.month;
       this.data.config.SYS_THEME = sanitizedTheme;
+      this.data.config.SYS_DATA_MODE = resolvedMode;
     }
 
     const storage = this.getStorage();
@@ -1733,13 +1952,14 @@ class GFMPEngine {
       storage.setItem('gfmp_initialized', 'true');
       storage.setItem('gfmp_onboarding_v5_6', 'true');
       storage.setItem('gfmp_theme', sanitizedTheme);
+      storage.setItem('gfmp_data_mode', resolvedMode);
     }
     this.needsOnboarding = false;
 
     // Trigger immediate background rate sync
     this.fetchLiveExchangeRates(false);
 
-    this.logHistory('INIT_SYSTEM', 'CONFIG', sanitizedCurrency, `Initialisation du système : Devise ${sanitizedCurrency}, Langue ${sanitizedLanguage}, Période ${this.month}/${this.year}, Thème ${sanitizedTheme}`);
+    this.logHistory('INIT_SYSTEM', 'CONFIG', sanitizedCurrency, `Initialisation du système : Devise ${sanitizedCurrency}, Langue ${sanitizedLanguage}, Période ${this.month}/${this.year}, Thème ${sanitizedTheme}, Données ${resolvedMode}`);
     this.save();
     this.notify();
     return {
@@ -1749,7 +1969,8 @@ class GFMPEngine {
       date: this.referenceDate,
       year: this.year,
       month: this.month,
-      theme: sanitizedTheme
+      theme: sanitizedTheme,
+      dataMode: resolvedMode
     };
   }
 
@@ -2171,6 +2392,8 @@ class GFMPEngine {
 
       alloue = this.roundMoney(alloue);
       const consomme = this.roundMoney(catRealise[cat.id] || 0);
+      if (alloue === 0 && consomme === 0) return;
+
       const ecart = this.roundMoney(alloue - consomme);
       const rawPct = alloue > 0 ? (consomme / alloue) * 100 : (consomme > 0 ? 100 : 0);
 
@@ -2414,6 +2637,10 @@ class GFMPEngine {
   initDatabase() {
     if (typeof window !== 'undefined' && window.GFMP_BASELINE) {
       this.data = JSON.parse(JSON.stringify(window.GFMP_BASELINE));
+      this.dataMode = 'DEMO';
+      this.data.dataMode = 'DEMO';
+      if (!this.data.config) this.data.config = {};
+      this.data.config.SYS_DATA_MODE = 'DEMO';
       this.logHistory('DB_INIT', 'database', 'system', 'Réinitialisation de la base de données aux paramètres d\'usine');
       this.save();
       this.notify();
@@ -2441,6 +2668,11 @@ class GFMPEngine {
     const txCount = Array.isArray(this.data.transactions) ? this.data.transactions.length : 0;
     this.data.transactions = [];
     this.data.budgets = [];
+    this.dataMode = 'EMPTY';
+    this.data.dataMode = 'EMPTY';
+    if (!this.data.config) this.data.config = {};
+    this.data.config.SYS_DATA_MODE = 'EMPTY';
+    this.selectedCategoryFilter = null;
     this.logHistory('DB_PURGE', 'database', 'system', `Purge des données : ${txCount} transactions et budgets réinitialisés`);
     this.save();
     this.notify();
@@ -2498,10 +2730,10 @@ class GFMPEngine {
     const nw = this.computeNetWorth(period);
     const bg = this.computeBudgetZBB(period);
 
-    // Financial health score (10 to 100)
+    // Financial health score (10 to 100) — neutral when netCashflow === 0
     let healthScore = 50;
     if (cf.netCashflow > 0) healthScore += 15;
-    else healthScore -= 15;
+    else if (cf.netCashflow < 0) healthScore -= 15;
 
     if (cf.savingsRate >= 20) healthScore += 15;
     else if (cf.savingsRate >= 10) healthScore += 8;
@@ -2517,11 +2749,20 @@ class GFMPEngine {
     else if (debtRatio > 60) healthScore -= 10;
 
     const savingsRate = Math.round(cf.savingsRate) || 0;
+    const totalTxCount = (this.data && Array.isArray(this.data.transactions)) ? this.data.transactions.length : 0;
+    const totalBudgetCount = (this.data && Array.isArray(this.data.budgets)) ? this.data.budgets.length : 0;
 
     return {
       hubFilter: this.hubFilter,
       period: `${this.getMonthLabel(targetMonth)} ${targetYear}`,
       currency: this.currency,
+      dataMode: this.getDataMode(),
+      hasData: (totalTxCount > 0 || totalBudgetCount > 0),
+      hasCashflowData: (cf.totalRevenus > 0 || cf.totalDepenses > 0 || cf.transactions.length > 0),
+      hasPatrimoineData: (totalAssets > 0 || totalLiabilities > 0),
+      hasBudgetData: (bg.totalAlloue > 0 || bg.totalConsomme > 0 || (bg.categories && bg.categories.length > 0)),
+      totalTxCount,
+      totalBudgetCount,
       healthScore: Math.max(10, Math.min(100, healthScore)),
       // Net Worth
       netWorth: nw.netWorth,
@@ -2548,9 +2789,10 @@ class GFMPEngine {
         ...b,
         nom: this.trEntity(b.nom)
       })),
-      // Top Asset accounts
+      // Top Asset accounts (only positive active balances so empty portfolios don't render 0,00 rows)
       topAssets: (nw.accounts || [])
-        .filter(a => a.classe !== 'DETTE')
+        .filter(a => a.classe !== 'DETTE' && a.soldeConverti > 0)
+        .sort((a, b) => b.soldeConverti - a.soldeConverti)
         .slice(0, 4)
         .map(a => ({
           nom: this.cleanAssetName(a.nom),
@@ -2590,10 +2832,17 @@ class GFMPEngine {
     const cf = this.computeCashflow(period);
     const nw = this.computeNetWorth(period);
     const bg = this.computeBudgetZBB(period);
+    const hasData = (cf.totalRevenus > 0 || cf.totalDepenses > 0 || nw.totalAssets > 0 || nw.totalLiabilities > 0 || bg.totalAlloue > 0);
 
     return {
       period: `${this.getMonthLabel(targetMonth)} ${targetYear}`,
       currency: this.currency,
+      dataMode: this.getDataMode(),
+      hasData,
+      txCount: cf.transactions.length,
+      rawRevenus: cf.totalRevenus,
+      rawDepenses: cf.totalDepenses,
+      rawNetWorth: nw.netWorth,
       revenus: this.formatMoney(cf.totalRevenus),
       depenses: this.formatMoney(cf.totalDepenses),
       netCashflow: this.formatMoney(cf.netCashflow),

@@ -102,6 +102,9 @@
         <button class="hub-filter-chip" data-hub-filter="BUDGET" id="hub-chip-budget">Budgets</button>
       </div>
 
+      <!-- Contextual Data Mode Status & Quick-Switch Banner (Demo vs Blank Portfolio) -->
+      <div id="hub-datamode-banner" class="hub-datamode-banner" role="region" aria-label="Mode de données financières"></div>
+
       <!-- Hero Portfolio Consolidated Wealth Card -->
       <div class="hub-hero-portfolio">
         <div class="hub-hero-header">
@@ -653,6 +656,35 @@
         </div>
       </div>
 
+      <!-- Setting Section 3.5: Mode de Données Financières (Données de Test vs Portefeuille Vierge) -->
+      <div class="solid-card" id="settings-datamode-card" style="margin-bottom:14px; cursor:default;">
+        <div class="card-header-inner">
+          <h2 class="card-title" id="lbl-settings-datamode-title" style="font-size:0.95rem;">MODE DE DONNÉES FINANCIÈRES</h2>
+          <span id="settings-datamode-badge" style="font-size:0.68rem; font-weight:800; color:var(--c-yellow-royal); background:rgba(250,218,94,0.12); padding:3px 8px; border-radius:999px; border:1px solid rgba(250,218,94,0.3);">DÉMO SFP</span>
+        </div>
+        <p id="lbl-settings-datamode-desc" style="font-size:0.72rem; color:var(--text-secondary); margin:4px 0 10px 0; line-height:1.45;">
+          Basculez librement entre les données de test SFP et un portefeuille personnel vierge sans perdre vos comptes ni vos catégories.
+        </p>
+        <div class="settings-datamode-grid" id="settings-datamode-selector" style="display:grid; grid-template-columns:repeat(2, 1fr); gap:10px;">
+          <button type="button" class="datamode-choice-btn active" id="btn-datamode-demo" data-datamode="DEMO" aria-pressed="true">
+            <div style="display:flex; align-items:center; justify-content:space-between; width:100%;">
+              <span style="font-size:0.62rem; font-weight:800; color:var(--c-yellow-royal); letter-spacing:0.4px;" id="lbl-set-dm-demo-badge">60 OPÉRATIONS • 17 BUDGETS</span>
+              <span class="datamode-check" aria-hidden="true">✓</span>
+            </div>
+            <span style="font-size:0.8rem; font-weight:800; color:#FFF; text-align:left;" id="lbl-set-dm-demo-title">Données de Test &amp; Démo SFP</span>
+            <span style="font-size:0.66rem; color:var(--text-secondary); text-align:left; line-height:1.35;" id="lbl-set-dm-demo-sub">Portefeuille d'exemple pré-rempli pour tester les analyses.</span>
+          </button>
+          <button type="button" class="datamode-choice-btn" id="btn-datamode-empty" data-datamode="EMPTY" aria-pressed="false">
+            <div style="display:flex; align-items:center; justify-content:space-between; width:100%;">
+              <span style="font-size:0.62rem; font-weight:800; color:#10B981; letter-spacing:0.4px;" id="lbl-set-dm-empty-badge">DÉMARRAGE À ZÉRO • 0,00</span>
+              <span class="datamode-check" aria-hidden="true">✓</span>
+            </div>
+            <span style="font-size:0.8rem; font-weight:800; color:#FFF; text-align:left;" id="lbl-set-dm-empty-title">Portefeuille Personnel Vierge</span>
+            <span style="font-size:0.66rem; color:var(--text-secondary); text-align:left; line-height:1.35;" id="lbl-set-dm-empty-sub">Aucune donnée de test. Prêt pour vos propres opérations.</span>
+          </button>
+        </div>
+      </div>
+
       <!-- Setting Section 4: Gestion Intégrale de la Base de Données -->
       <div class="hub-db-section" style="margin-bottom:20px;">
         <div class="hub-db-title">
@@ -1079,7 +1111,7 @@
         <!-- Question 1: Langue -->
         <div class="alloc-question-card init-step-card">
           <div class="init-step-header">
-            <div class="alloc-question-badge" id="init-step1-badge">ÉTAPE 01 / 04</div>
+            <div class="alloc-question-badge" id="init-step1-badge">ÉTAPE 01 / 05</div>
             <div class="alloc-question-title" id="init-step1-title">Sélectionnez la langue du système</div>
           </div>
           <p class="init-step-desc" id="init-step1-desc">
@@ -1124,7 +1156,7 @@
         <!-- Question 2: Devise Principale -->
         <div class="alloc-question-card init-step-card">
           <div class="init-step-header">
-            <div class="alloc-question-badge" id="init-step2-badge">ÉTAPE 02 / 04</div>
+            <div class="alloc-question-badge" id="init-step2-badge">ÉTAPE 02 / 05</div>
             <div class="alloc-question-title" id="init-step2-title">Sélectionnez votre devise de référence</div>
           </div>
           <p class="init-step-desc" id="init-step2-desc">
@@ -1185,7 +1217,7 @@
         <!-- Question 3: Date & Période Financière de Référence -->
         <div class="alloc-question-card init-step-card" id="init-date-section">
           <div class="init-step-header">
-            <div class="alloc-question-badge" id="init-step3-badge">ÉTAPE 03 / 04</div>
+            <div class="alloc-question-badge" id="init-step3-badge">ÉTAPE 03 / 05</div>
             <div class="alloc-question-title" id="init-step3-title">Configurez la date et la période financière</div>
           </div>
           <p class="init-step-desc" id="init-step3-desc">
@@ -1242,7 +1274,7 @@
         <!-- Question 4: Thème Visuel de l'Application -->
         <div class="alloc-question-card init-step-card" id="init-theme-section">
           <div class="init-step-header">
-            <div class="alloc-question-badge" id="init-step4-badge">ÉTAPE 04 / 04</div>
+            <div class="alloc-question-badge" id="init-step4-badge">ÉTAPE 04 / 05</div>
             <div class="alloc-question-title" id="init-step4-title">Choisissez le thème visuel de l'application</div>
           </div>
           <p class="init-step-desc" id="init-step4-desc">
@@ -1292,6 +1324,35 @@
               </div>
               <span class="init-choice-name" data-theme-name="AMETHYST">Améthyste Royale</span>
               <span class="init-choice-sub" data-theme-sub="AMETHYST">Haute Joaillerie • Pourpre</span>
+            </button>
+          </div>
+        </div>
+
+        <!-- Question 5: Mode de Données Financières (Données de Test vs Portefeuille Vierge) -->
+        <div class="alloc-question-card init-step-card" id="init-datamode-section">
+          <div class="init-step-header">
+            <div class="alloc-question-badge" id="init-step5-badge">ÉTAPE 05 / 05</div>
+            <div class="alloc-question-title" id="init-step5-title">Choisissez le mode de données financières</div>
+          </div>
+          <p class="init-step-desc" id="init-step5-desc">
+            Explorez l'application avec le portefeuille de test complet ou démarrez avec un portefeuille vierge prêt pour vos saisies.
+          </p>
+          <div class="init-choice-grid init-datamode-grid-layout" id="init-datamode-grid">
+            <button type="button" class="init-choice-card active" data-init-datamode="demo" aria-pressed="true">
+              <div class="init-card-top">
+                <span class="init-datamode-pill demo" id="init-dm-demo-badge">60 OPÉRATIONS • 17 BUDGETS</span>
+                <span class="init-card-check" aria-hidden="true">✓</span>
+              </div>
+              <span class="init-choice-name" id="init-dm-demo-title">Données de Test &amp; Démo SFP</span>
+              <span class="init-choice-sub" id="init-dm-demo-sub">Portefeuille d'exemple pré-rempli (Jan–Mar 2026) pour tester les graphiques, rapports et analyses.</span>
+            </button>
+            <button type="button" class="init-choice-card" data-init-datamode="empty" aria-pressed="false">
+              <div class="init-card-top">
+                <span class="init-datamode-pill empty" id="init-dm-empty-badge">DÉMARRAGE À ZÉRO • 0,00</span>
+                <span class="init-card-check" aria-hidden="true">✓</span>
+              </div>
+              <span class="init-choice-name" id="init-dm-empty-title">Portefeuille Personnel Vierge</span>
+              <span class="init-choice-sub" id="init-dm-empty-sub">Aucune transaction ni budget de test. Comptes, catégories et devises prêts pour vos propres opérations.</span>
             </button>
           </div>
         </div>
