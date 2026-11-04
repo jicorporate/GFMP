@@ -1,8 +1,9 @@
 {
   "name": "GFMP — Global Finance Management Platform",
   "short_name": "GFMP",
+  "version": "1.01",
   "id": "com.jicorporate.gfmp",
-  "description": "Système Financier Personnel & Entreprise-Grade SFP v1.0 — 100% Autonome et Hors-Ligne",
+  "description": "Plateforme de Gestion Financière et Patrimoniale Haute Précision — 100% Autonome et Hors-Ligne",
   "start_url": "./index.html",
   "scope": "./",
   "display": "standalone",

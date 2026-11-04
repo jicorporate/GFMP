@@ -2987,168 +2987,167 @@ dialog.gfmp-confirm-dialog[open]::backdrop {
 }
 
 /* ==========================================================================
-   DATA MODE CHOICE (DEMO VS BLANK PORTFOLIO) & DYNAMIC EMPTY STATE RESILIENCE
-   (Modern Web Guidance: content-based-styling, improve-text-layout-and-legibility, card)
+   ACCOUNTS & LIABILITIES INVENTORY : DYNAMIC, RESILIENT & RESPONSIVE STYLES
+   (Modern Web Guidance: responsive-table, content-based-styling, improve-text-layout-and-legibility)
    ========================================================================== */
 
-/* 1. Onboarding Step 5: Data Mode Choice Grid */
-.init-datamode-grid-layout {
-  display: grid;
-  grid-template-columns: repeat(2, 1fr);
-  gap: 10px;
-}
-
-@media (max-width: 480px) {
-  .init-datamode-grid-layout,
-  .settings-datamode-grid {
-    grid-template-columns: 1fr !important;
-  }
-}
-
-.init-datamode-pill {
-  display: inline-flex;
-  align-items: center;
-  padding: 3px 8px;
-  border-radius: 999px;
-  font-size: 0.6rem;
+/* 1. Table Counter Badges & Inline Actions */
+.table-counter-badge {
+  font-size: 0.66rem;
   font-weight: 800;
   letter-spacing: 0.4px;
-  text-transform: uppercase;
-}
-
-.init-datamode-pill.demo {
-  background: rgba(250, 218, 94, 0.14);
   color: var(--c-yellow-royal);
-  border: 1px solid rgba(250, 218, 94, 0.35);
-}
-
-.init-datamode-pill.empty {
-  background: rgba(16, 185, 129, 0.14);
-  color: #34D399;
-  border: 1px solid rgba(16, 185, 129, 0.35);
-}
-
-/* 2. Settings Data Mode Switcher */
-.datamode-choice-btn {
-  display: flex;
-  flex-direction: column;
-  align-items: flex-start;
-  gap: 6px;
-  padding: 12px 14px;
-  border-radius: 12px;
-  background: rgba(255, 255, 255, 0.03);
-  border: 1.5px solid rgba(255, 255, 255, 0.1);
-  color: #FFFFFF;
-  cursor: pointer;
-  transition: var(--transition);
-  text-align: left;
-}
-
-.datamode-choice-btn:hover {
-  background: rgba(255, 255, 255, 0.06);
-  border-color: rgba(250, 218, 94, 0.35);
-}
-
-.datamode-choice-btn.active {
-  background: linear-gradient(135deg, rgba(65, 105, 225, 0.2) 0%, rgba(250, 218, 94, 0.1) 100%);
-  border-color: var(--c-yellow-royal);
-  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.35);
-}
-
-.datamode-choice-btn .datamode-check {
-  width: 18px;
-  height: 18px;
-  border-radius: 50%;
+  background: rgba(250, 218, 94, 0.12);
+  padding: 3px 9px;
+  border-radius: 999px;
+  border: 1px solid rgba(250, 218, 94, 0.3);
   display: inline-flex;
   align-items: center;
-  justify-content: center;
+}
+
+.btn-inline-add-entity {
+  background: rgba(250, 218, 94, 0.12);
+  color: var(--c-yellow-royal);
+  border: 1px solid rgba(250, 218, 94, 0.35);
+  border-radius: 999px;
   font-size: 0.68rem;
-  font-weight: 900;
-  background: rgba(255, 255, 255, 0.08);
-  color: transparent;
-  border: 1px solid rgba(255, 255, 255, 0.2);
+  font-weight: 800;
+  padding: 4px 10px;
+  cursor: pointer;
+  transition: var(--transition);
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
 }
 
-.datamode-choice-btn.active .datamode-check {
+.btn-inline-add-entity:hover {
   background: var(--c-yellow-royal);
-  color: #060B19;
-  border-color: var(--c-yellow-royal);
+  color: #070A13;
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(250, 218, 94, 0.28);
 }
 
-/* 3. Contextual Hub Data Mode Banner (#hub-datamode-banner) */
-.hub-datamode-banner {
+/* 2. Portfolio & Accounts Zero-State Readiness Callout */
+.nw-readiness-callout {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 12px 14px;
+  margin: 0 0 12px 0;
+  border-radius: var(--radius-md);
+  background: linear-gradient(135deg, rgba(15, 23, 42, 0.85) 0%, rgba(20, 30, 55, 0.8) 100%);
+  border: 1px solid rgba(250, 218, 94, 0.24);
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.25);
+}
+
+.nw-readiness-header {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  flex-wrap: wrap;
-  gap: 10px;
-  padding: 10px 14px;
-  margin-bottom: 14px;
-  border-radius: var(--radius-lg);
-  background: linear-gradient(135deg, rgba(15, 23, 42, 0.92) 0%, rgba(30, 41, 59, 0.88) 100%);
-  border: 1px solid rgba(250, 218, 94, 0.28);
-  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.35);
-}
-
-.hub-datamode-banner.is-empty-mode {
-  border-color: rgba(16, 185, 129, 0.38);
-  background: linear-gradient(135deg, rgba(6, 36, 32, 0.88) 0%, rgba(15, 23, 42, 0.94) 100%);
-}
-
-.hub-dm-info {
-  display: flex;
-  align-items: center;
-  gap: 9px;
-  font-size: 0.74rem;
-  font-weight: 700;
-  color: var(--text-primary);
-}
-
-.hub-dm-dot {
-  width: 8px;
-  height: 8px;
-  border-radius: 50%;
-  background: var(--c-yellow-royal);
-  box-shadow: 0 0 8px var(--c-yellow-royal);
-  flex-shrink: 0;
-}
-
-.hub-datamode-banner.is-empty-mode .hub-dm-dot {
-  background: #10B981;
-  box-shadow: 0 0 8px #10B981;
-}
-
-.hub-dm-actions {
-  display: flex;
-  align-items: center;
   gap: 8px;
   flex-wrap: wrap;
 }
 
-.hub-dm-btn {
+.nw-readiness-badge {
   display: inline-flex;
   align-items: center;
-  gap: 5px;
-  padding: 5px 11px;
-  border-radius: 999px;
+  gap: 6px;
   font-size: 0.68rem;
   font-weight: 800;
+  color: var(--c-yellow-royal);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.nw-readiness-dot {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: var(--c-yellow-royal);
+  box-shadow: 0 0 6px var(--c-yellow-royal);
+}
+
+.nw-readiness-text {
+  font-size: 0.72rem;
+  color: var(--text-secondary);
+  line-height: 1.45;
+  margin: 0;
+}
+
+.nw-readiness-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+  margin-top: 4px;
+}
+
+/* 3. Account Row Micro-Status Pills */
+.cpt-status-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 0.62rem;
+  font-weight: 700;
+  padding: 2px 6px;
+  border-radius: 999px;
+  margin-top: 3px;
+  line-height: 1.2;
+}
+
+.cpt-status-pill.ready {
+  background: rgba(16, 185, 129, 0.1);
+  color: #34D399;
+  border: 1px solid rgba(16, 185, 129, 0.28);
+}
+
+.cpt-status-pill.clear {
+  background: rgba(59, 130, 246, 0.1);
+  color: #93C5FD;
+  border: 1px solid rgba(59, 130, 246, 0.28);
+}
+
+.cpt-status-pill.funded {
+  background: rgba(250, 218, 94, 0.1);
+  color: var(--c-yellow-royal);
+  border: 1px solid rgba(250, 218, 94, 0.28);
+}
+
+.cpt-status-pill.debt {
+  background: rgba(239, 68, 68, 0.1);
+  color: #FCA5A5;
+  border: 1px solid rgba(239, 68, 68, 0.28);
+}
+
+/* 4. Quick Action Button inside Table Rows */
+.btn-cpt-quick-add {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  background: rgba(250, 218, 94, 0.12);
+  border: 1px solid rgba(250, 218, 94, 0.35);
+  color: var(--c-yellow-royal);
   cursor: pointer;
   transition: var(--transition);
-  border: 1px solid rgba(250, 218, 94, 0.4);
-  background: rgba(250, 218, 94, 0.12);
-  color: var(--c-yellow-royal);
+  margin-left: 8px;
+  vertical-align: middle;
 }
 
-.hub-dm-btn:hover {
-  background: rgba(250, 218, 94, 0.22);
-  transform: translateY(-1px);
-}
-
-.hub-dm-btn.primary-cta {
+.btn-cpt-quick-add:hover {
   background: var(--c-yellow-royal);
-  color: #060B19;
-  border-color: var(--c-yellow-royal);
+  color: #070A13;
+  transform: scale(1.1);
+  box-shadow: 0 2px 8px rgba(250, 218, 94, 0.4);
+}
+
+.td-amount-with-action {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 8px;
 }
 
 /* 4. Rich, Resilient, Dynamic Empty States (.empty-state-rich) */

@@ -732,9 +732,15 @@ document.addEventListener('DOMContentLoaded', () => {
   const modalExpress = document.getElementById('modal-bottom-sheet-tx');
   const btnCloseExpress = document.getElementById('btn-close-express-tx');
 
-  function openExpressModal() {
+  function openExpressModal(defaultAccountId = null) {
     triggerHaptic(25);
     populateSelects();
+    if (defaultAccountId) {
+      const cptSel = document.getElementById('exp-tx-compte');
+      if (cptSel) {
+        cptSel.value = String(defaultAccountId);
+      }
+    }
     modalExpress?.classList.add('open');
   }
 
@@ -1910,36 +1916,6 @@ document.addEventListener('DOMContentLoaded', () => {
       else chip.classList.remove('active');
     });
 
-    // Contextual Data Mode Banner (Demo Dataset vs Blank Personal Portfolio)
-    const bannerEl = document.getElementById('hub-datamode-banner');
-    if (bannerEl) {
-      const isEmptyMode = (data.dataMode === 'EMPTY');
-      bannerEl.className = `hub-datamode-banner ${isEmptyMode ? 'is-empty-mode' : ''}`;
-      if (isEmptyMode) {
-        bannerEl.innerHTML = `
-          <div class="hub-dm-info">
-            <span class="hub-dm-dot" aria-hidden="true"></span>
-            <span>${escapeHTML(engine.tr('BANNER_EMPTY_ACTIVE'))}</span>
-          </div>
-          <div class="hub-dm-actions">
-            <button type="button" class="hub-dm-btn primary-cta" data-empty-action="add-tx">${escapeHTML(engine.tr('EMPTY_CTA_ADD_TX'))}</button>
-            <button type="button" class="hub-dm-btn" data-empty-action="load-demo">${escapeHTML(engine.tr('EMPTY_CTA_LOAD_DEMO'))}</button>
-          </div>
-        `;
-      } else {
-        bannerEl.innerHTML = `
-          <div class="hub-dm-info">
-            <span class="hub-dm-dot" aria-hidden="true"></span>
-            <span>${escapeHTML(engine.tr('BANNER_DEMO_ACTIVE'))}</span>
-          </div>
-          <div class="hub-dm-actions">
-            <button type="button" class="hub-dm-btn" data-empty-action="switch-empty">${escapeHTML(engine.tr('EMPTY_CTA_SWITCH_EMPTY'))}</button>
-            <button type="button" class="hub-dm-btn primary-cta" data-empty-action="add-tx">${escapeHTML(engine.tr('EMPTY_CTA_ADD_TX'))}</button>
-          </div>
-        `;
-      }
-    }
-
     // Consolidated Portfolio Hero Card
     const heroNw = document.getElementById('hub-hero-networth');
     if (heroNw) heroNw.textContent = engine.formatMoney(data.netWorth);
@@ -2169,7 +2145,6 @@ document.addEventListener('DOMContentLoaded', () => {
                 <div class="empty-state-actions">
                   <button type="button" class="btn-empty-cta" data-empty-action="add-tx">${escapeHTML(engine.tr('EMPTY_CTA_ADD_TX'))}</button>
                   ${isCatFiltered ? `<button type="button" class="btn-empty-cta secondary" data-empty-action="reset-cf-filters">${escapeHTML(engine.tr('EMPTY_CTA_RESET_FILTER'))}</button>` : ''}
-                  ${data.dataMode === 'EMPTY' ? `<button type="button" class="btn-empty-cta secondary" data-empty-action="load-demo">${escapeHTML(engine.tr('EMPTY_CTA_LOAD_DEMO'))}</button>` : ''}
                 </div>
               </div>
             </td>
@@ -2372,18 +2347,39 @@ document.addEventListener('DOMContentLoaded', () => {
         `;
       }
     } else if (stackBar) {
-      stackBar.innerHTML = `<div class="stack-segment" style="width:100%; background:rgba(255,255,255,0.1);"></div>`;
+      stackBar.innerHTML = `<div class="stack-segment" style="width:100%; background:linear-gradient(90deg, rgba(212,175,55,0.25) 0%, rgba(250,218,94,0.4) 100%);"></div>`;
       if (stackLegend) {
         stackLegend.innerHTML = `
           <span style="display:inline-flex; align-items:center; gap:8px; flex-wrap:wrap;">
-            <span>${escapeHTML(engine.tr('NO_ASSETS'))} — ${escapeHTML(engine.tr('EMPTY_PATRIMOINE_SUB'))}</span>
+            <span style="color:var(--c-gold-light); font-weight:600;">● ${escapeHTML(engine.tr('NW_STACK_EMPTY_LABEL'))}</span>
             <button type="button" class="btn-empty-cta" style="padding:4px 10px; font-size:0.66rem;" data-empty-action="add-tx">${escapeHTML(engine.tr('EMPTY_CTA_ADD_TX'))}</button>
           </span>
         `;
       }
     }
 
-    // Accounts Modern Table
+    // Modern Accounts & Liabilities Inventory Table Header & Readiness Callout
+    const asOfDateEl = document.getElementById('lbl-as-of-date');
+    if (asOfDateEl) {
+      asOfDateEl.textContent = `${engine.tr('AS_OF') || 'Au'} ${engine.systemDate}`;
+    }
+    const accBadge = document.getElementById('nw-accounts-summary-badge');
+    if (accBadge) {
+      accBadge.textContent = (nw.accounts.length === 0)
+        ? `0 ${engine.tr('NW_ACCOUNTS_COUNT')}`
+        : `${nw.accounts.length} ${engine.tr('NW_ACCOUNTS_COUNT')}`;
+    }
+    const btnAddAcc = document.getElementById('btn-nw-add-account');
+    if (btnAddAcc) {
+      btnAddAcc.textContent = engine.tr('BTN_NW_ADD_ACCOUNT');
+    }
+
+    const readinessSlot = document.getElementById('nw-table-readiness-slot');
+    if (readinessSlot) {
+      readinessSlot.innerHTML = '';
+    }
+
+    // Accounts Modern Table Body
     const tbody = document.getElementById('networth-table-body');
     if (nw.accounts.length === 0) {
       const hasClassFilter = (engine.patrimoineClassFilter && engine.patrimoineClassFilter !== 'ALL');
@@ -2392,12 +2388,13 @@ document.addEventListener('DOMContentLoaded', () => {
           <td colspan="4" class="empty-state">
             <div class="empty-state-rich">
               <div class="empty-state-icon-box" aria-hidden="true">
-                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2L2 7l10 5 10-5-10-5z"/><path d="M2 17l10 5 10-5"/><path d="M2 12l10 5 10-5"/></svg>
+                <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2L2 7l10 5 10-5-10-5z"/><path d="M2 17l10 5 10-5"/><path d="M2 12l10 5 10-5"/></svg>
               </div>
-              <div class="empty-state-title">${escapeHTML(engine.tr('NO_ACCOUNT_MATCH'))}</div>
+              <div class="empty-state-title">${escapeHTML(hasClassFilter ? engine.tr('NO_ACCOUNT_MATCH') : (engine.tr('NO_ACCOUNT_OR_TX') || engine.tr('NO_ACCOUNT_MATCH')))}</div>
               <p class="empty-state-desc">${escapeHTML(engine.tr('EMPTY_PATRIMOINE_SUB'))}</p>
               <div class="empty-state-actions">
-                <button type="button" class="btn-empty-cta" data-empty-action="add-account">${escapeHTML(engine.tr('EMPTY_CTA_ADD_ACC'))}</button>
+                <button type="button" class="btn-empty-cta" data-empty-action="add-tx">${escapeHTML(engine.tr('EMPTY_CTA_ADD_TX'))}</button>
+                <button type="button" class="btn-empty-cta secondary" data-empty-action="add-account">${escapeHTML(engine.tr('EMPTY_CTA_ADD_ACC'))}</button>
                 ${hasClassFilter ? `<button type="button" class="btn-empty-cta secondary" data-empty-action="reset-nw-filters">${escapeHTML(engine.tr('EMPTY_CTA_RESET_FILTER'))}</button>` : ''}
               </div>
             </div>
@@ -2407,23 +2404,48 @@ document.addEventListener('DOMContentLoaded', () => {
       return;
     }
 
-    tbody.innerHTML = nw.accounts.map(cpt => `
-      <tr>
-        <td>
-          <div style="font-weight:700;">${escapeHTML(engine.cleanAssetName(cpt.nom))}</div>
-          <div style="font-size:0.68rem; opacity:0.8;">${cpt.isDette ? engine.tr('ASSET_LIABILITY') : engine.tr('ASSET_ACTIVE')}</div>
-        </td>
-        <td>
-          <span class="badge-flux ${escapeHTML(cpt.classe)}">${escapeHTML(cpt.classeTraduit || engine.trEntity(cpt.classe))}</span>
-        </td>
-        <td>
-          <div>${cpt.soldeNatif.toLocaleString('fr-FR', { minimumFractionDigits: 2 })} ${escapeHTML(cpt.deviseNative)}</div>
-        </td>
-        <td class="td-amount" style="color: ${cpt.isDette ? 'var(--c-yellow-royal)' : '#FFF'};">
-          ${escapeHTML(engine.formatMoney(cpt.soldeConverti))}
-        </td>
-      </tr>
-    `).join('');
+    tbody.innerHTML = nw.accounts.map(cpt => {
+      let statusPillHtml = '';
+      if (cpt.isDette) {
+        if (cpt.soldeConverti === 0) {
+          statusPillHtml = `<span class="cpt-status-pill clear">${escapeHTML(engine.tr('ACCOUNT_STATUS_DEBT_FREE'))}</span>`;
+        } else {
+          const debtPct = (nw.totalLiabilities > 0) ? Math.round((cpt.soldeConverti / nw.totalLiabilities) * 100) : 0;
+          statusPillHtml = `<span class="cpt-status-pill debt">${escapeHTML(engine.tr('ACCOUNT_STATUS_DEBT'))} • ${debtPct}%</span>`;
+        }
+      } else {
+        if (cpt.soldeConverti === 0) {
+          statusPillHtml = `<span class="cpt-status-pill ready">${escapeHTML(engine.tr('ACCOUNT_STATUS_READY'))}</span>`;
+        } else {
+          const assetPct = (nw.totalAssets > 0) ? Math.round((cpt.soldeConverti / nw.totalAssets) * 100) : 0;
+          statusPillHtml = `<span class="cpt-status-pill funded">${escapeHTML(engine.tr('ACCOUNT_STATUS_FUNDED'))} • ${assetPct}%</span>`;
+        }
+      }
+
+      return `
+        <tr>
+          <td>
+            <div style="font-weight:700; display:flex; align-items:center; gap:6px; flex-wrap:wrap;">
+              <span>${escapeHTML(engine.cleanAssetName(cpt.nom))}</span>
+              ${statusPillHtml}
+            </div>
+            <div style="font-size:0.68rem; opacity:0.8; margin-top:2px;">${cpt.isDette ? engine.tr('ASSET_LIABILITY') : engine.tr('ASSET_ACTIVE')}</div>
+          </td>
+          <td>
+            <span class="badge-flux ${escapeHTML(cpt.classe)}">${escapeHTML(cpt.classeTraduit || engine.trEntity(cpt.classe))}</span>
+          </td>
+          <td>
+            <div style="font-family:monospace, tabular-nums; font-weight:600;">${cpt.soldeNatif.toLocaleString('fr-FR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} ${escapeHTML(cpt.deviseNative)}</div>
+          </td>
+          <td class="td-amount td-amount-with-action" style="color: ${cpt.isDette ? 'var(--c-yellow-royal)' : '#FFF'};">
+            <span class="cpt-converted-val">${escapeHTML(engine.formatMoney(cpt.soldeConverti))}</span>
+            <button type="button" class="btn-cpt-quick-add" data-account-id="${escapeHTML(cpt.id)}" title="${escapeHTML(engine.tr('ACCOUNT_QUICK_ADD_TX'))}" aria-label="${escapeHTML(engine.tr('ACCOUNT_QUICK_ADD_TX'))} ${escapeHTML(engine.cleanAssetName(cpt.nom))}">
+              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+            </button>
+          </td>
+        </tr>
+      `;
+    }).join('');
   }
 
   function renderBudgetView() {
@@ -2550,65 +2572,19 @@ document.addEventListener('DOMContentLoaded', () => {
       hapticBtn.style.background = hapticOn ? '#10B981' : '#64748B';
     }
 
-    // Data Mode Switcher (Demo vs Blank Personal Portfolio)
-    const curMode = engine.getDataMode();
-    const dmTitle = document.getElementById('lbl-settings-datamode-title');
-    if (dmTitle) dmTitle.textContent = engine.tr('SETTINGS_DATAMODE_TITLE');
-    const dmDesc = document.getElementById('lbl-settings-datamode-desc');
-    if (dmDesc) dmDesc.textContent = engine.tr('SETTINGS_DATAMODE_DESC');
-    const dmBadge = document.getElementById('settings-datamode-badge');
-    if (dmBadge) {
-      dmBadge.textContent = (curMode === 'EMPTY') ? engine.tr('DATA_MODE_EMPTY_BADGE') : engine.tr('DATA_MODE_DEMO_BADGE');
-      dmBadge.style.color = (curMode === 'EMPTY') ? '#34D399' : 'var(--c-yellow-royal)';
-      dmBadge.style.borderColor = (curMode === 'EMPTY') ? 'rgba(16,185,129,0.4)' : 'rgba(250,218,94,0.35)';
-    }
-
-    const setDmTxt = (id, key) => {
-      const el = document.getElementById(id);
-      if (el) el.textContent = engine.tr(key);
-    };
-    setDmTxt('lbl-set-dm-demo-badge', 'DATA_MODE_DEMO_BADGE');
-    setDmTxt('lbl-set-dm-demo-title', 'DATA_MODE_DEMO_TITLE');
-    setDmTxt('lbl-set-dm-demo-sub', 'DATA_MODE_DEMO_SUB');
-    setDmTxt('lbl-set-dm-empty-badge', 'DATA_MODE_EMPTY_BADGE');
-    setDmTxt('lbl-set-dm-empty-title', 'DATA_MODE_EMPTY_TITLE');
-    setDmTxt('lbl-set-dm-empty-sub', 'DATA_MODE_EMPTY_SUB');
-
-    const btnDmDemo = document.getElementById('btn-datamode-demo');
-    const btnDmEmpty = document.getElementById('btn-datamode-empty');
-    if (btnDmDemo) {
-      const isDemo = (curMode === 'DEMO');
-      btnDmDemo.classList.toggle('active', isDemo);
-      btnDmDemo.setAttribute('aria-pressed', isDemo ? 'true' : 'false');
-    }
-    if (btnDmEmpty) {
-      const isEmpty = (curMode === 'EMPTY');
-      btnDmEmpty.classList.toggle('active', isEmpty);
-      btnDmEmpty.setAttribute('aria-pressed', isEmpty ? 'true' : 'false');
-    }
   }
 
-  // Settings Data Mode Selector Buttons
-  document.getElementById('btn-datamode-demo')?.addEventListener('click', () => {
-    triggerHaptic(20);
-    engine.setDataMode('DEMO');
-    populateSelects();
-    renderSettingsView();
-    renderCurrentView();
-    showToast(engine.tr('BANNER_DEMO_ACTIVE'), 'success');
-  });
-
-  document.getElementById('btn-datamode-empty')?.addEventListener('click', () => {
-    triggerHaptic(20);
-    engine.setDataMode('EMPTY');
-    populateSelects();
-    renderSettingsView();
-    renderCurrentView();
-    showToast(engine.tr('BANNER_EMPTY_ACTIVE'), 'info');
-  });
-
-  // Delegated Click Handler for Rich Empty States & Contextual Data Mode Banner CTAs ([data-empty-action])
+  // Delegated Click Handler for Inventory Quick-Add, Empty States & Action CTAs
   document.addEventListener('click', (e) => {
+    const quickAddBtn = e.target.closest('.btn-cpt-quick-add');
+    if (quickAddBtn) {
+      e.stopPropagation();
+      triggerHaptic(18);
+      const accId = quickAddBtn.getAttribute('data-account-id');
+      openExpressModal(accId);
+      return;
+    }
+
     const btn = e.target.closest('[data-empty-action]');
     if (!btn) return;
     triggerHaptic(18);
@@ -2658,17 +2634,13 @@ document.addEventListener('DOMContentLoaded', () => {
     } else if (action === 'view-full-year') {
       engine.setMonth('00');
       showToast(engine.tr('FULL_YEAR', { year: engine.year }), 'info');
-    } else if (action === 'switch-empty') {
-      engine.setDataMode('EMPTY');
-      populateSelects();
-      renderCurrentView();
-      showToast(engine.tr('BANNER_EMPTY_ACTIVE'), 'info');
-    } else if (action === 'load-demo') {
-      engine.setDataMode('DEMO');
-      populateSelects();
-      renderCurrentView();
-      showToast(engine.tr('BANNER_DEMO_ACTIVE'), 'success');
     }
+  });
+
+  // Net Worth Inline Add Account Button
+  document.getElementById('btn-nw-add-account')?.addEventListener('click', () => {
+    triggerHaptic(18);
+    openAddEntityDialog('compte');
   });
 
   // Theme selector
@@ -2722,7 +2694,7 @@ document.addEventListener('DOMContentLoaded', () => {
     selectedInitYear = engine.year || '2026';
     selectedInitMonth = engine.month || '02';
     selectedInitTheme = localStorage.getItem('gfmp_theme') || engine.theme || 'blue';
-    selectedInitDataMode = (engine.getDataMode() === 'EMPTY') ? 'empty' : 'demo';
+    selectedInitDataMode = 'empty';
     modalInit?.classList.add('open');
     updateInitModalUI();
   });
@@ -2820,7 +2792,7 @@ document.addEventListener('DOMContentLoaded', () => {
     reader.readAsText(file);
   });
 
-  // --- 16. FULLSCREEN INITIALIZATION MODAL (5-STEP GOLD-STANDARD SYSTEM ONBOARDING & CONFIG) ---
+  // --- 16. FULLSCREEN INITIALIZATION MODAL (4-STEP GOLD-STANDARD PRODUCTION v1.01 ONBOARDING & CONFIG) ---
   const modalInit = document.getElementById('modal-initialization');
   let selectedInitLang = engine.lang || 'FR';
   let selectedInitCurr = engine.currency || 'MUR';
@@ -2828,7 +2800,7 @@ document.addEventListener('DOMContentLoaded', () => {
   let selectedInitYear = engine.year || '2026';
   let selectedInitMonth = engine.month || '02';
   let selectedInitTheme = localStorage.getItem('gfmp_theme') || engine.theme || 'blue';
-  let selectedInitDataMode = (engine.getDataMode() === 'EMPTY') ? 'empty' : 'demo';
+  let selectedInitDataMode = 'empty';
 
   function trInit(key, params = {}) {
     return engine.tr(key, params, selectedInitLang);
@@ -2872,14 +2844,7 @@ document.addEventListener('DOMContentLoaded', () => {
       if (code) code.style.color = isSel ? 'var(--c-yellow-royal)' : '#94A3B8';
     });
 
-    // 3.5. Data Mode Cards Active State (Demo vs Blank Portfolio)
-    document.querySelectorAll('#init-datamode-grid .init-choice-card').forEach(card => {
-      const isSel = (card.dataset.initDatamode === selectedInitDataMode);
-      card.classList.toggle('active', isSel);
-      card.setAttribute('aria-pressed', isSel ? 'true' : 'false');
-    });
-
-    // 4. Live Quadrilingual Translation of All 5 Steps
+    // 4. Live Quadrilingual Translation of Configuration Steps
     const setTxt = (id, key) => {
       const el = document.getElementById(id);
       if (el) el.textContent = trInit(key);
@@ -2899,19 +2864,10 @@ document.addEventListener('DOMContentLoaded', () => {
     setTxt('init-step4-badge', 'INIT_STEP4_BADGE');
     setTxt('init-step4-title', 'INIT_STEP4_TITLE');
     setTxt('init-step4-desc', 'INIT_STEP4_DESC');
-    setTxt('init-step5-badge', 'INIT_STEP5_BADGE');
-    setTxt('init-step5-title', 'INIT_STEP5_TITLE');
-    setTxt('init-step5-desc', 'INIT_STEP5_DESC');
-    setTxt('init-dm-demo-badge', 'DATA_MODE_DEMO_BADGE');
-    setTxt('init-dm-demo-title', 'DATA_MODE_DEMO_TITLE');
-    setTxt('init-dm-demo-sub', 'DATA_MODE_DEMO_SUB');
-    setTxt('init-dm-empty-badge', 'DATA_MODE_EMPTY_BADGE');
-    setTxt('init-dm-empty-title', 'DATA_MODE_EMPTY_TITLE');
-    setTxt('init-dm-empty-sub', 'DATA_MODE_EMPTY_SUB');
     setTxt('lbl-init-date-picker', 'INIT_DATE_LABEL');
     setTxt('lbl-init-month-picker', 'INIT_MONTH_LABEL');
     setTxt('lbl-init-year-picker', 'INIT_YEAR_LABEL');
-    setTxt('lbl-init-btn-demo', 'INIT_BTN_DEMO');
+    setTxt('lbl-init-btn-first', 'INIT_BTN_FIRST');
     setTxt('lbl-init-btn-today', 'INIT_BTN_TODAY');
     setTxt('lbl-btn-confirm-init', 'INIT_BTN_CONFIRM');
 
@@ -2965,13 +2921,15 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     // Highlight active date shortcut chip
-    const demoChip = document.getElementById('btn-init-date-demo');
+    const firstChip = document.getElementById('btn-init-date-first');
     const todayChip = document.getElementById('btn-init-date-today');
     const realToday = new Date().toISOString().split('T')[0];
-    if (demoChip) demoChip.classList.toggle('active', selectedInitDate === '2026-02-27' && selectedInitMonth === '02' && selectedInitYear === '2026');
+    const activeMonthCode = (selectedInitMonth === '00') ? '01' : selectedInitMonth;
+    const firstOfMonth = `${selectedInitYear}-${activeMonthCode}-01`;
+    if (firstChip) firstChip.classList.toggle('active', selectedInitDate === firstOfMonth);
     if (todayChip) todayChip.classList.toggle('active', selectedInitDate === realToday);
 
-    // 8. Update Live Summary Pill (All 5 Pillars: Language • Currency • Period • Theme • Data Mode)
+    // 8. Update Live Summary Pill (4 Production Pillars: Language • Currency • Period • Theme)
     const langLabels = { FR: 'Français (FR)', EN: 'English (EN)', ES: 'Español (ES)', PT: 'Português (PT)' };
     const summaryText = document.getElementById('init-summary-text');
     if (summaryText) {
@@ -2982,10 +2940,7 @@ document.addEventListener('DOMContentLoaded', () => {
       const periodLabel = (selectedInitMonth === '00')
         ? trInit('FULL_YEAR', { year: selectedInitYear })
         : `${(mNames[mIdx] || selectedInitMonth)} ${selectedInitYear}`;
-      const modeLabel = (selectedInitDataMode === 'empty')
-        ? trInit('DATA_MODE_EMPTY_TITLE')
-        : trInit('DATA_MODE_DEMO_TITLE');
-      summaryText.innerHTML = `${prefix} <strong>${langLabels[selectedInitLang] || selectedInitLang}</strong> • <strong>${selectedInitCurr}</strong> • <strong>${periodLabel}</strong> • <strong>${themeLabel}</strong> • <strong>${modeLabel}</strong>`;
+      summaryText.innerHTML = `${prefix} <strong>${langLabels[selectedInitLang] || selectedInitLang}</strong> • <strong>${selectedInitCurr}</strong> • <strong>${periodLabel}</strong> • <strong>${themeLabel}</strong>`;
     }
   }
 
@@ -3043,11 +2998,10 @@ document.addEventListener('DOMContentLoaded', () => {
     updateInitModalUI();
   });
 
-  document.getElementById('btn-init-date-demo')?.addEventListener('click', () => {
+  document.getElementById('btn-init-date-first')?.addEventListener('click', () => {
     triggerHaptic(15);
-    selectedInitDate = '2026-02-27';
-    selectedInitYear = '2026';
-    selectedInitMonth = '02';
+    const activeMonthCode = (selectedInitMonth === '00') ? '01' : selectedInitMonth;
+    selectedInitDate = `${selectedInitYear}-${activeMonthCode}-01`;
     updateInitModalUI();
   });
 
@@ -3073,19 +3027,9 @@ document.addEventListener('DOMContentLoaded', () => {
     });
   });
 
-  // Step 5: Data Mode Card Click (Demo Dataset vs Blank Personal Portfolio)
-  document.querySelectorAll('#init-datamode-grid .init-choice-card').forEach(card => {
-    card.addEventListener('click', () => {
-      triggerHaptic(15);
-      selectedInitDataMode = card.dataset.initDatamode || 'demo';
-      updateInitModalUI();
-    });
-  });
-
   // Confirm Initialization Button
   document.getElementById('btn-confirm-init')?.addEventListener('click', () => {
     triggerHaptic(25);
-    const useDemo = (selectedInitDataMode !== 'empty');
     engine.initializeSystem(
       selectedInitCurr,
       selectedInitLang,
@@ -3093,7 +3037,7 @@ document.addEventListener('DOMContentLoaded', () => {
       selectedInitTheme,
       selectedInitYear,
       selectedInitMonth,
-      useDemo
+      false
     );
     document.body.className = (selectedInitTheme === 'blue') ? '' : `theme-${selectedInitTheme}`;
     localStorage.setItem('gfmp_theme', selectedInitTheme);

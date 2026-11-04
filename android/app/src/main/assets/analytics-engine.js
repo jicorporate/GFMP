@@ -732,6 +732,7 @@ const GFMP_CATEGORY_COLORS = {
 
 class GFMPEngine {
   constructor() {
+    this.version = '1.01';
     this.data = null;
     this.lang = 'FR';
     this.currency = 'MUR';
@@ -739,7 +740,7 @@ class GFMPEngine {
     this.month = '02'; // '00' = Année entière
     this.referenceDate = '2026-02-27';
     this.theme = 'blue';
-    this.dataMode = 'DEMO'; // 'DEMO' or 'EMPTY'
+    this.dataMode = 'EMPTY'; // Production v1.01: clean sovereign portfolio without test data
     this.currentView = 'home';
     this.hubFilter = 'ALL'; // 'ALL', 'CASHFLOW', 'PATRIMOINE', 'BUDGET'
     this.searchTerm = '';
@@ -928,25 +929,43 @@ class GFMPEngine {
 
   init(customData = null) {
     const storage = this.getStorage();
-    let isExplicitEmpty = false;
 
     if (customData && typeof customData === 'object' && Array.isArray(customData.transactions)) {
       this.data = JSON.parse(JSON.stringify(customData));
-      isExplicitEmpty = (this.data.dataMode === 'EMPTY') || Boolean(this.data.config && this.data.config.SYS_DATA_MODE === 'EMPTY');
+      const hasCustomTx = this.data.transactions.length > 0 || (Array.isArray(this.data.budgets) && this.data.budgets.length > 0);
+      this.dataMode = (this.data.dataMode === 'EMPTY' || !hasCustomTx) ? 'EMPTY' : (this.data.dataMode || 'DEMO');
     } else {
       try {
-        const storedMode = storage ? storage.getItem('gfmp_data_mode') : null;
-        if (storedMode === 'EMPTY') isExplicitEmpty = true;
-
         // 1. Try reading saved dataset from phone storage
         const stored = storage ? storage.getItem('gfmp_dataset_v3') : null;
         if (stored) {
           const parsed = JSON.parse(stored);
-          const parsedEmpty = parsed && (parsed.dataMode === 'EMPTY' || (parsed.config && parsed.config.SYS_DATA_MODE === 'EMPTY') || isExplicitEmpty);
-          if (parsed && Array.isArray(parsed.transactions) && (parsed.transactions.length > 0 || parsedEmpty)) {
+          if (parsed && Array.isArray(parsed.transactions)) {
+            // Production v1.01 Auto-Migration: strip any legacy v1.0 embedded test dataset
+            const isLegacyTestDataset = (parsed.dataset_version === '2.0') ||
+              (parsed.dataMode === 'DEMO') ||
+              (Array.isArray(parsed.audit_history) && parsed.audit_history.some(h => h && h.action === 'TEST_DATA_EMBED'));
+
+            if (isLegacyTestDataset) {
+              parsed.transactions = [];
+              parsed.budgets = [];
+              parsed.version = '1.01';
+              parsed.dataset_version = '1.01-PROD';
+              parsed.dataMode = 'EMPTY';
+              if (!parsed.config) parsed.config = {};
+              parsed.config.SYS_DATA_MODE = 'EMPTY';
+              if (Array.isArray(parsed.audit_history)) {
+                parsed.audit_history = parsed.audit_history.filter(h =>
+                  h && h.action !== 'TEST_DATA_EMBED' && !(h.description && h.description.includes('15000 MUR'))
+                );
+              }
+            }
             this.data = parsed;
-            isExplicitEmpty = Boolean(parsedEmpty && parsed.transactions.length === 0);
-            console.log('[GFMPEngine] Loaded dataset from phone storage:', this.data.transactions.length, 'transactions (mode:', isExplicitEmpty ? 'EMPTY' : 'DEMO', ')');
+            this.dataMode = 'EMPTY';
+            if (isLegacyTestDataset) {
+              this.save();
+            }
+            console.log('[GFMPEngine] Loaded Production v1.01 dataset from storage:', this.data.transactions.length, 'transactions');
           }
         }
       } catch (e) {
@@ -954,75 +973,70 @@ class GFMPEngine {
       }
     }
 
-    // 2. Synchronous & bulletproof fallback to embedded baseline data (unless user explicitly chose EMPTY portfolio)
-    if (!this.data || !Array.isArray(this.data.transactions) || (this.data.transactions.length === 0 && !isExplicitEmpty)) {
+    // 2. Synchronous & bulletproof fallback to embedded Production v1.01 reference schema (0 test transactions, 0 test budgets)
+    if (!this.data || !Array.isArray(this.data.transactions)) {
       if (typeof window !== 'undefined' && window.GFMP_BASELINE) {
         this.data = JSON.parse(JSON.stringify(window.GFMP_BASELINE));
-        if (isExplicitEmpty) {
-          this.data.transactions = [];
-          this.data.budgets = [];
-          this.data.dataMode = 'EMPTY';
-          if (this.data.config) this.data.config.SYS_DATA_MODE = 'EMPTY';
-        } else {
-          this.data.dataMode = 'DEMO';
-          if (this.data.config) this.data.config.SYS_DATA_MODE = 'DEMO';
-        }
-        console.log('[GFMPEngine] Initialized from embedded baseline data:', this.data.transactions.length, 'transactions');
+        this.data.version = '1.01';
+        this.data.dataset_version = '1.01-PROD';
+        this.data.dataMode = (this.data.transactions && this.data.transactions.length > 0 && this.data.dataMode !== 'EMPTY') ? 'DEMO' : 'EMPTY';
+        if (!this.data.config) this.data.config = {};
+        this.data.config.SYS_DATA_MODE = this.data.dataMode;
+        console.log('[GFMPEngine] Initialized from Production v1.01 baseline schema:', this.data.transactions.length, 'transactions');
         this.save();
       } else {
         this.data = {
           app_name: 'GFMP',
-          dataMode: isExplicitEmpty ? 'EMPTY' : 'DEMO',
+          version: '1.01',
+          dataset_version: '1.01-PROD',
+          dataMode: 'EMPTY',
           comptes: [
             { id: '1', nom: 'Compte Courant Principal', classe: 'LIQUIDITE', devise: 'MUR', actif: 'OUI' },
             { id: '2', nom: 'Livret d\'Épargne', classe: 'LIQUIDITE', devise: 'MUR', actif: 'OUI' },
+            { id: '3', nom: 'Portefeuille Espèces', classe: 'LIQUIDITE', devise: 'MUR', actif: 'OUI' },
             { id: '4', nom: 'Assurance Vie', classe: 'INVESTISSEMENT', devise: 'EUR', actif: 'OUI' },
             { id: '5', nom: 'PEA / Actions', classe: 'INVESTISSEMENT', devise: 'EUR', actif: 'OUI' },
-            { id: '7', nom: 'Prêt Immobilier', classe: 'DETTE', devise: 'MUR', actif: 'OUI' }
+            { id: '6', nom: 'Portefeuille Crypto', classe: 'INVESTISSEMENT', devise: 'USD', actif: 'OUI' },
+            { id: '7', nom: 'Prêt Immobilier', classe: 'DETTE', devise: 'MUR', actif: 'OUI' },
+            { id: '8', nom: 'Carte de Crédit (Différé)', classe: 'DETTE', devise: 'MUR', actif: 'OUI' },
+            { id: '9', nom: 'Autre (Préciser...)', classe: 'AUTRE', devise: 'MUR', actif: 'OUI' }
           ],
           categories: [
             { id: '1', nom: 'Salaire / Revenus Pro', type: 'REVENU' },
-            { id: '2', nom: 'Dividendes / Placements', type: 'REVENU' },
+            { id: '2', nom: 'Intérêts / Dividendes', type: 'REVENU' },
+            { id: '3', nom: 'Aides / Bourses / Allocations', type: 'REVENU' },
             { id: '4', nom: 'Logement (Loyer/Prêt/Charges)', type: 'DEPENSE' },
             { id: '5', nom: 'Alimentation & Supermarché', type: 'DEPENSE' },
             { id: '6', nom: 'Transports (Essence/Assurance)', type: 'DEPENSE' },
             { id: '7', nom: 'Santé & Mutuelle', type: 'DEPENSE' },
-            { id: '8', nom: 'Loisirs, Sorties & Vacances', type: 'DEPENSE' }
+            { id: '8', nom: 'Loisirs, Sorties & Vacances', type: 'DEPENSE' },
+            { id: '9', nom: 'Impôts & Taxes', type: 'DEPENSE' },
+            { id: '10', nom: 'Virement Interne (Épargne)', type: 'TRANSFERT' },
+            { id: '11', nom: 'Autre (Préciser...)', type: 'AUTRE' }
           ],
           tiers: [
             { id: '1', nom: 'Employeur principal', type: 'ENTREPRISE' },
-            { id: '2', nom: 'Banque / Courtier', type: 'BANQUE' },
+            { id: '2', nom: 'Banque / Courtier', type: 'FINANCE' },
+            { id: '3', nom: 'État / Impôts', type: 'INSTITUTION' },
             { id: '4', nom: 'Supermarché / Alimentaire', type: 'COMMERCE' },
-            { id: '5', nom: 'Propriétaire / Syndic', type: 'IMMOBILIER' }
+            { id: '5', nom: 'Propriétaire / Syndic', type: 'IMMOBILIER' },
+            { id: '6', nom: 'Clinique & Pharmacie', type: 'SANTE' },
+            { id: '7', nom: 'Autre (Préciser...)', type: 'AUTRE' }
           ],
-          transactions: isExplicitEmpty ? [] : [
-            { id: 1, date: '2026-02-05', id_compte: '1', id_categorie: '4', id_tiers: '5', montant: 12000, devise: 'MUR', notes: 'Loyer Résidence KIMYA' },
-            { id: 2, date: '2026-02-12', id_compte: '5', id_categorie: '2', id_tiers: '2', montant: 4500, devise: 'MUR', notes: 'Dividendes Portefeuille PEA' },
-            { id: 3, date: '2026-02-15', id_compte: '1', id_categorie: '6', id_tiers: '4', montant: 2800, devise: 'MUR', notes: 'Assurance & Entretien Auto' },
-            { id: 4, date: '2026-02-18', id_compte: '1', id_categorie: '8', id_tiers: '4', montant: 3500, devise: 'MUR', notes: 'Sorties & Restaurants' },
-            { id: 5, date: '2026-02-23', id_compte: '1', id_categorie: '1', id_tiers: '1', montant: 78000, devise: 'MUR', notes: 'Salaire Février KIMYA ÉDITION' },
-            { id: 6, date: '2026-02-23', id_compte: '4', id_categorie: '7', id_tiers: '2', montant: 7000, devise: 'MUR', notes: 'Santé & Mutuelle Famille' },
-            { id: 7, date: '2026-02-23', id_compte: '3', id_categorie: '5', id_tiers: '4', montant: 4000, devise: 'MUR', notes: 'Courses Hebdomadaires' }
-          ],
-          budgets: isExplicitEmpty ? [] : [
-            { id: 1, mois: '2026-02', id_categorie: '4', montant: 12000 },
-            { id: 2, mois: '2026-02', id_categorie: '5', montant: 8000 },
-            { id: 3, mois: '2026-02', id_categorie: '6', montant: 4000 },
-            { id: 4, mois: '2026-02', id_categorie: '7', montant: 7000 },
-            { id: 5, mois: '2026-02', id_categorie: '8', montant: 5000 }
-          ],
+          transactions: [],
+          budgets: [],
           devises: { MUR: 12.2243, EUR: 656.168, USD: 567.5369, GBP: 757.0023, ZAR: 33.2723, XOF: 1 },
           dictionary: {},
-          config: { LANGUE_UI: 'FR', SYS_DEVISE_BASE: 'MUR', SYS_DATA_MODE: isExplicitEmpty ? 'EMPTY' : 'DEMO' }
+          config: { LANGUE_UI: 'FR', SYS_DEVISE_BASE: 'MUR', SYS_DATA_MODE: 'EMPTY' }
         };
         this.save();
       }
     }
 
     if (this.data) {
-      const resolvedMode = isExplicitEmpty
-        ? 'EMPTY'
-        : ((this.data.dataMode === 'EMPTY' || (this.data.config && this.data.config.SYS_DATA_MODE === 'EMPTY')) ? 'EMPTY' : 'DEMO');
+      const resolvedMode = (this.data.dataMode === 'DEMO' && Array.isArray(this.data.transactions) && this.data.transactions.length > 0)
+        ? 'DEMO'
+        : 'EMPTY';
       this.dataMode = resolvedMode;
       this.data.dataMode = resolvedMode;
       if (!this.data.config) this.data.config = {};
@@ -1254,7 +1268,7 @@ class GFMPEngine {
       'HUB_PATRIMOINE_TITLE': { FR: 'ALLOCATION D\'ACTIFS & STRUCTURE PATRIMONIALE', EN: 'ASSET ALLOCATION & WEALTH STRUCTURE', ES: 'DISTRIBUCIÓN DE ACTIVOS Y PATRIMONIO', PT: 'ALOCAÇÃO DE ATIVOS E PATRIMÔNIO' },
       'HUB_BUDGET_TITLE': { FR: 'PILOTAGE & SANTÉ DES ENVELOPPES BUDGÉTAIRES', EN: 'BUDGET ENVELOPES HEALTH & TRACKING', ES: 'GESTIÓN Y SALUD PRESUPUESTARIA', PT: 'GESTÃO E SAÚDE ORÇAMENTÁRIA' },
       'HUB_RECENT_TITLE': { FR: 'DERNIÈRES TRANSACTIONS ENREGISTRÉES', EN: 'LATEST RECORDED TRANSACTIONS', ES: 'ÚLTIMAS TRANSACCIONES REGISTRADAS', PT: 'ÚLTIMAS TRANSAÇÕES REGISTRADAS' },
-      'INIT_BADGE': { FR: 'SFP v1.0 • ÉDITION GOLD PRIVÉE', EN: 'SFP v1.0 • PRIVATE GOLD EDITION', ES: 'SFP v1.0 • EDICIÓN GOLD PRIVADA', PT: 'SFP v1.0 • EDIÇÃO GOLD PRIVADA' },
+      'INIT_BADGE': { FR: 'BANQUE PRIVÉE • GESTION DE PATRIMOINE', EN: 'PRIVATE BANKING • WEALTH MANAGEMENT', ES: 'BANCA PRIVADA • GESTIÓN DE PATRIMONIO', PT: 'BANCA PRIVADA • GESTÃO DE PATRIMÔNIO' },
       'INIT_TITLE': { FR: 'INITIALISATION DU SYSTÈME', EN: 'SYSTEM INITIALIZATION', ES: 'INICIALIZACIÓN DEL SISTEMA', PT: 'INICIALIZAÇÃO DO SISTEMA' },
       'INIT_SUBTITLE': {
         FR: 'Configurez votre environnement de gestion patrimoniale et financière haute précision.',
@@ -1265,7 +1279,7 @@ class GFMPEngine {
       'INIT_TRUST_1': { FR: '100% Hors-Ligne & Privé', EN: '100% Offline & Private', ES: '100% Sin Conexión y Privado', PT: '100% Offline e Privado' },
       'INIT_TRUST_2': { FR: 'Multi-Devises Live API', EN: 'Live Multi-Currency API', ES: 'API Multidivisa en Vivo', PT: 'API Multimoeda ao Vivo' },
       'INIT_TRUST_3': { FR: 'Architecture ZBB & Audit', EN: 'ZBB & Audit Architecture', ES: 'Arquitectura ZBB y Auditoría', PT: 'Arquitetura ZBB e Auditoria' },
-      'INIT_STEP1_BADGE': { FR: 'ÉTAPE 01 / 05', EN: 'STEP 01 / 05', ES: 'PASO 01 / 05', PT: 'PASSO 01 / 05' },
+      'INIT_STEP1_BADGE': { FR: 'ÉTAPE 01 / 04', EN: 'STEP 01 / 04', ES: 'PASO 01 / 04', PT: 'PASSO 01 / 04' },
       'INIT_STEP1_TITLE': { FR: 'Sélectionnez la langue du système', EN: 'Select your system language', ES: 'Seleccione el idioma del sistema', PT: 'Selecione o idioma do sistema' },
       'INIT_STEP1_DESC': {
         FR: 'L\'ensemble de vos synthèses, rapports et interfaces s\'adapteront immédiatement.',
@@ -1273,7 +1287,7 @@ class GFMPEngine {
         ES: 'Todos sus paneles, informes financieros e interfaces se adaptarán de inmediato.',
         PT: 'Todos os seus painéis, relatórios financeiros e interfaces adaptar-se-ão imediatamente.'
       },
-      'INIT_STEP2_BADGE': { FR: 'ÉTAPE 02 / 05', EN: 'STEP 02 / 05', ES: 'PASO 02 / 05', PT: 'PASSO 02 / 05' },
+      'INIT_STEP2_BADGE': { FR: 'ÉTAPE 02 / 04', EN: 'STEP 02 / 04', ES: 'PASO 02 / 04', PT: 'PASSO 02 / 04' },
       'INIT_STEP2_TITLE': { FR: 'Sélectionnez votre devise de référence', EN: 'Select your primary reference currency', ES: 'Seleccione su divisa principal de referencia', PT: 'Selecione a sua moeda principal de referência' },
       'INIT_STEP2_DESC': {
         FR: 'Devise mère sur laquelle l\'ensemble de votre patrimoine et flux seront consolidés.',
@@ -1281,7 +1295,7 @@ class GFMPEngine {
         ES: 'Divisa base en la que se consolidarán todo su patrimonio, activos y flujos.',
         PT: 'Moeda base na qual todo o seu patrimônio, ativos e fluxos serão consolidados.'
       },
-      'INIT_STEP3_BADGE': { FR: 'ÉTAPE 03 / 05', EN: 'STEP 03 / 05', ES: 'PASO 03 / 05', PT: 'PASSO 03 / 05' },
+      'INIT_STEP3_BADGE': { FR: 'ÉTAPE 03 / 04', EN: 'STEP 03 / 04', ES: 'PASO 03 / 04', PT: 'PASSO 03 / 04' },
       'INIT_STEP3_TITLE': { FR: 'Configurez la date et la période financière', EN: 'Configure date & active financial period', ES: 'Configure la fecha y el período financiero', PT: 'Configure a data e o período financeiro' },
       'INIT_STEP3_DESC': {
         FR: 'Définissez la date système par défaut pour vos saisies et le mois/année d\'ouverture du tableau de bord.',
@@ -1293,38 +1307,14 @@ class GFMPEngine {
       'INIT_MONTH_LABEL': { FR: 'Mois de pilotage', EN: 'Active month', ES: 'Mes de control', PT: 'Mês de controlo' },
       'INIT_YEAR_LABEL': { FR: 'Exercice (Année)', EN: 'Fiscal year', ES: 'Ejercicio (Año)', PT: 'Exercício (Ano)' },
       'INIT_BTN_TODAY': { FR: 'Aujourd\'hui', EN: 'Today', ES: 'Hoy', PT: 'Hoje' },
-      'INIT_BTN_DEMO': { FR: 'Période Démo SFP (Fév 2026)', EN: 'SFP Demo Period (Feb 2026)', ES: 'Período Demo SFP (Feb 2026)', PT: 'Período Demo SFP (Fev 2026)' },
-      'INIT_STEP4_BADGE': { FR: 'ÉTAPE 04 / 05', EN: 'STEP 04 / 05', ES: 'PASO 04 / 05', PT: 'PASSO 04 / 05' },
+      'INIT_BTN_FIRST': { FR: '1er du Mois (01)', EN: '1st of Month (01)', ES: '1º del Mes (01)', PT: '1º do Mês (01)' },
+      'INIT_STEP4_BADGE': { FR: 'ÉTAPE 04 / 04', EN: 'STEP 04 / 04', ES: 'PASO 04 / 04', PT: 'PASSO 04 / 04' },
       'INIT_STEP4_TITLE': { FR: 'Choisissez le thème visuel de l\'application', EN: 'Choose the application visual theme', ES: 'Elija el tema visual de la aplicación', PT: 'Escolha o tema visual da aplicação' },
       'INIT_STEP4_DESC': {
         FR: 'Personnalisez l\'ambiance Haute Joaillerie de votre interface avec aperçu instantané en direct.',
         EN: 'Customize the Haute Joaillerie ambiance of your interface with instant live preview.',
         ES: 'Personalice el ambiente de Alta Joyería de su interfaz con vista previa instantánea en vivo.',
         PT: 'Personalize o ambiente de Alta Joalharia da sua interface com pré-visualização instantânea ao vivo.'
-      },
-      'INIT_STEP5_BADGE': { FR: 'ÉTAPE 05 / 05', EN: 'STEP 05 / 05', ES: 'PASO 05 / 05', PT: 'PASSO 05 / 05' },
-      'INIT_STEP5_TITLE': { FR: 'Choisissez le mode de données financières', EN: 'Choose your financial data mode', ES: 'Elija el modo de datos financieros', PT: 'Escolha o modo de dados financeiros' },
-      'INIT_STEP5_DESC': {
-        FR: 'Explorez l\'application avec le portefeuille de test complet ou démarrez avec un portefeuille vierge prêt pour vos saisies.',
-        EN: 'Explore the application with the full test portfolio or start with a blank portfolio ready for your entries.',
-        ES: 'Explore la aplicación con la cartera de prueba completa o comience con una cartera en blanco lista para sus registros.',
-        PT: 'Explore a aplicação com a carteira de teste completa ou comece com uma carteira em branco pronta para os seus lançamentos.'
-      },
-      'DATA_MODE_DEMO_BADGE': { FR: '60 OPÉRATIONS • 17 BUDGETS', EN: '60 TRANSACTIONS • 17 BUDGETS', ES: '60 OPERACIONES • 17 PRESUPUESTOS', PT: '60 TRANSAÇÕES • 17 ORÇAMENTOS' },
-      'DATA_MODE_DEMO_TITLE': { FR: 'Données de Test & Démo SFP', EN: 'SFP Test & Demo Dataset', ES: 'Datos de Prueba y Demo SFP', PT: 'Dados de Teste e Demo SFP' },
-      'DATA_MODE_DEMO_SUB': {
-        FR: 'Portefeuille d\'exemple pré-rempli (Jan–Mar 2026) pour tester les graphiques, rapports et analyses.',
-        EN: 'Pre-filled sample portfolio (Jan–Mar 2026) to explore charts, reports, and analytics.',
-        ES: 'Cartera de ejemplo precargada (Ene–Mar 2026) para explorar gráficos, informes y análisis.',
-        PT: 'Carteira de exemplo pré-preenchida (Jan–Mar 2026) para explorar gráficos, relatórios e análises.'
-      },
-      'DATA_MODE_EMPTY_BADGE': { FR: 'DÉMARRAGE À ZÉRO • 0,00', EN: 'CLEAN SLATE • 0.00', ES: 'DESDE CERO • 0,00', PT: 'DO ZERO • 0,00' },
-      'DATA_MODE_EMPTY_TITLE': { FR: 'Portefeuille Personnel Vierge', EN: 'Blank Personal Portfolio', ES: 'Cartera Personal en Blanco', PT: 'Carteira Pessoal em Branco' },
-      'DATA_MODE_EMPTY_SUB': {
-        FR: 'Aucune transaction ni budget de test. Comptes, catégories et devises prêts pour vos propres opérations.',
-        EN: 'Zero test transactions or budgets. Accounts, categories, and currencies ready for your own entries.',
-        ES: 'Sin transacciones ni presupuestos de prueba. Cuentas, categorías y divisas listas para sus propios datos.',
-        PT: 'Sem transações nem orçamentos de teste. Contas, categorias e moedas prontas para os seus próprios dados.'
       },
       'SOLVENCY_EMPTY': {
         FR: 'Portefeuille vierge • Aucune opération enregistrée sur cette période',
@@ -1350,11 +1340,17 @@ class GFMPEngine {
         ES: 'Registre un gasto en este período o cambie de mes para visualizar la distribución.',
         PT: 'Registe uma despesa neste período ou mude de mês para visualizar a distribuição.'
       },
+      'NO_ACCOUNT_OR_TX': {
+        FR: 'Aucun mouvement financier enregistré',
+        EN: 'No account transactions recorded',
+        ES: 'Sin movimientos financieros registrados',
+        PT: 'Sem movimentações financeiras registadas'
+      },
       'EMPTY_PATRIMOINE_SUB': {
-        FR: 'Tous vos comptes affichent un solde de 0,00. Saisissez un revenu ou apport initial pour valoriser votre patrimoine.',
-        EN: 'All accounts currently have a 0.00 balance. Record an income or initial deposit to value your net worth.',
-        ES: 'Todas sus cuentas muestran un saldo de 0,00. Registre un ingreso o aporte inicial para valorar su patrimonio.',
-        PT: 'Todas as suas contas apresentam saldo de 0,00. Registe uma receita ou aporte inicial para valorizar o seu patrimônio.'
+        FR: 'L\'inventaire de vos actifs et passifs se calcule dynamiquement à partir de vos flux réels. Enregistrez une opération pour valoriser vos comptes.',
+        EN: 'Your wealth and liabilities inventory is calculated dynamically from your actual transactions. Record an entry to value your accounts.',
+        ES: 'Su inventario patrimonial se calcula dinámicamente a partir de sus operaciones reales. Registre un flujo para valorar sus cuentas.',
+        PT: 'O seu inventário patrimonial é calculado dinamicamente a partir das suas transações reais. Registe uma movimentação para valorizar as suas contas.'
       },
       'EMPTY_BUDGET_SUB': {
         FR: 'Définissez vos enveloppes budgétaires mensuelles (ZBB) pour suivre vos plafonds de dépenses en temps réel.',
@@ -1374,26 +1370,37 @@ class GFMPEngine {
       'EMPTY_CTA_ADD_ACC': { FR: '+ Créer un compte', EN: '+ Create account', ES: '+ Crear cuenta', PT: '+ Criar conta' },
       'EMPTY_CTA_RESET_FILTER': { FR: 'Réinitialiser les filtres', EN: 'Reset filters', ES: 'Restablecer filtros', PT: 'Repor filtros' },
       'EMPTY_CTA_FULL_YEAR': { FR: 'Voir toute l\'année', EN: 'View full year', ES: 'Ver año completo', PT: 'Ver ano inteiro' },
-      'EMPTY_CTA_LOAD_DEMO': { FR: 'Charger les données de test', EN: 'Load test dataset', ES: 'Cargar datos de prueba', PT: 'Carregar dados de teste' },
-      'EMPTY_CTA_SWITCH_EMPTY': { FR: 'Vider les données de test', EN: 'Clear test data (Start at 0)', ES: 'Vaciar datos de prueba', PT: 'Limpar dados de teste' },
-      'BANNER_DEMO_ACTIVE': {
-        FR: 'Mode Données de Test & Démo actif (60 opérations d\'exemple)',
-        EN: 'Test & Demo Dataset Mode active (60 sample transactions)',
-        ES: 'Modo Datos de Prueba y Demo activo (60 operaciones de ejemplo)',
-        PT: 'Modo Dados de Teste e Demo ativo (60 transações de exemplo)'
+      'NW_READINESS_TITLE': {
+        FR: 'Inventaire Prêt pour vos Actifs',
+        EN: 'Inventory Ready for Your Assets',
+        ES: 'Inventario Listo para sus Activos',
+        PT: 'Inventário Pronto para os seus Ativos'
       },
-      'BANNER_EMPTY_ACTIVE': {
-        FR: 'Portefeuille Personnel Vierge actif — Prêt pour vos opérations',
-        EN: 'Blank Personal Portfolio active — Ready for your transactions',
-        ES: 'Cartera Personal en Blanco activa — Lista para sus operaciones',
-        PT: 'Carteira Pessoal em Branco ativa — Pronta para as suas transações'
+      'NW_READINESS_DESC': {
+        FR: 'Aucun mouvement financier enregistré. Vos comptes sont configurés et sécurisés. Effectuez votre premier dépôt ou virement pour valoriser votre inventaire patrimonial.',
+        EN: 'No financial activity recorded yet. Your accounts are configured and secure. Make your first deposit or transfer to value your wealth inventory.',
+        ES: 'Ningún movimiento financiero registrado. Sus cuentas están configuradas y seguras. Realice su primer depósito o transferencia para valorar su inventario.',
+        PT: 'Nenhuma movimentação financeira registada. As suas contas estão configuradas e seguras. Efetue o seu primeiro depósito ou transferência para valorizar o seu inventário.'
       },
-      'SETTINGS_DATAMODE_TITLE': { FR: 'MODE DE DONNÉES FINANCIÈRES', EN: 'FINANCIAL DATA MODE', ES: 'MODO DE DATOS FINANCIEROS', PT: 'MODO DE DADOS FINANCEIROS' },
+      'ACCOUNT_STATUS_READY': { FR: 'Prêt • 0 mouvement', EN: 'Ready • 0 entries', ES: 'Listo • 0 movimientos', PT: 'Pronto • 0 movimentos' },
+      'ACCOUNT_STATUS_DEBT_FREE': { FR: 'Solvable • Aucune dette', EN: 'Solvent • Debt-free', ES: 'Solvente • Sin deuda', PT: 'Solvente • Sem dívida' },
+      'ACCOUNT_STATUS_FUNDED': { FR: 'Actif', EN: 'Asset', ES: 'Activo', PT: 'Ativo' },
+      'ACCOUNT_STATUS_DEBT': { FR: 'Passif', EN: 'Liability', ES: 'Pasivo', PT: 'Passivo' },
+      'ACCOUNT_QUICK_ADD_TX': { FR: '+ Opération', EN: '+ Entry', ES: '+ Operación', PT: '+ Lançamento' },
+      'NW_ACCOUNTS_COUNT': { FR: 'comptes configurés', EN: 'configured accounts', ES: 'cuentas configuradas', PT: 'contas configuradas' },
+      'NW_STACK_EMPTY_LABEL': {
+        FR: 'Allocation patrimoniale active dès le premier dépôt • 0 dette contractée',
+        EN: 'Wealth allocation active upon first deposit • 0 debt contracted',
+        ES: 'Asignación patrimonial activa desde el primer depósito • 0 deuda contraída',
+        PT: 'Alocação patrimonial ativa desde o primeiro depósito • 0 dívida contraída'
+      },
+      'BTN_NW_ADD_ACCOUNT': { FR: '+ Nouveau Compte', EN: '+ New Account', ES: '+ Nueva Cuenta', PT: '+ Nova Conta' },
+      'SETTINGS_DATAMODE_TITLE': { FR: 'ÉTAT DU PORTEFEUILLE PRODUCTION v1.01', EN: 'PRODUCTION v1.01 PORTFOLIO STATUS', ES: 'ESTADO DE CARTERA PRODUCCIÓN v1.01', PT: 'ESTADO DA CARTEIRA PRODUÇÃO v1.01' },
       'SETTINGS_DATAMODE_DESC': {
-        FR: 'Basculez librement entre les données de test SFP et un portefeuille personnel vierge sans perdre vos comptes ni vos catégories.',
-        EN: 'Switch freely between the SFP test dataset and a blank personal portfolio without losing your accounts or categories.',
-        ES: 'Cambie libremente entre los datos de prueba SFP y una cartera personal en blanco sin perder sus cuentas ni categorías.',
-        PT: 'Alterne livremente entre os dados de teste SFP e uma carteira pessoal em branco sem perder as suas contas ou categorias.'
+        FR: 'Environnement de production souverain sans données de test. Vos comptes, catégories et devises sont prêts pour vos opérations réelles.',
+        EN: 'Sovereign production environment with zero test data. Your accounts, categories, and currencies are ready for your real operations.',
+        ES: 'Entorno de producción soberano sin datos de prueba. Sus cuentas, categorías y divisas están listas para sus operaciones reales.',
+        PT: 'Ambiente de produção soberano sem dados de teste. As suas contas, categorias e moedas estão prontas para as suas operações reais.'
       },
       'REPORT_EMPTY_DIAG_TITLE': {
         FR: 'DIAGNOSTIC EXÉCUTIF : AUCUNE OPÉRATION SUR LA PÉRIODE',
@@ -1896,14 +1903,14 @@ class GFMPEngine {
   }
 
   // --- APP INITIALIZATION & RECONFIGURATION ---
-  initializeSystem(defaultCurrency = 'MUR', defaultLanguage = 'FR', defaultDate = null, defaultTheme = null, defaultYear = null, defaultMonth = null, useDemoData = true) {
+  initializeSystem(defaultCurrency = 'MUR', defaultLanguage = 'FR', defaultDate = null, defaultTheme = null, defaultYear = null, defaultMonth = null, useDemoData = false) {
     const sanitizedCurrency = (typeof defaultCurrency === 'string') ? defaultCurrency.trim().toUpperCase() : 'MUR';
     const sanitizedLanguage = (typeof defaultLanguage === 'string') ? defaultLanguage.trim().toUpperCase() : 'FR';
     const validThemes = ['blue', 'gold', 'emerald', 'amethyst'];
     const sanitizedTheme = (typeof defaultTheme === 'string' && validThemes.includes(defaultTheme.trim().toLowerCase()))
       ? defaultTheme.trim().toLowerCase()
       : (this.theme || 'blue');
-    const isDemo = !(useDemoData === false || String(useDemoData).trim().toUpperCase() === 'EMPTY');
+    const isDemo = (useDemoData === true || String(useDemoData).trim().toUpperCase() === 'DEMO');
     const resolvedMode = isDemo ? 'DEMO' : 'EMPTY';
 
     this.lang = sanitizedLanguage;
@@ -2267,6 +2274,7 @@ class GFMPEngine {
 
       const cptNativeDevise = cpt.devise || 'MUR';
       let soldeNatif = 0;
+      let cptTxCount = 0;
 
       (this.data.transactions || []).forEach(tx => {
         if (!tx.date || tx.date.substring(0, 7) > targetFilterMonth) return;
@@ -2275,6 +2283,7 @@ class GFMPEngine {
         const montantNormalise = this.convert(tx.montant, txDev, cptNativeDevise);
 
         if (String(tx.id_compte) === String(cpt.id)) {
+          cptTxCount++;
           if (fluxType === 'REVENU') {
             soldeNatif += montantNormalise;
           } else if (fluxType === 'DEPENSE') {
@@ -2288,10 +2297,17 @@ class GFMPEngine {
               soldeNatif -= montantNormalise;
             }
           }
-        } else if (String(cpt.id) === '2' && String(tx.id_compte) === '1' && fluxType === 'TRANSFERT') {
-          // Cross-account counterpart: Transfers from Checking (Account 1) to Savings (Account 2 Livret d'Épargne)
+        } else if (tx.id_compte_dest && String(tx.id_compte_dest) === String(cpt.id) && fluxType === 'TRANSFERT') {
+          cptTxCount++;
+          soldeNatif += montantNormalise;
+        } else if (fluxType === 'TRANSFERT') {
+          // Dynamic note-based counterpart matching for transfers without explicit destination
           const notes = (tx.notes || '').toLowerCase();
-          if (notes.includes('épargne') || notes.includes('epargne') || notes.includes('livret') || notes.includes('precaution') || notes.includes('précaution')) {
+          const targetNom = (cpt.nom || '').toLowerCase();
+          const isTargetMatch = notes.includes(targetNom) ||
+            (cpt.id === '2' && (notes.includes('épargne') || notes.includes('epargne') || notes.includes('livret') || notes.includes('precaution') || notes.includes('précaution')));
+          if (isTargetMatch && String(tx.id_compte) !== String(cpt.id)) {
+            cptTxCount++;
             soldeNatif += montantNormalise;
           }
         }
@@ -2302,6 +2318,9 @@ class GFMPEngine {
       // Exclude empty template trigger placeholder ("Autre (Préciser...)") from Net Worth inventory
       const isPlaceholder = (cpt.classe === 'AUTRE' && (cpt.nom || '').toLowerCase().includes('préciser') && Math.abs(soldeNatif) < 0.005);
       if (isPlaceholder) return;
+
+      // Dynamic Transaction-Derived Inventory: Only accounts with recorded transactions or active balance are listed
+      if (cptTxCount === 0 && Math.abs(soldeNatif) < 0.005) return;
 
       const soldeConverti = this.roundMoney(this.convert(soldeNatif, cptNativeDevise, this.currency));
       const isDette = (cpt.classe === 'DETTE');
@@ -2334,7 +2353,8 @@ class GFMPEngine {
           deviseNative: cptNativeDevise,
           soldeNatif,
           soldeConverti,
-          isDette
+          isDette,
+          txCount: cptTxCount
         });
       }
     });
@@ -2637,11 +2657,15 @@ class GFMPEngine {
   initDatabase() {
     if (typeof window !== 'undefined' && window.GFMP_BASELINE) {
       this.data = JSON.parse(JSON.stringify(window.GFMP_BASELINE));
-      this.dataMode = 'DEMO';
-      this.data.dataMode = 'DEMO';
+      this.data.version = '1.01';
+      this.data.dataset_version = '1.01-PROD';
+      this.data.transactions = [];
+      this.data.budgets = [];
+      this.dataMode = 'EMPTY';
+      this.data.dataMode = 'EMPTY';
       if (!this.data.config) this.data.config = {};
-      this.data.config.SYS_DATA_MODE = 'DEMO';
-      this.logHistory('DB_INIT', 'database', 'system', 'Réinitialisation de la base de données aux paramètres d\'usine');
+      this.data.config.SYS_DATA_MODE = 'EMPTY';
+      this.logHistory('DB_INIT', 'database', 'system', 'Réinitialisation du référentiel usine aux paramètres initiaux (Portefeuille vierge)');
       this.save();
       this.notify();
       return true;

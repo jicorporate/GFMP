@@ -32,7 +32,8 @@ eval(baselineCode);
 eval(engineCode);
 
 const engine = window.gfmpEngine;
-engine.init(global.window.GFMP_BASELINE_DATA);
+const sampleFixture = JSON.parse(fs.readFileSync(path.join(__dirname, 'sample_test_dataset.json'), 'utf8'));
+engine.init(sampleFixture);
 
 // --- TEST 1: "6-" REMOVED FROM "MONTH CASHFLOW TREND" ---
 console.log('--- TEST 1: "6-" removed from MONTH CASHFLOW TREND ---');
@@ -103,7 +104,7 @@ assert.strictEqual(typeof engine.getDictionary, 'function', 'engine.getDictionar
     'INIT_STEP1_BADGE', 'INIT_STEP1_TITLE', 'INIT_STEP1_DESC',
     'INIT_STEP2_BADGE', 'INIT_STEP2_TITLE', 'INIT_STEP2_DESC',
     'INIT_STEP3_BADGE', 'INIT_STEP3_TITLE', 'INIT_STEP3_DESC',
-    'INIT_DATE_LABEL', 'INIT_MONTH_LABEL', 'INIT_YEAR_LABEL', 'INIT_BTN_TODAY', 'INIT_BTN_DEMO',
+    'INIT_DATE_LABEL', 'INIT_MONTH_LABEL', 'INIT_YEAR_LABEL', 'INIT_BTN_TODAY', 'INIT_BTN_FIRST',
     'INIT_STEP4_BADGE', 'INIT_STEP4_TITLE', 'INIT_STEP4_DESC',
     'THEME_NAME_BLUE', 'THEME_SUB_BLUE',
     'THEME_NAME_GOLD', 'THEME_SUB_GOLD',

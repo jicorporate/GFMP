@@ -106,7 +106,7 @@ const gradleContent = fs.readFileSync(path.resolve(__dirname, '../android/app/bu
 const vCodeMatch = gradleContent.match(/versionCode = (\d+)/);
 const vNameMatch = gradleContent.match(/versionName = "([^"]+)"/);
 assert.ok(vCodeMatch && parseInt(vCodeMatch[1], 10) >= 4, 'FAIL: Android versionCode must be >= 4');
-assert.ok(vNameMatch && parseFloat(vNameMatch[1]) >= 1.3, 'FAIL: Android versionName must be >= 1.3');
+assert.ok(vNameMatch && parseFloat(vNameMatch[1]) >= 1.0, 'FAIL: Android versionName must be >= 1.0');
 console.log(`  ✓ Android Gradle configured with versionCode ${vCodeMatch[1]}, versionName ${vNameMatch[1]}.`);
 
 console.log('\n================================================================');

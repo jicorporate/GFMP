@@ -3,7 +3,7 @@
  * Cache-First Strategy for Ultra-Fast Instant Mobile Loading
  */
 
-const CACHE_NAME = 'gfmp-mobile-v5.5.0';
+const CACHE_NAME = 'gfmp-mobile-v1.01-prod';
 const ASSETS_TO_CACHE = [
   './',
   './index.html',

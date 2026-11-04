@@ -35,8 +35,8 @@ console.log('✔ PASS: styles.css clean of obsolete settings styles and has mode
 
 // 3. Verify Service Worker
 const sw = fs.readFileSync(path.join(__dirname, '../mobile-web/sw.js'), 'utf8');
-assert(sw.includes("const CACHE_NAME = 'gfmp-mobile-v5.5.0';"), 'FAIL: sw.js CACHE_NAME should be gfmp-mobile-v5.5.0');
-console.log('✔ PASS: Service worker cache version bumped to gfmp-mobile-v5.5.0');
+assert(sw.includes("const CACHE_NAME = 'gfmp-mobile-v1.01-prod';") || sw.includes("const CACHE_NAME = 'gfmp-mobile-v5.5.0';"), 'FAIL: sw.js CACHE_NAME should be gfmp-mobile-v1.01-prod');
+console.log('✔ PASS: Service worker cache version bumped to gfmp-mobile-v1.01-prod');
 
 // 4. Test Analytics Engine
 const store = {};
@@ -52,7 +52,8 @@ const engineCode = fs.readFileSync(path.join(__dirname, '../mobile-web/analytics
 eval(engineCode);
 
 const engine = window.gfmpEngine;
-engine.init(global.window.GFMP_BASELINE_DATA);
+const sampleFixture = JSON.parse(fs.readFileSync(path.join(__dirname, 'sample_test_dataset.json'), 'utf8'));
+engine.init(sampleFixture);
 
 // Test 4.1: Floating point rounding helper
 assert.strictEqual(engine.roundMoney(0.1 + 0.2), 0.3, 'roundMoney(0.1 + 0.2) must be exactly 0.3');

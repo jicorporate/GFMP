@@ -59,39 +59,26 @@ function assertAudit(pillar, condition, description) {
 }
 
 console.log('================================================================================');
-console.log('🏛️  AUDIT COMPLET GOLD STANDARD CUTTING-EDGE — GFMP (SFP v1.0)');
+console.log('🏛️  AUDIT COMPLET GOLD STANDARD CUTTING-EDGE — GFMP (SFP v1.01 PRODUCTION)');
 console.log('================================================================================\n');
 
 // ============================================================================
-// PILLAR 1: KIMBALL STAR SCHEMA & REFERENTIAL INTEGRITY
+// PILLAR 1: KIMBALL STAR SCHEMA, PRODUCTION v1.01 ZERO-TEST-DATA & INTEGRITY
 // ============================================================================
 {
-  const P = '1. Kimball Star Schema & Data Integrity';
+  const P = '1. Kimball Star Schema & Production v1.01 Integrity';
   global.localStorage.clear();
-  engine.init(global.window.GFMP_BASELINE_DATA);
+  engine.init();
 
+  const baselineJson = fs.readFileSync(path.join(MOBILE_WEB, 'baseline_data.json'), 'utf8');
+  assertAudit(P, engine.version === '1.01' && window.GFMP_BASELINE.version === '1.01', 'Production version is strictly 1.01 across engine and baseline');
   assertAudit(P, engine.data && typeof engine.data.devises === 'object' && Object.keys(engine.data.devises).length >= 6, 'T_SYS_Config (devises) contains >= 6 currencies');
-  assertAudit(P, Array.isArray(engine.data.comptes) && engine.data.comptes.length === 9, 'T_DIM_Compte contains 9 baseline accounts');
-  assertAudit(P, Array.isArray(engine.data.categories) && engine.data.categories.length === 11, 'T_DIM_Categorie contains 11 baseline categories');
-  assertAudit(P, Array.isArray(engine.data.tiers) && engine.data.tiers.length === 7, 'T_DIM_Tiers contains 7 baseline counterparties');
-  assertAudit(P, Array.isArray(engine.data.budgets) && engine.data.budgets.length === 17, 'T_FACT_Budget contains 17 baseline budget envelopes');
-  assertAudit(P, Array.isArray(engine.data.transactions) && engine.data.transactions.length === 60, 'T_FACT_Transaction contains 60 baseline transactions');
-
-  const accountIds = new Set(engine.data.comptes.map(c => String(c.id)));
-  const categoryIds = new Set(engine.data.categories.map(c => String(c.id)));
-  const tiersIds = new Set(engine.data.tiers.map(t => String(t.id)));
-  const validDevises = new Set(Object.keys(engine.data.devises));
-
-  const orphanTx = engine.data.transactions.filter(tx =>
-    !accountIds.has(String(tx.id_compte)) ||
-    !categoryIds.has(String(tx.id_categorie)) ||
-    (tx.id_tiers && !tiersIds.has(String(tx.id_tiers))) ||
-    !validDevises.has(tx.devise)
-  );
-  assertAudit(P, orphanTx.length === 0, 'Zero orphan foreign keys in T_FACT_Transaction (100% referential integrity)');
-
-  const orphanBg = engine.data.budgets.filter(bg => !categoryIds.has(String(bg.id_categorie)));
-  assertAudit(P, orphanBg.length === 0, 'Zero orphan foreign keys in T_FACT_Budget');
+  assertAudit(P, Array.isArray(engine.data.comptes) && engine.data.comptes.length === 9, 'T_DIM_Compte contains 9 reference accounts ready for production');
+  assertAudit(P, Array.isArray(engine.data.categories) && engine.data.categories.length === 11, 'T_DIM_Categorie contains 11 reference categories ready for production');
+  assertAudit(P, Array.isArray(engine.data.tiers) && engine.data.tiers.length === 7, 'T_DIM_Tiers contains 7 reference counterparties ready for production');
+  assertAudit(P, Array.isArray(engine.data.budgets) && engine.data.budgets.length === 0, 'T_FACT_Budget contains 0 test budget envelopes in Production v1.01');
+  assertAudit(P, Array.isArray(engine.data.transactions) && engine.data.transactions.length === 0, 'T_FACT_Transaction contains 0 test transactions in Production v1.01');
+  assertAudit(P, !baselineJson.includes('Salaire KIMYA') && !baselineJson.includes('TEST_DATA_EMBED') && !baselineCode.includes('Salaire KIMYA'), 'Zero test transaction strings in production baseline_data.json & baseline_data.js');
 
   assertAudit(P, engine.cleanText('   mcb   courant  ') === 'mcb courant', 'cleanText normalizes and collapses whitespace');
 
@@ -108,7 +95,8 @@ console.log('===================================================================
 {
   const P = '2. Financial & Mathematical Precision Engine';
   global.localStorage.clear();
-  engine.init(global.window.GFMP_BASELINE_DATA);
+  const sampleFixture = JSON.parse(fs.readFileSync(path.join(__dirname, 'sample_test_dataset.json'), 'utf8'));
+  engine.init(sampleFixture);
 
   assertAudit(P, engine.roundMoney(0.1 + 0.2) === 0.3, 'roundMoney(0.1 + 0.2) === 0.3 exactly');
   assertAudit(P, engine.roundMoney(10.005) === 10.01, 'roundMoney(10.005) === 10.01 (Number.EPSILON correction)');
@@ -235,7 +223,7 @@ console.log('===================================================================
 
   assertAudit(P, indexHtml.includes('width="38" height="38" fetchpriority="high"'), 'Header LCP brand emblem image has explicit width/height and fetchpriority="high"');
   assertAudit(P, stylesCss.includes('overflow-anchor: none;'), 'App header and main container prevent browser scroll-anchoring jitter');
-  assertAudit(P, swJs.includes('gfmp-mobile-v5.5.0') && swJs.includes('./analytics-engine.js') && swJs.includes('./baseline_data.js'), 'Service Worker caches all core application assets for 100% offline execution');
+  assertAudit(P, swJs.includes('gfmp-mobile-v1.01-prod') && swJs.includes('./analytics-engine.js') && swJs.includes('./baseline_data.js'), 'Service Worker caches all core application assets for 100% offline execution');
 }
 
 // ============================================================================

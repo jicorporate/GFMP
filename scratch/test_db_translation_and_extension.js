@@ -17,7 +17,8 @@ const engineCode = fs.readFileSync(path.join(__dirname, '../mobile-web/analytics
 eval(engineCode);
 
 const engine = window.gfmpEngine;
-engine.init();
+const sampleFixture = JSON.parse(fs.readFileSync(path.join(__dirname, 'sample_test_dataset.json'), 'utf8'));
+engine.init(sampleFixture);
 
 console.log('=== TEST 1: Database Quadri-Lingual Translation ===');
 const sampleEntities = [

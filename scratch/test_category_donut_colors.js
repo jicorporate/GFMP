@@ -91,6 +91,8 @@ console.log(`✓ Custom Category "${customCat2}" -> ${c2}`);
 console.log(`✓ Custom Category "${customCat3}" -> ${c3}`);
 
 console.log('\n=== TEST 5: BREAKDOWN COMPUTATION & DATA CONCORDANCE ===');
+const sampleFixture = JSON.parse(fs.readFileSync(path.join(__dirname, 'sample_test_dataset.json'), 'utf8'));
+engine.init(sampleFixture);
 const cf = engine.computeCashflow();
 if (!cf || !Array.isArray(cf.breakdown) || cf.breakdown.length === 0) {
   throw new Error(`FAIL: computeCashflow().breakdown is empty`);

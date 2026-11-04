@@ -46,24 +46,35 @@ console.log('===================================================================
 console.log('🧪 TEST SUITE: DATA MODE CHOICE (DEMO VS EMPTY) & ZERO-DATA UI/ENGINE RESILIENCE');
 console.log('================================================================================\n');
 
-// 1. Verify Step 5 Data Mode Choice in #modal-initialization & #view-settings & #hub-datamode-banner
-console.log('--- 1. Onboarding Step 5, Settings Switcher & Hub Banner DOM/CSS/i18n ---');
-assert(html.includes('id="init-datamode-section"') && html.includes('id="init-datamode-grid"'), 'index.html must include Step 5 #init-datamode-section and #init-datamode-grid');
-assert(html.includes('data-init-datamode="demo"') && html.includes('data-init-datamode="empty"'), 'index.html must include demo and empty choice cards in #init-datamode-grid');
-assert(html.includes('id="hub-datamode-banner"'), 'index.html #view-home must include #hub-datamode-banner');
-assert(html.includes('id="settings-datamode-card"') && html.includes('id="btn-datamode-demo"') && html.includes('id="btn-datamode-empty"'), 'index.html #view-settings must include #settings-datamode-card switcher');
-assert(css.includes('.empty-state-rich') && css.includes('.empty-state-donut-wrap') && css.includes('.hub-datamode-banner') && css.includes(':has(.empty-state-rich)'), 'styles.css must define .empty-state-rich, .empty-state-donut-wrap, .hub-datamode-banner, and :has(.empty-state-rich)');
+// 1. Verify Complete Eradication of "LOAD TEST DATA" & Obsolete Dev Labels + Dynamic Accounts Inventory
+console.log('--- 1. Eradication of Test Mode Artifacts & Dynamic Accounts Inventory DOM/CSS/i18n ---');
+assert(!html.includes('id="init-datamode-section"'), 'index.html must NOT include obsolete #init-datamode-section');
+assert(!html.includes('id="hub-datamode-banner"'), 'index.html must NOT include #hub-datamode-banner');
+assert(!html.includes('id="settings-datamode-card"'), 'index.html must NOT include obsolete #settings-datamode-card');
+assert(!appJs.includes('data-empty-action="load-demo"'), 'app.js must NOT offer any "load-demo" action');
+assert(!html.includes('SFP v1.01'), 'index.html must NOT contain obsolete "SFP v1.01" dev labels');
+assert(!appJs.includes('SFP v1.01 Production'), 'app.js must NOT contain "SFP v1.01 Production" text');
+
+// Dynamic Accounts & Liabilities Inventory elements
+assert(html.includes('id="nw-accounts-summary-badge"'), 'index.html #view-networth must include #nw-accounts-summary-badge');
+assert(html.includes('id="lbl-as-of-date"'), 'index.html #view-networth must include #lbl-as-of-date');
+assert(html.includes('id="btn-nw-add-account"'), 'index.html #view-networth must include #btn-nw-add-account');
+assert(html.includes('id="networth-table-body"'), 'index.html #view-networth must include #networth-table-body');
+
+assert(css.includes('.table-counter-badge') && css.includes('.btn-inline-add-entity'), 'styles.css must define .table-counter-badge and .btn-inline-add-entity');
+assert(css.includes('.cpt-status-pill.ready') && css.includes('.cpt-status-pill.clear') && css.includes('.btn-cpt-quick-add'), 'styles.css must define micro-status pills and quick-add button');
 
 const requiredKeys = [
-  'INIT_STEP5_BADGE', 'INIT_STEP5_TITLE', 'INIT_STEP5_DESC',
-  'DATA_MODE_DEMO_BADGE', 'DATA_MODE_DEMO_TITLE', 'DATA_MODE_DEMO_SUB',
-  'DATA_MODE_EMPTY_BADGE', 'DATA_MODE_EMPTY_TITLE', 'DATA_MODE_EMPTY_SUB',
+  'INIT_BADGE', 'INIT_TITLE', 'INIT_SUBTITLE',
   'SOLVENCY_EMPTY', 'TREND_EMPTY_TITLE', 'TREND_EMPTY_SUB', 'DONUT_EMPTY_HINT',
-  'EMPTY_PATRIMOINE_SUB', 'EMPTY_BUDGET_SUB', 'EMPTY_TX_SUB',
+  'NO_ACCOUNT_OR_TX', 'EMPTY_PATRIMOINE_SUB', 'EMPTY_BUDGET_SUB', 'EMPTY_TX_SUB',
   'EMPTY_CTA_ADD_TX', 'EMPTY_CTA_ADD_EXP', 'EMPTY_CTA_ALLOC_BG', 'EMPTY_CTA_ADD_ACC',
-  'EMPTY_CTA_RESET_FILTER', 'EMPTY_CTA_FULL_YEAR', 'EMPTY_CTA_LOAD_DEMO', 'EMPTY_CTA_SWITCH_EMPTY',
-  'BANNER_DEMO_ACTIVE', 'BANNER_EMPTY_ACTIVE',
-  'SETTINGS_DATAMODE_TITLE', 'SETTINGS_DATAMODE_DESC',
+  'EMPTY_CTA_RESET_FILTER', 'EMPTY_CTA_FULL_YEAR',
+  'NW_READINESS_TITLE', 'NW_READINESS_DESC',
+  'ACCOUNT_STATUS_READY', 'ACCOUNT_STATUS_DEBT_FREE',
+  'ACCOUNT_STATUS_FUNDED', 'ACCOUNT_STATUS_DEBT',
+  'ACCOUNT_QUICK_ADD_TX', 'NW_ACCOUNTS_COUNT',
+  'NW_STACK_EMPTY_LABEL', 'BTN_NW_ADD_ACCOUNT',
   'REPORT_EMPTY_DIAG_TITLE', 'REPORT_EMPTY_DIAG_DESC'
 ];
 ['FR', 'EN', 'ES', 'PT'].forEach(lang => {
@@ -72,7 +83,7 @@ const requiredKeys = [
     assert(val && val !== k, `Missing ${lang} translation for key ${k}`);
   });
 });
-console.log('✔ PASS: Onboarding Step 5, Settings Data Mode Switcher, Hub Banner & Quadrilingual keys verified.');
+console.log('✔ PASS: Eradication of test artifacts, dynamic accounts inventory & Quadrilingual keys verified.');
 
 // 2. Verify initializeSystem with useDemoData = false ('EMPTY') vs useDemoData = true ('DEMO')
 console.log('\n--- 2. Engine Data Mode Initialization & Persistence Across Reloads ---');
@@ -113,7 +124,7 @@ const nwEmpty = engine.computeNetWorth('2026-02');
 assert.strictEqual(nwEmpty.totalAssets, 0, 'Empty netWorth totalAssets === 0');
 assert.strictEqual(nwEmpty.totalLiabilities, 0, 'Empty netWorth totalLiabilities === 0');
 assert.strictEqual(nwEmpty.netWorth, 0, 'Empty netWorth === 0');
-assert.strictEqual(nwEmpty.accounts.length, 8, 'NetWorth inventory lists the 8 active configured accounts at 0.00');
+assert.strictEqual(nwEmpty.accounts.length, 0, 'NetWorth transaction-derived inventory is empty ([]) when 0 transactions exist');
 
 const bgEmpty = engine.computeBudgetZBB('2026-02');
 assert.strictEqual(bgEmpty.totalAlloue, 0, 'Empty ZBB totalAlloue === 0');
@@ -137,29 +148,54 @@ assert.strictEqual(repEmpty.hasData, false, 'repEmpty.hasData === false');
 assert.strictEqual(repEmpty.topExpenses.length, 0, 'repEmpty.topExpenses === []');
 console.log('✔ PASS: All analytical modules return clean, resilient zero-states without dummy rows or false penalties.');
 
-// 4. Verify Dynamic Switching Between DEMO and EMPTY Modes + Purge Persistence
-console.log('\n--- 4. Live Switching (setDataMode DEMO <-> EMPTY) & purgeDatabase() ---');
-const switchDemo = engine.setDataMode('DEMO');
-assert.strictEqual(switchDemo.dataMode, 'DEMO', 'setDataMode("DEMO") activates DEMO mode');
-assert.strictEqual(switchDemo.txCount, 60, 'setDataMode("DEMO") loads 60 sample transactions');
-assert.strictEqual(switchDemo.budgetCount, 17, 'setDataMode("DEMO") loads 17 sample budgets');
-assert.strictEqual(engine.hasFinancialData('2026-02'), true, 'hasFinancialData("2026-02") is true in DEMO mode');
-assert.strictEqual(engine.computeBudgetZBB('2026-02').categories.length, 6, 'computeBudgetZBB("2026-02") returns all 6 active categories in DEMO mode');
+// 4. Verify Production v1.01 Zero-Test-Data Guarantee & Legacy v1.0 Migration + Purge Persistence
+console.log('\n--- 4. Production v1.01 Zero-Test-Data Baseline, Legacy Migration & User Operations ---');
+assert.strictEqual(window.GFMP_BASELINE.version, '1.01', 'GFMP_BASELINE.version must be 1.01');
+assert.strictEqual(window.GFMP_BASELINE.dataset_version, '1.01-PROD', 'GFMP_BASELINE.dataset_version must be 1.01-PROD');
+assert.strictEqual(window.GFMP_BASELINE.transactions.length, 0, 'Production v1.01 baseline must have 0 test transactions');
+assert.strictEqual(window.GFMP_BASELINE.budgets.length, 0, 'Production v1.01 baseline must have 0 test budgets');
+
+// Simulate legacy v1.0 localStorage containing 60 demo transactions -> verify automatic v1.01 migration scrubs them
+const legacyFixture = JSON.parse(fs.readFileSync(path.join(__dirname, 'sample_test_dataset.json'), 'utf8'));
+global.localStorage.setItem('gfmp_dataset_v3', JSON.stringify(legacyFixture));
+global.localStorage.setItem('gfmp_data_mode', 'DEMO');
+engine.data = null;
+engine.init();
+assert.strictEqual(engine.data.dataset_version, '1.01-PROD', 'Legacy v1.0 localStorage must auto-migrate to 1.01-PROD');
+assert.strictEqual(engine.getDataMode(), 'EMPTY', 'Legacy DEMO mode must auto-migrate to EMPTY in Production v1.01');
+assert.strictEqual(engine.data.transactions.length, 0, 'Legacy 60 test transactions must be scrubbed on v1.01 migration');
+assert.strictEqual(engine.data.budgets.length, 0, 'Legacy 17 test budgets must be scrubbed on v1.01 migration');
+
+// Add a real user transaction and budget, then verify hasFinancialData() and purgeDatabase()
+engine.addTransaction({
+  date: '2026-02-15',
+  type: 'REVENU',
+  montant: 50000,
+  devise: 'MUR',
+  id_compte: '1',
+  id_categorie: '1',
+  id_tiers: '1',
+  notes: 'Revenu réel Production v1.01'
+});
+engine.allocateBudget('4', 15000, '2026-02');
+assert.strictEqual(engine.hasFinancialData('2026-02'), true, 'hasFinancialData("2026-02") is true once user records real operations');
+assert.strictEqual(engine.computeBudgetZBB('2026-02').categories.length, 1, 'computeBudgetZBB("2026-02") returns user allocated category');
+assert.strictEqual(engine.computeNetWorth('2026-02').accounts.length, 1, 'NetWorth transaction-derived inventory dynamically includes active account with transactions');
 
 engine.purgeDatabase();
-assert.strictEqual(engine.getDataMode(), 'EMPTY', 'purgeDatabase() sets dataMode to EMPTY');
+assert.strictEqual(engine.getDataMode(), 'EMPTY', 'purgeDatabase() maintains EMPTY mode');
 assert.strictEqual(engine.data.transactions.length, 0, 'purgeDatabase() clears transactions');
 assert.strictEqual(engine.data.budgets.length, 0, 'purgeDatabase() clears budgets');
-
-// Restore default DEMO mode for any subsequent state
-engine.setDataMode('DEMO');
-assert.strictEqual(engine.getDataMode(), 'DEMO', 'Restored DEMO mode cleanly');
+assert.strictEqual(engine.computeNetWorth('2026-02').accounts.length, 0, 'NetWorth transaction-derived inventory returns to 0 after purge');
 
 // 5. Verify app.js Rich Empty State & Delegated Action Wiring
 console.log('\n--- 5. App Controller Rich Empty States & Action Delegation ---');
 assert(appJs.includes('empty-state-donut-wrap') && appJs.includes('trend-empty-callout'), 'app.js renders .empty-state-donut-wrap and .trend-empty-callout');
 assert(appJs.includes('data-empty-action="add-tx"') && appJs.includes('data-empty-action="open-alloc"') && appJs.includes('data-empty-action="reset-cf-filters"'), 'app.js renders contextual [data-empty-action] CTA buttons');
 assert(appJs.includes("e.target.closest('[data-empty-action]')"), 'app.js binds delegated click handler for all [data-empty-action] buttons');
+assert(appJs.includes('networth-table-body') && appJs.includes('NO_ACCOUNT_OR_TX'), 'app.js renders rich empty state inside #networth-table-body');
+assert(appJs.includes('btn-cpt-quick-add'), 'app.js renders .btn-cpt-quick-add quick action on account rows');
+assert(appJs.includes('btn-nw-add-account'), 'app.js binds #btn-nw-add-account to openAddEntityDialog("compte")');
 console.log('✔ PASS: App controller rich empty states and delegated action handlers verified.');
 
 console.log('\n================================================================================');
