@@ -3276,3 +3276,191 @@ dialog.gfmp-confirm-dialog[open]::backdrop {
   }
 }
 
+
+/* =========================================================================
+   ZERO-FOUC ONBOARDING PROTECTION & KPI CARDS GOLD STANDARD
+   ========================================================================= */
+
+/* Zero-FOUC Startup Onboarding Protection */
+html.gfmp-onboarding-active body {
+  overflow: hidden !important;
+}
+html.gfmp-onboarding-active .gfmp-header,
+html.gfmp-onboarding-active .main-content,
+html.gfmp-onboarding-active .bottom-nav,
+html.gfmp-onboarding-active #toast-container {
+  visibility: hidden !important;
+  opacity: 0 !important;
+  pointer-events: none !important;
+}
+html.gfmp-onboarding-active #modal-init-system {
+  display: flex !important;
+  visibility: visible !important;
+  opacity: 1 !important;
+  pointer-events: auto !important;
+  z-index: 99999 !important;
+}
+
+/* KPI Responsive Cards Grid (Cashflow & Net Worth) */
+.kpi-row,
+.kpi-cashflow-row,
+.kpi-networth-row {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 12px;
+  margin-bottom: 16px;
+}
+
+@media (max-width: 480px) {
+  .kpi-row,
+  .kpi-cashflow-row,
+  .kpi-networth-row {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 8px;
+  }
+}
+
+.kpi-card,
+.kpi-mini-card {
+  background: var(--surface-card, #131A2A);
+  border: 1px solid var(--border-subtle, rgba(255, 255, 255, 0.08));
+  border-radius: 14px;
+  padding: 12px 14px;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.18);
+  transition: transform 0.2s ease, border-color 0.2s ease, box-shadow 0.2s ease;
+  position: relative;
+  overflow: hidden;
+}
+
+.kpi-card::before,
+.kpi-mini-card::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 3px;
+  background: transparent;
+  transition: background 0.2s ease;
+}
+
+.kpi-card.kpi-rev-card::before,
+.kpi-mini-card.kpi-rev::before {
+  background: linear-gradient(90deg, #10B981, #059669);
+}
+
+.kpi-card.kpi-dep-card::before,
+.kpi-mini-card.kpi-dep::before {
+  background: linear-gradient(90deg, #EF4444, #DC2626);
+}
+
+.kpi-card.kpi-net-card::before,
+.kpi-mini-card.kpi-net::before {
+  background: linear-gradient(90deg, var(--c-yellow-royal, #D4AF37), #F59E0B);
+}
+
+.kpi-card.kpi-networth-card::before {
+  background: linear-gradient(90deg, var(--c-royal-blue, #4169E1), #3B82F6);
+}
+
+.kpi-card.kpi-assets-card::before {
+  background: linear-gradient(90deg, #10B981, #34D399);
+}
+
+.kpi-card.kpi-debts-card::before {
+  background: linear-gradient(90deg, #EF4444, #F87171);
+}
+
+.kpi-mini-label {
+  font-size: 0.68rem;
+  font-weight: 800;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--text-muted, #94A3B8);
+  margin-bottom: 4px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.kpi-mini-value {
+  font-size: 1.05rem;
+  font-weight: 800;
+  font-family: 'Plus Jakarta Sans', var(--font-primary, sans-serif);
+  color: var(--text-main, #FFFFFF);
+  line-height: 1.25;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+@media (max-width: 480px) {
+  .kpi-mini-value {
+    font-size: 0.92rem;
+  }
+}
+
+.kpi-mini-value.assets,
+.kpi-rev-card .kpi-mini-value,
+.kpi-mini-card.kpi-rev .kpi-mini-value {
+  color: #10B981;
+}
+
+.kpi-mini-value.liabilities,
+.kpi-dep-card .kpi-mini-value,
+.kpi-mini-card.kpi-dep .kpi-mini-value {
+  color: #EF4444;
+}
+
+.kpi-net-card.positive .kpi-mini-value,
+.kpi-mini-card.kpi-net.positive .kpi-mini-value {
+  color: #10B981;
+}
+
+.kpi-net-card.negative .kpi-mini-value,
+.kpi-mini-card.kpi-net.negative .kpi-mini-value {
+  color: #EF4444;
+}
+
+.kpi-card-sub {
+  font-size: 0.65rem;
+  font-weight: 600;
+  color: var(--text-muted, #94A3B8);
+  margin-top: 4px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.nw-allocation-card {
+  margin-bottom: 16px;
+}
+
+select.hero-amount-currency {
+  appearance: none;
+  -webkit-appearance: none;
+  background: rgba(255, 255, 255, 0.08);
+  border: 1px solid rgba(255, 255, 255, 0.16);
+  border-radius: 8px;
+  color: var(--c-yellow-royal, #D4AF37);
+  font-family: inherit;
+  font-size: 0.95rem;
+  font-weight: 800;
+  padding: 4px 10px;
+  cursor: pointer;
+  transition: border-color 0.2s, background 0.2s;
+}
+
+select.hero-amount-currency:focus {
+  border-color: var(--c-yellow-royal, #D4AF37);
+  background: rgba(255, 255, 255, 0.14);
+}
+
+select.hero-amount-currency option {
+  background: #0F172A;
+  color: #FFFFFF;
+  font-weight: 700;
+}

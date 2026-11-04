@@ -756,8 +756,9 @@ class GFMPEngine {
 
   roundMoney(val) {
     if (val === null || val === undefined || isNaN(val)) return 0;
-    const res = Math.round((Number(val) + Number.EPSILON) * 100) / 100;
-    return res === 0 ? 0 : res;
+    const num = Number(val);
+    const res = Math.round((num + (num >= 0 ? 1e-9 : -1e-9)) * 100) / 100;
+    return Object.is(res, -0) || res === 0 ? 0 : res;
   }
 
   cleanText(str) {
@@ -1069,14 +1070,10 @@ class GFMPEngine {
         const parsed = JSON.parse(cached);
         if (parsed && parsed.devises) {
           const cachedRates = { ...parsed.devises };
-          if (cachedRates.EUR && cachedRates.EUR <= 2) {
-            const scale = 656.168;
-            Object.keys(cachedRates).forEach(k => {
-              cachedRates[k] = Number((cachedRates[k] * scale).toFixed(4));
-            });
-            cachedRates.XOF = 1;
+          if (cachedRates.MUR && cachedRates.MUR > 0 && cachedRates.XOF && cachedRates.XOF > 0) {
+            this.data.devises = Object.assign({}, this.data.devises, cachedRates);
+            this.lastExchangeSync = parsed.lastSync;
           }
-          this.data.devises = Object.assign({}, this.data.devises, cachedRates);
           this.lastExchangeSync = parsed.lastSync;
         }
       }
@@ -1509,6 +1506,15 @@ class GFMPEngine {
       },
       'NETWORTH_TITLE': { FR: 'VALEUR NETTE PATRIMONIALE', EN: 'NET WORTH & WEALTH', ES: 'VALOR NETO PATRIMONIAL', PT: 'VALOR PATRIMONIAL LÍQUIDO' },
       'NETWORTH_INVENTORY': { FR: 'INVENTAIRE DES COMPTES ET DETTES', EN: 'ACCOUNTS & LIABILITIES INVENTORY', ES: 'INVENTARIO DE CUENTAS Y DEUDAS', PT: 'INVENTÁRIO DE CONTAS E DÍVIDAS' },
+      'ALLOC_TITLE': { FR: 'RÉPARTITION & STRUCTURE DU PATRIMOINE', EN: 'ASSET ALLOCATION & WEALTH STRUCTURE', ES: 'DISTRIBUCIÓN Y ESTRUCTURA PATRIMONIAL', PT: 'ALOCAÇÃO E ESTRUTURA PATRIMONIAL' },
+      'SUB_INFLOW': { FR: 'Flux Entrant', EN: 'Inflow', ES: 'Flujo Entrante', PT: 'Fluxo de Entrada' },
+      'SUB_OUTFLOW': { FR: 'Flux Sortant', EN: 'Outflow', ES: 'Flujo Saliente', PT: 'Fluxo de Saída' },
+      'SUB_NET_BALANCE': { FR: 'Solde Périodique', EN: 'Periodic Balance', ES: 'Saldo Periódico', PT: 'Saldo Periódico' },
+      'SUB_NET_WORTH': { FR: 'Patrimoine Net', EN: 'Net Worth', ES: 'Patrimonio Neto', PT: 'Patrimônio Líquido' },
+      'SUB_GROSS_ASSETS': { FR: 'Actifs Bruts', EN: 'Gross Assets', ES: 'Activos Brutos', PT: 'Ativos Brutos' },
+      'SUB_LIABILITIES': { FR: 'Engagements', EN: 'Liabilities', ES: 'Pasivos', PT: 'Passivos' },
+      'SUB_SURPLUS': { FR: 'Excédent Net', EN: 'Net Surplus', ES: 'Excedente Neto', PT: 'Superávit Líquido' },
+      'SUB_DEFICIT': { FR: 'Déficit Net', EN: 'Net Deficit', ES: 'Déficit Neto', PT: 'Déficit Líquido' },
       'ASSET_ACTIVE': { FR: 'Actif', EN: 'Asset', ES: 'Activo', PT: 'Ativo' },
       'ASSET_LIABILITY': { FR: 'Passif / Dette', EN: 'Liability / Debt', ES: 'Pasivo / Deuda', PT: 'Passivo / Dívida' },
 
@@ -1844,23 +1850,23 @@ class GFMPEngine {
       const json = await res.json();
 
       if (json && json.rates) {
-        const supported = ['MUR', 'EUR', 'USD', 'GBP', 'ZAR', 'XOF'];
-        const newDevises = {};
-        const eurBaseXof = (this.data && this.data.devises && this.data.devises.EUR > 10)
-          ? this.data.devises.EUR
-          : 656.168;
+        const xofPerEur = (typeof json.rates.XOF === 'number' && json.rates.XOF > 100)
+          ? json.rates.XOF
+          : 655.957;
 
+        const newDevises = {
+          XOF: 1.0,
+          EUR: Number(xofPerEur.toFixed(4))
+        };
+
+        const supported = ['MUR', 'USD', 'GBP', 'ZAR'];
         supported.forEach(curr => {
-          if (curr === 'EUR') {
-            newDevises[curr] = eurBaseXof;
-          } else if (curr === 'XOF') {
-            newDevises[curr] = 1;
-          } else if (json.rates[curr] && json.rates[curr] > 0) {
-            newDevises[curr] = Number((eurBaseXof / json.rates[curr]).toFixed(4));
+          if (json.rates[curr] && json.rates[curr] > 0) {
+            newDevises[curr] = Number((xofPerEur / json.rates[curr]).toFixed(4));
+          } else if (this.data && this.data.devises && this.data.devises[curr]) {
+            newDevises[curr] = this.data.devises[curr];
           }
         });
-
-        if (!newDevises['XOF']) newDevises['XOF'] = 1;
 
         if (!this.data) this.data = {};
         this.data.devises = Object.assign({}, this.data.devises, newDevises);
@@ -1883,7 +1889,7 @@ class GFMPEngine {
           }));
         }
 
-        this.logHistory('SYNC_RATES', 'FOREX_API', 'LIVE', `Taux de change actualisés en direct via API (MUR, EUR, USD, GBP, ZAR, XOF)`);
+        this.logHistory('SYNC_RATES', 'FOREX_API', 'LIVE', `Taux de change actualisés en direct via API (Marchés connectés)`);
         this.save();
         this.notify();
         return { success: true, rates: this.data.devises, lastSync: this.lastExchangeSync };
@@ -1952,6 +1958,15 @@ class GFMPEngine {
       this.data.config.SYS_MONTH = this.month;
       this.data.config.SYS_THEME = sanitizedTheme;
       this.data.config.SYS_DATA_MODE = resolvedMode;
+
+      // Align liquid and default accounts native currency with user's selected base currency
+      if (Array.isArray(this.data.comptes)) {
+        this.data.comptes.forEach(c => {
+          if (c.devise === 'MUR' || c.classe === 'LIQUIDITE' || c.classe === 'AUTRE' || c.classe === 'DETTE') {
+            c.devise = sanitizedCurrency;
+          }
+        });
+      }
     }
 
     const storage = this.getStorage();
@@ -2005,12 +2020,22 @@ class GFMPEngine {
   }
 
   convert(amount, fromCurrency, toCurrency = this.currency) {
-    if (amount === 0 || isNaN(amount)) return 0;
-    if (fromCurrency === toCurrency) return this.roundMoney(amount);
-    const rates = (this.data && this.data.devises) ? this.data.devises : { MUR: 12.2243, EUR: 656.168, USD: 567.5369, GBP: 757.0023, ZAR: 33.2723, XOF: 1.0 };
-    const tauxO = (rates[fromCurrency] !== undefined && rates[fromCurrency] > 0) ? rates[fromCurrency] : 1;
-    const tauxC = (rates[toCurrency] !== undefined && rates[toCurrency] > 0) ? rates[toCurrency] : 1;
-    return this.roundMoney((amount * tauxO) / tauxC);
+    if (amount === null || amount === undefined || isNaN(amount)) return 0;
+    const num = parseFloat(amount) || 0;
+    if (num === 0) return 0;
+
+    const from = (typeof fromCurrency === 'string') ? fromCurrency.trim().toUpperCase() : (this.currency || 'MUR');
+    const to = (typeof toCurrency === 'string') ? toCurrency.trim().toUpperCase() : (this.currency || 'MUR');
+    if (from === to) return this.roundMoney(num);
+
+    const fallbackRates = { XOF: 1.0, MUR: 12.2243, EUR: 656.168, USD: 567.5369, GBP: 757.0023, ZAR: 33.2723 };
+    const rates = (this.data && this.data.devises && typeof this.data.devises === 'object')
+      ? { ...fallbackRates, ...this.data.devises }
+      : fallbackRates;
+
+    const tauxO = (rates[from] !== undefined && rates[from] > 0) ? rates[from] : 1;
+    const tauxC = (rates[to] !== undefined && rates[to] > 0) ? rates[to] : 1;
+    return this.roundMoney((num * tauxO) / tauxC);
   }
 
   formatMoney(amount, currency = this.currency) {
@@ -2274,32 +2299,41 @@ class GFMPEngine {
 
       const cptNativeDevise = cpt.devise || 'MUR';
       let soldeNatif = 0;
+      let soldeDirectSystem = 0;
       let cptTxCount = 0;
 
       (this.data.transactions || []).forEach(tx => {
         if (!tx.date || tx.date.substring(0, 7) > targetFilterMonth) return;
         const fluxType = catTypeDict[tx.id_categorie] || 'DEPENSE';
-        const txDev = tx.devise || cptNativeDevise;
+        const txDev = (tx.devise || cptNativeDevise).trim().toUpperCase();
         const montantNormalise = this.convert(tx.montant, txDev, cptNativeDevise);
+        const montantSystem = (txDev === this.currency)
+          ? this.roundMoney(Math.abs(parseFloat(tx.montant) || 0))
+          : this.convert(tx.montant, txDev, this.currency);
 
         if (String(tx.id_compte) === String(cpt.id)) {
           cptTxCount++;
           if (fluxType === 'REVENU') {
             soldeNatif += montantNormalise;
+            soldeDirectSystem += montantSystem;
           } else if (fluxType === 'DEPENSE') {
             soldeNatif -= montantNormalise;
+            soldeDirectSystem -= montantSystem;
           } else if (fluxType === 'TRANSFERT') {
             // Transfers into investments (DCA/Crypto/PEA) increase balance
             if (cpt.classe === 'INVESTISSEMENT') {
               soldeNatif += montantNormalise;
+              soldeDirectSystem += montantSystem;
             } else {
               // Outflow from checking/liquid account to savings/investments
               soldeNatif -= montantNormalise;
+              soldeDirectSystem -= montantSystem;
             }
           }
         } else if (tx.id_compte_dest && String(tx.id_compte_dest) === String(cpt.id) && fluxType === 'TRANSFERT') {
           cptTxCount++;
           soldeNatif += montantNormalise;
+          soldeDirectSystem += montantSystem;
         } else if (fluxType === 'TRANSFERT') {
           // Dynamic note-based counterpart matching for transfers without explicit destination
           const notes = (tx.notes || '').toLowerCase();
@@ -2309,11 +2343,13 @@ class GFMPEngine {
           if (isTargetMatch && String(tx.id_compte) !== String(cpt.id)) {
             cptTxCount++;
             soldeNatif += montantNormalise;
+            soldeDirectSystem += montantSystem;
           }
         }
       });
 
       soldeNatif = this.roundMoney(soldeNatif);
+      soldeDirectSystem = this.roundMoney(soldeDirectSystem);
 
       // Exclude empty template trigger placeholder ("Autre (Préciser...)") from Net Worth inventory
       const isPlaceholder = (cpt.classe === 'AUTRE' && (cpt.nom || '').toLowerCase().includes('préciser') && Math.abs(soldeNatif) < 0.005);
@@ -2322,7 +2358,12 @@ class GFMPEngine {
       // Dynamic Transaction-Derived Inventory: Only accounts with recorded transactions or active balance are listed
       if (cptTxCount === 0 && Math.abs(soldeNatif) < 0.005) return;
 
-      const soldeConverti = this.roundMoney(this.convert(soldeNatif, cptNativeDevise, this.currency));
+      const rawConverted = this.convert(soldeNatif, cptNativeDevise, this.currency);
+      const soldeConverti = (cptNativeDevise === this.currency)
+        ? soldeNatif
+        : (Math.abs(soldeDirectSystem) > 0 && Math.abs(rawConverted - soldeDirectSystem) < 0.1
+          ? soldeDirectSystem
+          : this.roundMoney(rawConverted));
       const isDette = (cpt.classe === 'DETTE');
 
       if (isDette) {
@@ -2512,10 +2553,11 @@ class GFMPEngine {
     return this.computeBudgetZBB(period);
   }
 
-  allocateBudget(idCategorie, montant, mois = null) {
+  allocateBudget(idCategorie, montant, mois = null, devise = null) {
     if (!this.data) return false;
     const targetMois = mois || ((this.month === '00') ? `${this.year}-01` : `${this.year}-${this.month}`);
     const numAmount = this.roundMoney(Math.abs(parseFloat(montant) || 0));
+    const budgetDevise = devise ? String(devise).toUpperCase() : this.currency;
 
     if (!Array.isArray(this.data.budgets)) {
       this.data.budgets = [];
@@ -2527,8 +2569,8 @@ class GFMPEngine {
       existing.montant_alloue = numAmount;
       existing.mois = targetMois;
       existing.mois_annee = targetMois;
-      existing.devise = this.currency;
-      this.logHistory('BUDGET_ALLOC', 'budget', existing.id, `Mise à jour enveloppe ${targetMois} : ${numAmount} ${this.currency}`, existing);
+      existing.devise = budgetDevise;
+      this.logHistory('BUDGET_ALLOC', 'budget', existing.id, `Mise à jour enveloppe ${targetMois} : ${numAmount} ${budgetDevise}`, existing);
     } else {
       const nextId = (this.data.budgets.length > 0)
         ? Math.max(...this.data.budgets.map(b => b.id || 0)) + 1
@@ -2540,10 +2582,10 @@ class GFMPEngine {
         id_categorie: String(idCategorie),
         montant: numAmount,
         montant_alloue: numAmount,
-        devise: this.currency
+        devise: budgetDevise
       };
       this.data.budgets.push(newB);
-      this.logHistory('BUDGET_ALLOC', 'budget', nextId, `Nouvelle enveloppe ${targetMois} : ${numAmount} ${this.currency}`, newB);
+      this.logHistory('BUDGET_ALLOC', 'budget', nextId, `Nouvelle enveloppe ${targetMois} : ${numAmount} ${budgetDevise}`, newB);
     }
 
     this.save();

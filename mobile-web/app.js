@@ -192,6 +192,15 @@ document.addEventListener('DOMContentLoaded', () => {
       window.scrollTo({ top: 0, behavior: 'smooth' });
     }
 
+    if (viewName === 'transaction' && !txDeviseUserModified) {
+      const cptId = document.getElementById('tx-compte')?.value;
+      const account = (engine.data?.comptes || []).find(c => String(c.id) === String(cptId));
+      const devSel = document.getElementById('tx-devise');
+      if (devSel) {
+        devSel.value = (account && account.devise) ? account.devise : engine.currency;
+      }
+    }
+
     // Update bottom navigation bar
     document.querySelectorAll('.bottom-nav .nav-tab').forEach(t => {
       if (t.dataset.view === viewName) {
@@ -216,9 +225,10 @@ document.addEventListener('DOMContentLoaded', () => {
   });
 
   // Bind Hub Quick Transaction Button
-  document.getElementById('btn-hub-quick-saisie')?.addEventListener('click', () => {
-    triggerHaptic(18);
-    document.getElementById('btn-open-saisie-express')?.click();
+  document.getElementById('btn-hub-quick-saisie')?.addEventListener('click', (e) => {
+    e.preventDefault();
+    e.stopPropagation();
+    openExpressModal();
   });
 
   // Bind Live Rates Refresh Button (Icon Only, Gold Cutting-Edge & Multilingual)
@@ -318,6 +328,9 @@ document.addEventListener('DOMContentLoaded', () => {
   // --- 7. POPULATE FORM DROPDOWNS & FILTER BY TYPE ---
   let activeTxType = 'DEPENSE';
   let activeExpType = 'DEPENSE';
+  let txDeviseUserModified = false;
+  let expTxDeviseUserModified = false;
+  let allocDeviseUserModified = false;
 
   function filterCategories(selectId, targetType) {
     const catSel = document.getElementById(selectId);
@@ -370,11 +383,15 @@ document.addEventListener('DOMContentLoaded', () => {
       }
 
       if (devSel) {
-        const prevDev = devSel.value || engine.currency;
-        const keys = Object.keys(engine.data.devises || { MUR: 1, EUR: 1, USD: 1 });
+        const isModified = (prefix === 'tx') ? txDeviseUserModified : (prefix === 'exp-tx') ? expTxDeviseUserModified : false;
+        const selectedCpt = cptSel ? (engine.data.comptes || []).find(c => String(c.id) === String(cptSel.value)) : null;
+        const defaultDev = (selectedCpt && selectedCpt.devise) ? selectedCpt.devise : (engine.currency || 'MUR');
+        const activeDev = (isModified && devSel.value) ? devSel.value : defaultDev;
+        const keys = Object.keys(engine.data.devises || { MUR: 1, EUR: 1, USD: 1, GBP: 1, ZAR: 1, XOF: 1 });
         devSel.innerHTML = keys.map(k => `
-          <option value="${k}" ${k === prevDev ? 'selected' : ''}>${k}</option>
+          <option value="${k}" ${k === activeDev ? 'selected' : ''}>${k}</option>
         `).join('');
+        devSel.value = activeDev;
       }
     };
 
@@ -393,6 +410,17 @@ document.addEventListener('DOMContentLoaded', () => {
       cfAccSel.innerHTML = `<option value="ALL">${allText}</option>` + (engine.data.comptes || []).map(c => `
         <option value="${c.id}" ${String(prevAcc) === String(c.id) ? 'selected' : ''}>${engine.cleanAssetName(c.nom)}</option>
       `).join('');
+    }
+
+    // Budget Alloc Devise Select
+    const allocDevSel = document.getElementById('alloc-devise');
+    if (allocDevSel) {
+      const activeAllocDev = (allocDeviseUserModified && allocDevSel.value) ? allocDevSel.value : (engine.currency || 'MUR');
+      const keys = Object.keys(engine.data.devises || { MUR: 1, EUR: 1, USD: 1, GBP: 1, ZAR: 1, XOF: 1 });
+      allocDevSel.innerHTML = keys.map(k => `
+        <option value="${k}" ${k === activeAllocDev ? 'selected' : ''}>${k}</option>
+      `).join('');
+      allocDevSel.value = activeAllocDev;
     }
 
     // Budget Alloc Category Select
@@ -614,6 +642,10 @@ document.addEventListener('DOMContentLoaded', () => {
     if (nameInput) {
       nameInput.value = '';
     }
+    const addDev = document.getElementById('add-entity-devise');
+    if (addDev) {
+      addDev.value = engine.currency || 'MUR';
+    }
 
     if (addEntityDialog) {
       if (typeof addEntityDialog.showModal === 'function') {
@@ -691,6 +723,46 @@ document.addEventListener('DOMContentLoaded', () => {
   hookSelectNew('exp-tx-tiers', 'tiers');
   hookSelectNew('alloc-categorie', 'categorie');
 
+  // Auto-sync transaction currency with account's native currency on selection
+  document.getElementById('tx-compte')?.addEventListener('change', (e) => {
+    const cptId = e.target.value;
+    if (cptId === '__NEW__') return;
+    const account = (engine.data?.comptes || []).find(c => String(c.id) === String(cptId));
+    if (account && account.devise) {
+      const devSel = document.getElementById('tx-devise');
+      if (devSel) {
+        devSel.value = account.devise;
+        txDeviseUserModified = false;
+      }
+    }
+  });
+
+  document.getElementById('exp-tx-compte')?.addEventListener('change', (e) => {
+    const cptId = e.target.value;
+    if (cptId === '__NEW__') return;
+    const account = (engine.data?.comptes || []).find(c => String(c.id) === String(cptId));
+    if (account && account.devise) {
+      const devSel = document.getElementById('exp-tx-devise');
+      if (devSel) {
+        devSel.value = account.devise;
+        expTxDeviseUserModified = false;
+      }
+    }
+  });
+
+  // Track explicit manual user selection of currency in forms
+  document.getElementById('tx-devise')?.addEventListener('change', () => {
+    txDeviseUserModified = true;
+  });
+  document.getElementById('exp-tx-devise')?.addEventListener('change', () => {
+    expTxDeviseUserModified = true;
+  });
+  document.getElementById('alloc-devise')?.addEventListener('change', (e) => {
+    allocDeviseUserModified = true;
+    const badgeCurr = document.getElementById('alloc-currency-badge');
+    if (badgeCurr) badgeCurr.textContent = e.target.value;
+  });
+
   // Submit new entity
   addEntityForm?.addEventListener('submit', (e) => {
     e.preventDefault();
@@ -735,10 +807,19 @@ document.addEventListener('DOMContentLoaded', () => {
   function openExpressModal(defaultAccountId = null) {
     triggerHaptic(25);
     populateSelects();
-    if (defaultAccountId) {
+    const validAccountId = (typeof defaultAccountId === 'string' || typeof defaultAccountId === 'number') ? String(defaultAccountId) : null;
+    if (validAccountId) {
       const cptSel = document.getElementById('exp-tx-compte');
       if (cptSel) {
-        cptSel.value = String(defaultAccountId);
+        cptSel.value = validAccountId;
+      }
+    }
+    if (!expTxDeviseUserModified) {
+      const cptId = document.getElementById('exp-tx-compte')?.value;
+      const account = (engine.data?.comptes || []).find(c => String(c.id) === String(cptId));
+      const devSel = document.getElementById('exp-tx-devise');
+      if (devSel) {
+        devSel.value = (account && account.devise) ? account.devise : engine.currency;
       }
     }
     modalExpress?.classList.add('open');
@@ -748,11 +829,12 @@ document.addEventListener('DOMContentLoaded', () => {
     modalExpress?.classList.remove('open');
   }
 
-  fabBtn?.addEventListener('click', openExpressModal);
+  fabBtn?.addEventListener('click', () => openExpressModal());
   btnCloseExpress?.addEventListener('click', closeExpressModal);
 
-  // Also bind clicking "+ Saisie Express" on Hub Central card 1 to open express modal
-  document.querySelector('#card-nav-saisie .card-kpi-preview')?.addEventListener('click', (e) => {
+  // Also bind clicking "+ Saisie Express" on Hub Central card to open express modal
+  document.getElementById('btn-hub-quick-saisie')?.addEventListener('click', (e) => {
+    e.preventDefault();
     e.stopPropagation();
     openExpressModal();
   });
@@ -785,6 +867,7 @@ document.addEventListener('DOMContentLoaded', () => {
       notes: notesVal
     });
 
+    expTxDeviseUserModified = false;
     document.getElementById('exp-tx-montant').value = '';
     document.getElementById('exp-tx-notes').value = '';
     modalExpress?.classList.remove('open');
@@ -829,6 +912,7 @@ document.addEventListener('DOMContentLoaded', () => {
       notes: notesVal
     });
 
+    txDeviseUserModified = false;
     document.getElementById('tx-montant').value = '';
     document.getElementById('tx-notes').value = '';
     showToast('Transaction enregistrée avec succès !', 'success');
@@ -873,8 +957,15 @@ document.addEventListener('DOMContentLoaded', () => {
       allocMois.value = targetMois;
       updateAllocMoisLocalized();
     }
+    const allocDev = document.getElementById('alloc-devise');
+    if (allocDev) allocDev.value = engine.currency;
     const badgeCurr = document.getElementById('alloc-currency-badge');
     if (badgeCurr) badgeCurr.textContent = engine.currency;
+  });
+
+  document.getElementById('alloc-devise')?.addEventListener('change', (e) => {
+    const badgeCurr = document.getElementById('alloc-currency-badge');
+    if (badgeCurr) badgeCurr.textContent = e.target.value;
   });
 
   document.getElementById('btn-close-alloc')?.addEventListener('click', () => {
@@ -891,8 +982,9 @@ document.addEventListener('DOMContentLoaded', () => {
     const mois = document.getElementById('alloc-mois').value;
     const cat = document.getElementById('alloc-categorie').value;
     const amt = document.getElementById('alloc-montant').value;
+    const dev = document.getElementById('alloc-devise')?.value || engine.currency;
 
-    engine.allocateBudget(cat, amt, mois);
+    engine.allocateBudget(cat, amt, mois, dev);
     modalAlloc?.classList.remove('open');
     const toastMsg = {
       FR: 'Allocation budgétaire enregistrée !',
@@ -1621,13 +1713,23 @@ document.addEventListener('DOMContentLoaded', () => {
       btn.setAttribute('aria-pressed', isAct ? 'true' : 'false');
     });
 
-    // 6. Currency Synchronization across all Views, Forms and Modals
+    // 6. Currency Synchronization across all Views, Forms and Modals (Dynamic and Responsive)
     const txDevise = document.getElementById('tx-devise');
-    if (txDevise) txDevise.value = engine.currency;
+    if (txDevise && !txDeviseUserModified) {
+      const activeCpt = (engine.data?.comptes || []).find(c => String(c.id) === String(document.getElementById('tx-compte')?.value));
+      txDevise.value = (activeCpt && activeCpt.devise) ? activeCpt.devise : engine.currency;
+    }
     const expTxDevise = document.getElementById('exp-tx-devise');
-    if (expTxDevise) expTxDevise.value = engine.currency;
+    if (expTxDevise && !expTxDeviseUserModified) {
+      const activeExpCpt = (engine.data?.comptes || []).find(c => String(c.id) === String(document.getElementById('exp-tx-compte')?.value));
+      expTxDevise.value = (activeExpCpt && activeExpCpt.devise) ? activeExpCpt.devise : engine.currency;
+    }
+    const allocDevise = document.getElementById('alloc-devise');
+    if (allocDevise && !allocDeviseUserModified) {
+      allocDevise.value = engine.currency;
+    }
     const allocBadge = document.getElementById('alloc-currency-badge');
-    if (allocBadge) allocBadge.textContent = engine.currency;
+    if (allocBadge) allocBadge.textContent = (allocDevise ? allocDevise.value : engine.currency);
     const setCurrSel = document.getElementById('settings-currency-select');
     if (setCurrSel && setCurrSel.value !== engine.currency) setCurrSel.value = engine.currency;
     const setLangSel = document.getElementById('settings-lang-select');
@@ -1713,6 +1815,8 @@ document.addEventListener('DOMContentLoaded', () => {
     if (hubBgTitle) hubBgTitle.textContent = engine.tr('HUB_BUDGET_TITLE');
     const hubRecentTitle = document.getElementById('hub-recent-title');
     if (hubRecentTitle) hubRecentTitle.textContent = engine.tr('HUB_RECENT_TITLE');
+    const btnHubQuickSaisie = document.getElementById('btn-hub-quick-saisie');
+    if (btnHubQuickSaisie) btnHubQuickSaisie.textContent = engine.tr('SAISIE_EXPRESS') || '+ SAISIE EXPRESS';
 
     const hubThDate = document.getElementById('hub-th-date');
     if (hubThDate) hubThDate.textContent = engine.tr('TH_DATE');
@@ -2187,10 +2291,17 @@ document.addEventListener('DOMContentLoaded', () => {
     const netCard = document.getElementById('card-kpi-net');
     netEl.textContent = engine.formatMoney(cf.netCashflow);
     if (cf.netCashflow >= 0) {
-      netCard.className = 'kpi-mini-card kpi-net positive';
+      netCard.className = 'kpi-card kpi-mini-card kpi-net kpi-net-card positive';
     } else {
-      netCard.className = 'kpi-mini-card kpi-net negative';
+      netCard.className = 'kpi-card kpi-mini-card kpi-net kpi-net-card negative';
     }
+
+    const lblCfSubRev = document.getElementById('lbl-cf-sub-rev');
+    if (lblCfSubRev) lblCfSubRev.textContent = engine.tr('SUB_INFLOW') || 'Flux Entrant';
+    const lblCfSubDep = document.getElementById('lbl-cf-sub-dep');
+    if (lblCfSubDep) lblCfSubDep.textContent = engine.tr('SUB_OUTFLOW') || 'Flux Sortant';
+    const lblCfSubNet = document.getElementById('lbl-cf-sub-net');
+    if (lblCfSubNet) lblCfSubNet.textContent = cf.netCashflow >= 0 ? (engine.tr('SUB_SURPLUS') || 'Excédent Net') : (engine.tr('SUB_DEFICIT') || 'Déficit Net');
 
     // Render Dynamic SVG Charts
     renderTrendChart('svg-trend-chart-box');
@@ -2304,11 +2415,31 @@ document.addEventListener('DOMContentLoaded', () => {
     const heroVal = document.getElementById('nw-hero-val');
     heroVal.textContent = engine.formatMoney(nw.netWorth);
 
-    if (nw.netWorth >= 0) {
-      heroCard.className = 'networth-hero positive';
-    } else {
-      heroCard.className = 'networth-hero negative';
+    if (heroCard) {
+      heroCard.className = 'kpi-row kpi-networth-row ' + (nw.netWorth >= 0 ? 'positive' : 'negative');
     }
+    const nwCard = document.getElementById('card-nw-networth');
+    if (nwCard) {
+      nwCard.className = 'kpi-card kpi-networth-card ' + (nw.netWorth >= 0 ? 'positive' : 'negative');
+    }
+
+    const lblNwCard = document.getElementById('lbl-nw-card-networth');
+    if (lblNwCard) lblNwCard.textContent = engine.tr('NET_WORTH') || 'VALEUR NETTE';
+    const lblNwSub = document.getElementById('lbl-nw-sub-networth');
+    if (lblNwSub) lblNwSub.textContent = engine.tr('SUB_NET_WORTH') || 'Patrimoine Net';
+
+    const lblAssetsCard = document.getElementById('lbl-nw-card-assets');
+    if (lblAssetsCard) lblAssetsCard.textContent = engine.tr('TOTAL_ASSETS') || 'TOTAL ACTIFS';
+    const lblAssetsSub = document.getElementById('lbl-nw-sub-assets');
+    if (lblAssetsSub) lblAssetsSub.textContent = engine.tr('SUB_GROSS_ASSETS') || 'Actifs Bruts';
+
+    const lblDebtsCard = document.getElementById('lbl-nw-card-debts');
+    if (lblDebtsCard) lblDebtsCard.textContent = engine.tr('TOTAL_DEBTS') || 'TOTAL DETTES';
+    const lblDebtsSub = document.getElementById('lbl-nw-sub-debts');
+    if (lblDebtsSub) lblDebtsSub.textContent = engine.tr('SUB_LIABILITIES') || 'Engagements';
+
+    const lblAllocTitle = document.getElementById('lbl-nw-alloc-title');
+    if (lblAllocTitle) lblAllocTitle.textContent = engine.tr('ALLOC_TITLE') || 'RÉPARTITION & STRUCTURE DU PATRIMOINE';
 
     document.getElementById('nw-hero-assets').textContent = engine.formatMoney(nw.totalAssets);
     document.getElementById('nw-hero-liabilities').textContent = engine.formatMoney(nw.totalLiabilities);
@@ -3047,6 +3178,26 @@ document.addEventListener('DOMContentLoaded', () => {
     const expDate = document.getElementById('exp-tx-date');
     if (expDate) expDate.value = selectedInitDate;
 
+    txDeviseUserModified = false;
+    expTxDeviseUserModified = false;
+    allocDeviseUserModified = false;
+
+    const txDev = document.getElementById('tx-devise');
+    if (txDev) txDev.value = selectedInitCurr;
+    const expDev = document.getElementById('exp-tx-devise');
+    if (expDev) expDev.value = selectedInitCurr;
+    const allocDev = document.getElementById('alloc-devise');
+    if (allocDev) allocDev.value = selectedInitCurr;
+    const allocBadge = document.getElementById('alloc-currency-badge');
+    if (allocBadge) allocBadge.textContent = selectedInitCurr;
+    const addEntityDev = document.getElementById('add-entity-devise');
+    if (addEntityDev) addEntityDev.value = selectedInitCurr;
+
+    document.querySelectorAll('.curr-btn').forEach(btn => {
+      btn.classList.toggle('active', btn.dataset.curr === selectedInitCurr);
+    });
+
+    document.documentElement.classList.remove('gfmp-onboarding-active');
     modalInit?.classList.remove('open');
     showToast(`Système configuré : ${selectedInitLang} • ${selectedInitCurr} • ${selectedInitMonth === '00' ? selectedInitYear : selectedInitMonth + '/' + selectedInitYear}`, 'success');
     populateSelects();
@@ -3054,14 +3205,17 @@ document.addEventListener('DOMContentLoaded', () => {
     renderCurrentView();
   });
 
-  // Automatically show on first app launch / after APK installation
+  // Automatically show on first app launch / after APK installation (Zero-FOUC)
   if (engine.needsOnboarding && modalInit) {
+    document.documentElement.classList.add('gfmp-onboarding-active');
     modalInit.classList.add('open');
     try {
       updateInitModalUI();
     } catch (err) {
       console.error('Init modal UI update warning:', err);
     }
+  } else {
+    document.documentElement.classList.remove('gfmp-onboarding-active');
   }
 
   // --- 17. PWA BEFOREINSTALLPROMPT HANDLER ---

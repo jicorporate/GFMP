@@ -17,6 +17,17 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800;900&family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="styles.css?v=5.5.0">
+  <script>
+    (function() {
+      try {
+        var isUrlOnboarding = window.location.search && window.location.search.indexOf('onboarding=1') !== -1;
+        var flag = localStorage.getItem('gfmp_onboarding_v5_6');
+        if (isUrlOnboarding || flag !== 'true') {
+          document.documentElement.classList.add('gfmp-onboarding-active');
+        }
+      } catch(e) {}
+    })();
+  </script>
 </head>
 <body>
 
@@ -26,7 +37,6 @@
   <header class="gfmp-header">
     <div class="header-top">
       <div class="brand-wrapper">
-        <img src="assets/favicon_jic.png" alt="Emblème GFMP" width="38" height="38" fetchpriority="high" class="brand-logo-img">
         <div class="brand-text">
           <h1 id="app-title-display">SYSTÈME FINANCIER PERSONNEL</h1>
           <div class="sub-title" id="date-display">25 Février 2026</div>
@@ -223,7 +233,7 @@
               </svg>
               <h3 style="font-size:0.88rem;" id="hub-recent-title">DERNIÈRES TRANSACTIONS ENREGISTRÉES</h3>
             </div>
-            <button class="btn-allouer" id="btn-hub-quick-saisie" style="padding:4px 10px; font-size:0.68rem;">+ SAISIE EXPRESS</button>
+            <button type="button" class="btn-allouer" id="btn-hub-quick-saisie" aria-label="Saisie Express" style="padding:4px 10px; font-size:0.68rem;">+ SAISIE EXPRESS</button>
           </div>
           <table class="violet-zebra-table" style="margin-top:6px;">
             <thead>
@@ -278,7 +288,14 @@
             <label class="form-label" id="lbl-form-montant" for="tx-montant">Montant</label>
             <div class="hero-amount-box">
               <input type="number" step="0.01" id="tx-montant" class="hero-amount-input" placeholder="0.00" required>
-              <select id="tx-devise" class="hero-amount-currency" aria-label="Devise de la transaction" style="border:none; cursor:pointer; outline:none;"></select>
+              <select id="tx-devise" class="hero-amount-currency" aria-label="Devise de la transaction">
+                <option value="MUR">MUR</option>
+                <option value="EUR">EUR</option>
+                <option value="USD">USD</option>
+                <option value="GBP">GBP</option>
+                <option value="ZAR">ZAR</option>
+                <option value="XOF">XOF</option>
+              </select>
             </div>
             <!-- Quick Amount Chips -->
             <div class="quick-amount-row">
@@ -344,19 +361,22 @@
         <span>Hub Central</span>
       </button>
 
-      <!-- 3 Solid Mini-Cards -->
-      <div class="kpi-row">
-        <div class="kpi-mini-card kpi-rev">
+      <!-- 3 Dedicated KPI Cards for Cashflow (Cutting-Edge Responsive) -->
+      <div class="kpi-row kpi-cashflow-row">
+        <div class="kpi-card kpi-mini-card kpi-rev kpi-rev-card" id="card-cf-rev">
           <div class="kpi-mini-label" id="lbl-kpi-rev">REVENUS</div>
           <div class="kpi-mini-value" id="kpi-cashflow-rev">0,00 Rs</div>
+          <div class="kpi-card-sub" id="lbl-cf-sub-rev">Flux Entrant</div>
         </div>
-        <div class="kpi-mini-card kpi-dep">
+        <div class="kpi-card kpi-mini-card kpi-dep kpi-dep-card" id="card-cf-dep">
           <div class="kpi-mini-label" id="lbl-kpi-dep">DÉPENSES</div>
           <div class="kpi-mini-value" id="kpi-cashflow-dep">0,00 Rs</div>
+          <div class="kpi-card-sub" id="lbl-cf-sub-dep">Flux Sortant</div>
         </div>
-        <div class="kpi-mini-card kpi-net" id="card-kpi-net">
+        <div class="kpi-card kpi-mini-card kpi-net kpi-net-card" id="card-kpi-net">
           <div class="kpi-mini-label" id="lbl-kpi-net">CASHFLOW NET</div>
           <div class="kpi-mini-value" id="kpi-cashflow-net">0,00 Rs</div>
+          <div class="kpi-card-sub" id="lbl-cf-sub-net">Solde Périodique</div>
         </div>
       </div>
 
@@ -452,20 +472,31 @@
         <span>Hub Central</span>
       </button>
 
-      <div class="networth-hero" id="networth-hero-card">
-        <div class="networth-label" id="lbl-networth-title">VALEUR NETTE PATRIMONIALE</div>
-        <div class="networth-val" id="nw-hero-val">0,00 Rs</div>
-        <div class="networth-breakdown">
-          <div class="nw-sub-col">
-            <div class="nw-sub-label" id="lbl-nw-assets">Total Actifs</div>
-            <div class="nw-sub-val assets" id="nw-hero-assets">0,00 Rs</div>
-          </div>
-          <div class="nw-sub-col">
-            <div class="nw-sub-label" id="lbl-nw-debts">Total Dettes</div>
-            <div class="nw-sub-val liabilities" id="nw-hero-liabilities">0,00 Rs</div>
-          </div>
+      <!-- 3 Dedicated KPI Cards for Net Worth (Cutting-Edge Responsive) -->
+      <div class="kpi-row kpi-networth-row" id="networth-hero-card">
+        <div class="kpi-card kpi-networth-card" id="card-nw-networth">
+          <div class="kpi-mini-label" id="lbl-nw-card-networth">VALEUR NETTE</div>
+          <div class="kpi-mini-value" id="nw-hero-val">0,00 Rs</div>
+          <div class="kpi-card-sub" id="lbl-nw-sub-networth">Patrimoine Net</div>
         </div>
+        <div class="kpi-card kpi-assets-card" id="card-nw-assets">
+          <div class="kpi-mini-label" id="lbl-nw-card-assets">TOTAL ACTIFS</div>
+          <div class="kpi-mini-value assets" id="nw-hero-assets">0,00 Rs</div>
+          <div class="kpi-card-sub" id="lbl-nw-sub-assets">Actifs Bruts</div>
+        </div>
+        <div class="kpi-card kpi-debts-card" id="card-nw-debts">
+          <div class="kpi-mini-label" id="lbl-nw-card-debts">TOTAL DETTES</div>
+          <div class="kpi-mini-value liabilities" id="nw-hero-liabilities">0,00 Rs</div>
+          <div class="kpi-card-sub" id="lbl-nw-sub-debts">Engagements</div>
+        </div>
+      </div>
 
+      <!-- Asset Allocation & Wealth Structure Dedicated Card -->
+      <div class="chart-card nw-allocation-card" id="nw-allocation-card">
+        <div class="chart-header">
+          <h3 id="lbl-nw-alloc-title">RÉPARTITION & STRUCTURE DU PATRIMOINE</h3>
+          <span style="font-size:0.7rem; color:var(--text-muted);" id="lbl-nw-alloc-sub">Actifs Détenus</span>
+        </div>
         <!-- Barre Empilée Proportionnelle des Actifs -->
         <div class="asset-stack-bar" id="nw-asset-stack-bar">
           <!-- Injected via app.js -->
@@ -780,7 +811,14 @@
           </div>
           <div class="hero-amount-box">
             <input type="number" step="0.01" id="exp-tx-montant" class="hero-amount-input" placeholder="0.00" required>
-            <select id="exp-tx-devise" class="hero-amount-currency" style="border:none; cursor:pointer; outline:none;"></select>
+            <select id="exp-tx-devise" class="hero-amount-currency" aria-label="Devise de la transaction rapide">
+              <option value="MUR">MUR</option>
+              <option value="EUR">EUR</option>
+              <option value="USD">USD</option>
+              <option value="GBP">GBP</option>
+              <option value="ZAR">ZAR</option>
+              <option value="XOF">XOF</option>
+            </select>
           </div>
           <div class="quick-amount-row">
             <button type="button" class="quick-amount-chip exp-chip" data-add="1000">+1 000</button>
@@ -898,7 +936,15 @@
           </div>
           <div class="hero-amount-box">
             <input type="number" step="0.01" id="alloc-montant" class="hero-amount-input" placeholder="0.00" required>
-            <span class="hero-amount-currency" id="alloc-currency-badge">MUR</span>
+            <select id="alloc-devise" class="hero-amount-currency" aria-label="Devise de l'enveloppe budgétaire">
+              <option value="MUR">MUR</option>
+              <option value="EUR">EUR</option>
+              <option value="USD">USD</option>
+              <option value="GBP">GBP</option>
+              <option value="ZAR">ZAR</option>
+              <option value="XOF">XOF</option>
+            </select>
+            <span class="hero-amount-currency" id="alloc-currency-badge" style="display:none;">MUR</span>
           </div>
           <div class="quick-amount-row">
             <button type="button" class="quick-amount-chip alloc-chip" data-add="1000">+1 000</button>

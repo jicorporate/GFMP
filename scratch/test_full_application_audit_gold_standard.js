@@ -221,7 +221,8 @@ console.log('===================================================================
   const stylesCss = fs.readFileSync(path.join(MOBILE_WEB, 'styles.css'), 'utf8');
   const swJs = fs.readFileSync(path.join(MOBILE_WEB, 'sw.js'), 'utf8');
 
-  assertAudit(P, indexHtml.includes('width="38" height="38" fetchpriority="high"'), 'Header LCP brand emblem image has explicit width/height and fetchpriority="high"');
+  const headerMatch = indexHtml.match(/<header[\s\S]*?<\/header>/)?.[0] || '';
+  assertAudit(P, !headerMatch.includes('<img') && !headerMatch.includes('class="brand-logo-img"'), 'Header has zero clutter icon (pure Haute Joaillerie typography, zero image CLS)');
   assertAudit(P, stylesCss.includes('overflow-anchor: none;'), 'App header and main container prevent browser scroll-anchoring jitter');
   assertAudit(P, swJs.includes('gfmp-mobile-v1.01-prod') && swJs.includes('./analytics-engine.js') && swJs.includes('./baseline_data.js'), 'Service Worker caches all core application assets for 100% offline execution');
 }

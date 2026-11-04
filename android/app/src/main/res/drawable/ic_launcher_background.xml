@@ -8,24 +8,15 @@
     <path android:pathData="M0,0h108v108h-108z">
         <aapt:attr name="android:fillColor">
             <gradient
-                android:startX="12"
-                android:startY="8"
-                android:endX="96"
-                android:endY="100"
+                android:startX="54"
+                android:startY="0"
+                android:endX="54"
+                android:endY="108"
                 android:type="linear">
-                <item android:offset="0.0" android:color="#070E24" />
-                <item android:offset="0.52" android:color="#102052" />
-                <item android:offset="1.0" android:color="#1E3A8A" />
+                <item android:offset="0.0" android:color="#F308FD" />
+                <item android:offset="0.5" android:color="#8D60F0" />
+                <item android:offset="1.0" android:color="#29B8E4" />
             </gradient>
         </aapt:attr>
     </path>
-    <!-- Concentric Haute Joaillerie guilloché rings -->
-    <path
-        android:pathData="M54,54m-41,0a41,41 0,1,1 82,0a41,41 0,1,1 -82,0"
-        android:strokeWidth="1.4"
-        android:strokeColor="#66FADA5E" />
-    <path
-        android:pathData="M54,54m-37.5,0a37.5,37.5 0,1,1 75,0a37.5,37.5 0,1,1 -75,0"
-        android:strokeWidth="0.7"
-        android:strokeColor="#38FADA5E" />
 </vector>

@@ -1,78 +1,134 @@
 <?xml version="1.0" encoding="utf-8"?>
 <vector xmlns:android="http://schemas.android.com/apk/res/android"
-    xmlns:aapt="http://schemas.android.com/aapt"
     android:width="108dp"
     android:height="108dp"
     android:viewportWidth="108"
     android:viewportHeight="108">
 
-    <!-- Outer Gold Medallion Ring -->
+    <!-- 1. Financial Statement Document (Sheet of Paper) -->
     <path
-        android:pathData="M54,54m-35,0a35,35 0,1,1 70,0a35,35 0,1,1 -70,0"
-        android:strokeWidth="2.4"
-        android:strokeColor="#FADA5E" />
-
-    <!-- Cardinal Sovereign Studs -->
-    <path
-        android:pathData="M54,19m-1.8,0a1.8,1.8 0,1,1 3.6,0a1.8,1.8 0,1,1 -3.6,0"
-        android:fillColor="#FFF6B7" />
-    <path
-        android:pathData="M54,89m-1.8,0a1.8,1.8 0,1,1 3.6,0a1.8,1.8 0,1,1 -3.6,0"
-        android:fillColor="#FADA5E" />
-    <path
-        android:pathData="M19,54m-1.8,0a1.8,1.8 0,1,1 3.6,0a1.8,1.8 0,1,1 -3.6,0"
-        android:fillColor="#FADA5E" />
-    <path
-        android:pathData="M89,54m-1.8,0a1.8,1.8 0,1,1 3.6,0a1.8,1.8 0,1,1 -3.6,0"
-        android:fillColor="#FADA5E" />
-
-    <!-- Sovereign Cut Diamond Crest (Haute Joaillerie Wealth Crown) -->
-    <path android:pathData="M48.5,25.5 L59.5,25.5 L64,31 L54,42 L44,31 Z">
-        <aapt:attr name="android:fillColor">
-            <gradient
-                android:startX="44"
-                android:startY="25"
-                android:endX="64"
-                android:endY="42"
-                android:type="linear">
-                <item android:offset="0.0" android:color="#FFF9D2" />
-                <item android:offset="0.45" android:color="#FADA5E" />
-                <item android:offset="1.0" android:color="#C59B27" />
-            </gradient>
-        </aapt:attr>
-    </path>
-    <path
-        android:pathData="M44.3,31 L63.7,31 M48.5,25.5 L50.2,31 L54,41.7 L57.8,31 L59.5,25.5"
-        android:strokeWidth="0.9"
-        android:strokeColor="#FFF9D2" />
-
-    <!-- Ascending Private Banking Wealth Pillars -->
-    <path
-        android:pathData="M35.5,58.5 L44.5,58.5 L44.5,71.5 L35.5,71.5 Z"
-        android:fillColor="#D4AF37"
-        android:strokeWidth="0.8"
-        android:strokeColor="#FFF9D2" />
-    <path
-        android:pathData="M49.5,52 L58.5,52 L58.5,71.5 L49.5,71.5 Z"
-        android:fillColor="#EAB308"
-        android:strokeWidth="0.8"
-        android:strokeColor="#FFF9D2" />
-    <path
-        android:pathData="M63.5,44 L72.5,44 L72.5,71.5 L63.5,71.5 Z"
-        android:fillColor="#FADA5E"
-        android:strokeWidth="0.8"
-        android:strokeColor="#FFF9D2" />
-
-    <!-- Dual-Tier Gold Pedestal Base -->
-    <path
-        android:pathData="M32,75 L76,75"
-        android:strokeWidth="2.5"
+        android:pathData="M38,54 L38,26.5 A3,3 0 0,1 41,23.5 L70,23.5 A3,3 0 0,1 73,26.5 L73,53"
+        android:strokeWidth="1.8"
+        android:strokeColor="#FFFFFF"
         android:strokeLineCap="round"
-        android:strokeColor="#FADA5E" />
+        android:strokeLineJoin="round" />
+
+    <!-- Document Header Dollar Sign -->
     <path
-        android:pathData="M39,79 L69,79"
+        android:pathData="M44.5,27.5 L44.5,37.5 M47,29.5 C47,28.2 43,28.2 43,31 C43,33.8 47,33.5 47,35.5 C47,37.2 43,37.2 43,36"
+        android:strokeWidth="1.4"
+        android:strokeColor="#FFFFFF"
+        android:strokeLineCap="round" />
+
+    <!-- Document Header Parallel Lines -->
+    <path
+        android:pathData="M51,29.5 L69,29.5"
         android:strokeWidth="1.6"
+        android:strokeColor="#FFFFFF"
+        android:strokeLineCap="round" />
+    <path
+        android:pathData="M51,33.5 L69,33.5"
+        android:strokeWidth="1.6"
+        android:strokeColor="#FFFFFF"
+        android:strokeLineCap="round" />
+
+    <!-- Document Body Content Lines -->
+    <path
+        android:pathData="M39.5,39 L55,39"
+        android:strokeWidth="1.6"
+        android:strokeColor="#FFFFFF"
+        android:strokeLineCap="round" />
+    <path
+        android:pathData="M39.5,43 L53,43"
+        android:strokeWidth="1.6"
+        android:strokeColor="#FFFFFF"
+        android:strokeLineCap="round" />
+
+    <!-- Bar Chart at Document Bottom-Right -->
+    <path
+        android:pathData="M58,37 L58,44 L69,44"
+        android:strokeWidth="1.5"
+        android:strokeColor="#FFFFFF"
         android:strokeLineCap="round"
-        android:strokeColor="#D4AF37" />
+        android:strokeLineJoin="round" />
+    <path
+        android:pathData="M61,44 L61,41"
+        android:strokeWidth="1.8"
+        android:strokeColor="#FFFFFF"
+        android:strokeLineCap="round" />
+    <path
+        android:pathData="M64.5,44 L64.5,39"
+        android:strokeWidth="1.8"
+        android:strokeColor="#FFFFFF"
+        android:strokeLineCap="round" />
+    <path
+        android:pathData="M68,44 L68,36.5"
+        android:strokeWidth="1.8"
+        android:strokeColor="#FFFFFF"
+        android:strokeLineCap="round" />
+
+    <!-- 2. Wealth Money Bag (Bottom-Left) -->
+    <!-- Tied Neck and Ribbon -->
+    <path
+        android:pathData="M39,49 C42,47 46,47 49,49 M42.5,48 C44,45.5 48.5,45.5 50.5,48 M45,49 C47.5,50.8 49.5,51.5 51.5,50.8"
+        android:strokeWidth="1.5"
+        android:strokeColor="#FFFFFF"
+        android:strokeLineCap="round"
+        android:strokeLineJoin="round" />
+
+    <!-- Bag Pouch Body -->
+    <path
+        android:pathData="M38,51 C32.5,54.5 32,65 37.5,68.5 C41.5,71 46.5,71 50.5,68.5 C56,65 55.5,54.5 50,51 C46.5,49.5 41.5,49.5 38,51 Z"
+        android:strokeWidth="1.8"
+        android:strokeColor="#FFFFFF"
+        android:strokeLineCap="round"
+        android:strokeLineJoin="round" />
+
+    <!-- Money Bag Dollar Crest Circle -->
+    <path
+        android:pathData="M44,61 m-5,0 a5,5 0 1,1 10,0 a5,5 0 1,1 -10,0"
+        android:strokeWidth="1.4"
+        android:strokeColor="#FFFFFF" />
+
+    <!-- Money Bag Dollar Sign Inside Circle -->
+    <path
+        android:pathData="M44,58 L44,64 M45.5,59.2 C45.5,58.4 42.5,58.4 42.5,60.2 C42.5,62 45.5,61.8 45.5,63 C45.5,63.9 42.5,63.9 42.5,63.2"
+        android:strokeWidth="1.2"
+        android:strokeColor="#FFFFFF"
+        android:strokeLineCap="round" />
+
+    <!-- 3. Financial Calculator (Bottom-Right) -->
+    <!-- Outer Calculator Body -->
+    <path
+        android:pathData="M56.5,48 L73.5,48 A2.8,2.8 0 0,1 76.3,50.8 L76.3,71.2 A2.8,2.8 0 0,1 73.5,74 L56.5,74 A2.8,2.8 0 0,1 53.7,71.2 L53.7,50.8 A2.8,2.8 0 0,1 56.5,48 Z"
+        android:strokeWidth="1.8"
+        android:strokeColor="#FFFFFF"
+        android:strokeLineCap="round"
+        android:strokeLineJoin="round" />
+
+    <!-- Screen Display -->
+    <path
+        android:pathData="M54.5,54 L75.5,54"
+        android:strokeWidth="1.6"
+        android:strokeColor="#FFFFFF" />
+
+    <!-- 9 Keypad Buttons (3x3 Grid with Smooth Rounded Rectangles) -->
+    <!-- Row 1 -->
+    <path
+        android:pathData="M56.5,58 A1.6,1.6 0 1,1 56.4,58 M65,58 A1.6,1.6 0 1,1 64.9,58 M72.5,58 A1.6,1.6 0 1,1 72.4,58"
+        android:strokeWidth="1.5"
+        android:strokeColor="#FFFFFF" />
+
+    <!-- Row 2 -->
+    <path
+        android:pathData="M56.5,63.5 A1.6,1.6 0 1,1 56.4,63.5 M65,63.5 A1.6,1.6 0 1,1 64.9,63.5 M72.5,63.5 A1.6,1.6 0 1,1 72.4,63.5"
+        android:strokeWidth="1.5"
+        android:strokeColor="#FFFFFF" />
+
+    <!-- Row 3 -->
+    <path
+        android:pathData="M56.5,69 A1.6,1.6 0 1,1 56.4,69 M65,69 A1.6,1.6 0 1,1 64.9,69 M72.5,69 A1.6,1.6 0 1,1 72.4,69"
+        android:strokeWidth="1.5"
+        android:strokeColor="#FFFFFF" />
 
 </vector>

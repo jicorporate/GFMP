@@ -165,17 +165,25 @@ window.GFMP_BASELINE = {
   ],
   "transactions": [],
   "budgets": [],
+  "devises": {
+    "XOF": 1.0,
+    "MUR": 12.2243,
+    "EUR": 656.168,
+    "USD": 567.5369,
+    "GBP": 757.0023,
+    "ZAR": 33.2723
+  },
   "config": {
     "SYS_DEVISE_BASE": "MUR",
     "LANGUE_UI": "FR",
     "SYS_DATA_MODE": "EMPTY",
     "TAUX_CHANGE": {
-      "MUR": 1.0,
-      "EUR": 50.6787,
-      "USD": 46.5214,
-      "GBP": 59.4321,
-      "ZAR": 2.5412,
-      "XOF": 0.0772
+      "XOF": 1.0,
+      "MUR": 12.2243,
+      "EUR": 656.168,
+      "USD": 567.5369,
+      "GBP": 757.0023,
+      "ZAR": 33.2723
     },
     "TAUX_DATE_MAJ": "2026-11-04T00:00:00.000Z",
     "THEME": "DARK_ROYAL",
