@@ -1987,6 +1987,117 @@ body.theme-amethyst .gfmp-header {
   box-shadow: 0 6px 24px rgba(120, 81, 169, 0.35);
 }
 
+body.theme-cutting-edge,
+body.theme-neon,
+body.theme-icon {
+  --c-blue-royal: #8D60F0;
+  --c-blue-glow: rgba(141, 96, 240, 0.45);
+  --c-yellow-royal: #29B8E4;
+  --c-yellow-glow: rgba(41, 184, 228, 0.45);
+  --border-gold: #29B8E4;
+  --bg-app: #070614;
+  --bg-card: rgba(22, 14, 42, 0.82);
+  --bg-card-hover: rgba(35, 22, 68, 0.92);
+  accent-color: #29B8E4;
+}
+
+body.theme-cutting-edge .gfmp-header,
+body.theme-neon .gfmp-header,
+body.theme-icon .gfmp-header {
+  background: linear-gradient(135deg, rgba(243, 8, 253, 0.95) 0%, rgba(141, 96, 240, 0.95) 50%, rgba(41, 184, 228, 0.95) 100%);
+  box-shadow: 0 6px 26px rgba(141, 96, 240, 0.5), 0 2px 10px rgba(41, 184, 228, 0.35);
+  border-bottom: 2px solid #29B8E4;
+}
+
+body.theme-cutting-edge .btn-allouer,
+body.theme-neon .btn-allouer,
+body.theme-icon .btn-allouer,
+body.theme-cutting-edge .fab-quick-add,
+body.theme-neon .fab-quick-add,
+body.theme-icon .fab-quick-add,
+body.theme-cutting-edge .btn-primary-alloc,
+body.theme-neon .btn-primary-alloc,
+body.theme-icon .btn-primary-alloc {
+  background: linear-gradient(135deg, #F308FD 0%, #8D60F0 50%, #29B8E4 100%);
+  color: #FFFFFF;
+  box-shadow: 0 6px 20px rgba(141, 96, 240, 0.5);
+}
+
+body.theme-cutting-edge .init-choice-card.active,
+body.theme-neon .init-choice-card.active,
+body.theme-icon .init-choice-card.active {
+  background: linear-gradient(145deg, rgba(243, 8, 253, 0.18), rgba(41, 184, 228, 0.18));
+  border-color: #29B8E4;
+  box-shadow: 0 6px 20px rgba(41, 184, 228, 0.28), inset 0 0 12px rgba(243, 8, 253, 0.12);
+}
+
+body.theme-cutting-edge #modal-initialization,
+body.theme-neon #modal-initialization,
+body.theme-icon #modal-initialization {
+  background: radial-gradient(circle at 50% 0%, rgba(243, 8, 253, 0.22) 0%, rgba(141, 96, 240, 0.18) 40%, rgba(7, 6, 20, 0.99) 85%), #070614;
+}
+
+body.theme-cutting-edge .init-hero-banner,
+body.theme-neon .init-hero-banner,
+body.theme-icon .init-hero-banner {
+  background: linear-gradient(155deg, rgba(35, 16, 62, 0.88) 0%, rgba(14, 10, 28, 0.96) 100%);
+  border: 1px solid rgba(41, 184, 228, 0.45);
+  box-shadow: 0 18px 45px rgba(0, 0, 0, 0.65), inset 0 1px 0 rgba(243, 8, 253, 0.25);
+}
+
+body.theme-cutting-edge .init-brand-emblem,
+body.theme-neon .init-brand-emblem,
+body.theme-icon .init-brand-emblem {
+  background: radial-gradient(circle at 30% 25%, rgba(243, 8, 253, 0.35), rgba(41, 184, 228, 0.25) 50%, rgba(14, 10, 28, 0.95) 75%);
+  border: 1.5px solid #29B8E4;
+  box-shadow: 0 10px 32px rgba(0, 0, 0, 0.55), 0 0 28px rgba(243, 8, 253, 0.45), inset 0 1px 1px rgba(255, 255, 255, 0.35);
+}
+
+body.theme-cutting-edge .init-emblem-glow,
+body.theme-neon .init-emblem-glow,
+body.theme-icon .init-emblem-glow {
+  background: radial-gradient(circle, rgba(243, 8, 253, 0.45) 0%, rgba(41, 184, 228, 0.25) 48%, transparent 72%);
+}
+
+body.theme-cutting-edge .init-version-pill,
+body.theme-neon .init-version-pill,
+body.theme-icon .init-version-pill {
+  background: linear-gradient(135deg, rgba(243, 8, 253, 0.18), rgba(41, 184, 228, 0.18));
+  border: 1px solid rgba(41, 184, 228, 0.5);
+  color: #29B8E4;
+}
+
+body.theme-cutting-edge .alloc-question-badge,
+body.theme-neon .alloc-question-badge,
+body.theme-icon .alloc-question-badge {
+  background: linear-gradient(135deg, rgba(243, 8, 253, 0.22), rgba(41, 184, 228, 0.22));
+  border: 1px solid rgba(41, 184, 228, 0.55);
+  color: #29B8E4;
+}
+
+body.theme-cutting-edge #btn-confirm-init,
+body.theme-cutting-edge .btn-confirm-init,
+body.theme-neon #btn-confirm-init,
+body.theme-neon .btn-confirm-init,
+body.theme-icon #btn-confirm-init,
+body.theme-icon .btn-confirm-init {
+  background: linear-gradient(135deg, #F308FD 0%, #8D60F0 50%, #29B8E4 100%) !important;
+  color: #FFFFFF !important;
+  box-shadow: 0 8px 30px rgba(141, 96, 240, 0.55), 0 2px 10px rgba(41, 184, 228, 0.4) !important;
+}
+
+body.theme-cutting-edge .bottom-nav .nav-tab.active,
+body.theme-neon .bottom-nav .nav-tab.active,
+body.theme-icon .bottom-nav .nav-tab.active {
+  color: #29B8E4;
+}
+
+body.theme-cutting-edge .bottom-nav .nav-tab.active::after,
+body.theme-neon .bottom-nav .nav-tab.active::after,
+body.theme-icon .bottom-nav .nav-tab.active::after {
+  background: linear-gradient(90deg, #F308FD, #29B8E4);
+}
+
 .theme-choice-btn {
   transition: var(--transition);
 }

@@ -29,7 +29,7 @@
     })();
   </script>
 </head>
-<body>
+<body class="theme-cutting-edge">
 
   <!-- =========================================================================
        BANDEAU SUPÉRIEUR HAUTE JOAILLERIE (BLEU ROYAL & OR)
@@ -622,9 +622,9 @@
           <span style="font-size:0.7rem; color:var(--text-muted);">Personnalisation instantanée</span>
         </div>
         <div class="settings-theme-grid" id="settings-theme-selector" style="display:grid; grid-template-columns:repeat(2, 1fr); gap:8px; margin-top:8px;">
-          <button type="button" class="theme-choice-btn active" data-theme="blue" style="display:flex; align-items:center; gap:8px; padding:10px; border-radius:10px; background:rgba(65,105,225,0.18); border:1.5px solid #4169E1; color:#FFF; font-weight:700; font-size:0.75rem; cursor:pointer;">
-            <span style="width:14px; height:14px; border-radius:50%; background:#4169E1; border:1.5px solid #FADA5E; flex-shrink:0;"></span>
-            <span>Bleu Royal (Défaut)</span>
+          <button type="button" class="theme-choice-btn" data-theme="blue" style="display:flex; align-items:center; gap:8px; padding:10px; border-radius:10px; background:rgba(65,105,225,0.18); border:1px solid rgba(65,105,225,0.3); color:#FFF; font-weight:700; font-size:0.75rem; cursor:pointer;">
+            <span style="width:14px; height:14px; border-radius:50%; background:#4169E1; border:1px solid #FFF; flex-shrink:0;"></span>
+            <span>Bleu Royal</span>
           </button>
           <button type="button" class="theme-choice-btn" data-theme="gold" style="display:flex; align-items:center; gap:8px; padding:10px; border-radius:10px; background:rgba(250,218,94,0.1); border:1px solid rgba(250,218,94,0.3); color:#FFF; font-weight:700; font-size:0.75rem; cursor:pointer;">
             <span style="width:14px; height:14px; border-radius:50%; background:#FADA5E; border:1px solid #FFF; flex-shrink:0;"></span>
@@ -637,6 +637,10 @@
           <button type="button" class="theme-choice-btn" data-theme="amethyst" style="display:flex; align-items:center; gap:8px; padding:10px; border-radius:10px; background:rgba(120,81,169,0.1); border:1px solid rgba(120,81,169,0.3); color:#FFF; font-weight:700; font-size:0.75rem; cursor:pointer;">
             <span style="width:14px; height:14px; border-radius:50%; background:#7851A9; border:1px solid #FFF; flex-shrink:0;"></span>
             <span>Améthyste Royale</span>
+          </button>
+          <button type="button" class="theme-choice-btn active" data-theme="cutting-edge" style="display:flex; align-items:center; gap:8px; padding:10px; border-radius:10px; background:linear-gradient(135deg, rgba(243,8,253,0.18), rgba(41,184,228,0.18)); border:1.5px solid #29B8E4; color:#FFF; font-weight:700; font-size:0.75rem; cursor:pointer; grid-column:span 2;">
+            <span style="width:14px; height:14px; border-radius:50%; background:linear-gradient(135deg, #F308FD 0%, #8D60F0 50%, #29B8E4 100%); border:1px solid #FFF; flex-shrink:0;"></span>
+            <span>Cutting-Edge Néon (Thème Icône — Défaut)</span>
           </button>
         </div>
       </div>
@@ -1304,7 +1308,18 @@
             Personnalisez l'ambiance Haute Joaillerie de votre interface avec aperçu instantané en direct.
           </p>
           <div class="init-choice-grid init-theme-grid-layout" id="init-theme-grid">
-            <button type="button" class="init-choice-card active" data-init-theme="blue" aria-pressed="true">
+            <button type="button" class="init-choice-card active" data-init-theme="cutting-edge" aria-pressed="true" style="grid-column: span 2;">
+              <div class="init-card-top">
+                <span class="init-theme-swatch">
+                  <span class="swatch-primary" style="background:linear-gradient(135deg, #F308FD 0%, #8D60F0 100%);"></span>
+                  <span class="swatch-accent" style="background:#29B8E4; border-color:#FFFFFF;"></span>
+                </span>
+                <span class="init-card-check" aria-hidden="true">✓</span>
+              </div>
+              <span class="init-choice-name" data-theme-name="CUTTING-EDGE">Cutting-Edge Néon</span>
+              <span class="init-choice-sub" data-theme-sub="CUTTING-EDGE">Design Icône • Magenta Néon &amp; Cyan</span>
+            </button>
+            <button type="button" class="init-choice-card" data-init-theme="blue" aria-pressed="false">
               <div class="init-card-top">
                 <span class="init-theme-swatch">
                   <span class="swatch-primary" style="background:#4169E1;"></span>
@@ -1356,7 +1371,7 @@
         <div class="init-footer-box">
           <div class="init-live-summary" id="init-live-summary">
             <span class="init-summary-dot"></span>
-            <span id="init-summary-text">Configuration active : <strong>Français (FR)</strong> • <strong>MUR (Rs)</strong></span>
+            <span id="init-summary-text">Configuration active : <strong>Français (FR)</strong> • <strong>MUR (Rs)</strong> • <strong>Cutting-Edge Néon</strong></span>
           </div>
           <button type="button" class="btn-primary-alloc" id="btn-confirm-init">
             <span id="lbl-btn-confirm-init">CONFIRMER &amp; LANCER L'APPLICATION</span>

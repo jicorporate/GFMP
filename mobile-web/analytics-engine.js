@@ -739,7 +739,7 @@ class GFMPEngine {
     this.year = '2026';
     this.month = '02'; // '00' = Année entière
     this.referenceDate = '2026-02-27';
-    this.theme = 'blue';
+    this.theme = 'cutting-edge';
     this.dataMode = 'EMPTY'; // Production v1.01: clean sovereign portfolio without test data
     this.currentView = 'home';
     this.hubFilter = 'ALL'; // 'ALL', 'CASHFLOW', 'PATRIMOINE', 'BUDGET'
@@ -1419,6 +1419,10 @@ class GFMPEngine {
       'THEME_SUB_EMERALD': { FR: 'Banque Privée • Émeraude', EN: 'Private Banking • Emerald', ES: 'Banca Privada • Esmeralda', PT: 'Private Banking • Esmeralda' },
       'THEME_NAME_AMETHYST': { FR: 'Améthyste Royale', EN: 'Royal Amethyst', ES: 'Amatista Real', PT: 'Ametista Real' },
       'THEME_SUB_AMETHYST': { FR: 'Haute Joaillerie • Pourpre', EN: 'Haute Joaillerie • Purple', ES: 'Alta Joyería • Púrpura', PT: 'Alta Joalharia • Púrpura' },
+      'THEME_NAME_CUTTING_EDGE': { FR: 'Cutting-Edge Néon', EN: 'Cutting-Edge Neon', ES: 'Cutting-Edge Neón', PT: 'Cutting-Edge Neon' },
+      'THEME_SUB_CUTTING_EDGE': { FR: 'Design Icône • Magenta Néon & Cyan', EN: 'Icon Design • Neon Magenta & Cyan', ES: 'Diseño Ícono • Magenta Neón y Cian', PT: 'Design Ícone • Magenta Neon e Ciano' },
+      'THEME_NAME_CUTTING-EDGE': { FR: 'Cutting-Edge Néon', EN: 'Cutting-Edge Neon', ES: 'Cutting-Edge Neón', PT: 'Cutting-Edge Neon' },
+      'THEME_SUB_CUTTING-EDGE': { FR: 'Design Icône • Magenta Néon & Cyan', EN: 'Icon Design • Neon Magenta & Cyan', ES: 'Diseño Ícono • Magenta Neón y Cian', PT: 'Design Ícone • Magenta Neon e Ciano' },
       'CURR_NAME_MUR': { FR: 'Roupie (Rs)', EN: 'Rupee (Rs)', ES: 'Rupia (Rs)', PT: 'Rupia (Rs)' },
       'CURR_NAME_EUR': { FR: 'Euro (€)', EN: 'Euro (€)', ES: 'Euro (€)', PT: 'Euro (€)' },
       'CURR_NAME_USD': { FR: 'Dollar ($)', EN: 'US Dollar ($)', ES: 'Dólar ($)', PT: 'Dólar ($)' },
@@ -1912,10 +1916,10 @@ class GFMPEngine {
   initializeSystem(defaultCurrency = 'MUR', defaultLanguage = 'FR', defaultDate = null, defaultTheme = null, defaultYear = null, defaultMonth = null, useDemoData = false) {
     const sanitizedCurrency = (typeof defaultCurrency === 'string') ? defaultCurrency.trim().toUpperCase() : 'MUR';
     const sanitizedLanguage = (typeof defaultLanguage === 'string') ? defaultLanguage.trim().toUpperCase() : 'FR';
-    const validThemes = ['blue', 'gold', 'emerald', 'amethyst'];
-    const sanitizedTheme = (typeof defaultTheme === 'string' && validThemes.includes(defaultTheme.trim().toLowerCase()))
-      ? defaultTheme.trim().toLowerCase()
-      : (this.theme || 'blue');
+    const validThemes = ['blue', 'gold', 'emerald', 'amethyst', 'cutting-edge', 'cutting_edge', 'neon', 'icon'];
+    let rawTheme = (typeof defaultTheme === 'string') ? defaultTheme.trim().toLowerCase() : (this.theme || 'cutting-edge');
+    if (rawTheme === 'cutting_edge' || rawTheme === 'neon' || rawTheme === 'icon') rawTheme = 'cutting-edge';
+    const sanitizedTheme = validThemes.includes(rawTheme) ? rawTheme : 'cutting-edge';
     const isDemo = (useDemoData === true || String(useDemoData).trim().toUpperCase() === 'DEMO');
     const resolvedMode = isDemo ? 'DEMO' : 'EMPTY';
 

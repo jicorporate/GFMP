@@ -2685,11 +2685,11 @@ document.addEventListener('DOMContentLoaded', () => {
     const setLng = document.getElementById('settings-lang-select');
     if (setLng) setLng.value = engine.lang;
 
-    const currentTheme = localStorage.getItem('gfmp_theme') || 'blue';
+    const currentTheme = localStorage.getItem('gfmp_theme') || engine.theme || 'cutting-edge';
     document.querySelectorAll('#settings-theme-selector .theme-choice-btn').forEach(btn => {
       if (btn.dataset.theme === currentTheme) {
         btn.classList.add('active');
-        btn.style.borderColor = '#FADA5E';
+        btn.style.borderColor = (currentTheme === 'cutting-edge') ? '#29B8E4' : '#FADA5E';
       } else {
         btn.classList.remove('active');
         btn.style.borderColor = 'rgba(255,255,255,0.15)';
@@ -2788,8 +2788,14 @@ document.addEventListener('DOMContentLoaded', () => {
 
   // Apply saved theme on startup
   const savedTheme = localStorage.getItem('gfmp_theme');
-  if (savedTheme && savedTheme !== 'blue') {
-    document.body.className = `theme-${savedTheme}`;
+  if (savedTheme) {
+    if (savedTheme === 'blue') {
+      document.body.className = '';
+    } else {
+      document.body.className = `theme-${savedTheme}`;
+    }
+  } else {
+    document.body.className = (engine.theme === 'blue') ? '' : `theme-${engine.theme || 'cutting-edge'}`;
   }
 
   // Settings Currency select
@@ -2824,7 +2830,7 @@ document.addEventListener('DOMContentLoaded', () => {
     selectedInitDate = engine.referenceDate || '2026-02-27';
     selectedInitYear = engine.year || '2026';
     selectedInitMonth = engine.month || '02';
-    selectedInitTheme = localStorage.getItem('gfmp_theme') || engine.theme || 'blue';
+    selectedInitTheme = localStorage.getItem('gfmp_theme') || engine.theme || 'cutting-edge';
     selectedInitDataMode = 'empty';
     modalInit?.classList.add('open');
     updateInitModalUI();
@@ -2930,7 +2936,7 @@ document.addEventListener('DOMContentLoaded', () => {
   let selectedInitDate = engine.referenceDate || '2026-02-27';
   let selectedInitYear = engine.year || '2026';
   let selectedInitMonth = engine.month || '02';
-  let selectedInitTheme = localStorage.getItem('gfmp_theme') || engine.theme || 'blue';
+  let selectedInitTheme = localStorage.getItem('gfmp_theme') || engine.theme || 'cutting-edge';
   let selectedInitDataMode = 'empty';
 
   function trInit(key, params = {}) {
@@ -3065,8 +3071,8 @@ document.addEventListener('DOMContentLoaded', () => {
     const summaryText = document.getElementById('init-summary-text');
     if (summaryText) {
       const prefix = trInit('INIT_SUMMARY_PREFIX');
-      const themeUpper = String(selectedInitTheme || 'blue').toUpperCase();
-      const themeLabel = trInit(`THEME_NAME_${themeUpper}`);
+      const themeUpper = String(selectedInitTheme || 'cutting-edge').toUpperCase();
+      const themeLabel = trInit(`THEME_NAME_${themeUpper}`) || trInit(`THEME_NAME_${themeUpper.replace(/-/g, '_')}`) || themeUpper;
       const mIdx = parseInt(selectedInitMonth, 10) - 1;
       const periodLabel = (selectedInitMonth === '00')
         ? trInit('FULL_YEAR', { year: selectedInitYear })
@@ -3152,7 +3158,7 @@ document.addEventListener('DOMContentLoaded', () => {
   document.querySelectorAll('#init-theme-grid .init-choice-card').forEach(card => {
     card.addEventListener('click', () => {
       triggerHaptic(15);
-      selectedInitTheme = card.dataset.initTheme || 'blue';
+      selectedInitTheme = card.dataset.initTheme || 'cutting-edge';
       document.body.className = (selectedInitTheme === 'blue') ? '' : `theme-${selectedInitTheme}`;
       updateInitModalUI();
     });
@@ -3209,6 +3215,9 @@ document.addEventListener('DOMContentLoaded', () => {
   if (engine.needsOnboarding && modalInit) {
     document.documentElement.classList.add('gfmp-onboarding-active');
     modalInit.classList.add('open');
+    if (!localStorage.getItem('gfmp_theme')) {
+      document.body.className = (selectedInitTheme === 'blue') ? '' : `theme-${selectedInitTheme}`;
+    }
     try {
       updateInitModalUI();
     } catch (err) {
